@@ -1,6 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
+import DashboardLayout from './pages/DashboardLayout';
+import OverviewPage from './pages/OverviewPage';
+import LeadsPage from './pages/LeadsPage';
+import CallLogsPage from './pages/CallLogsPage';
+import CampaignsPage from './pages/CampaignsPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function App() {
@@ -13,12 +17,17 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <DashboardLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<OverviewPage />} />
+          <Route path="leads" element={<LeadsPage />} />
+          <Route path="call-logs" element={<CallLogsPage />} />
+          <Route path="campaigns" element={<CampaignsPage />} />
+        </Route>
 
-        {/* Root Route - Redirect to dashboard or login based on auth */}
+        {/* Root Route - Redirect to dashboard overview */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         {/* Catch-all - Redirect to dashboard */}

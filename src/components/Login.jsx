@@ -56,18 +56,18 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-8 border border-slate-700">
+        <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-8 border border-slate-700">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-3 rounded-lg">
+              <div className="bg-linear-to-r from-primary-500 to-secondary-500 p-3 rounded-lg">
                 <LogIn className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-3xl font-bold bg-linear-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent mb-2">
               Power Dialer
             </h1>
             <p className="text-slate-400">Welcome back</p>
@@ -123,7 +123,7 @@ export default function Login({ onLoginSuccess }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-4 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg font-semibold hover:from-cyan-600 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-600 transition"
+              className="w-full px-4 py-2 bg-linear-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-primary-700 disabled:from-slate-600 disabled:to-slate-600 transition"
             >
               {isLoading ? 'Signing In...' : 'Sign In'}
             </button>

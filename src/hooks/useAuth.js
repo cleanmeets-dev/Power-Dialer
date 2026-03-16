@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { logout as logoutAPI } from '../services/api';
+import { logout as logoutAPI, logoutFromBackend } from '../services/api';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -35,7 +35,16 @@ export const useAuth = () => {
     setIsAuthenticated(true);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      // Call backend logout to trigger auto-availability disable
+      await logoutFromBackend();
+    } catch (error) {
+      console.error('Backend logout failed:', error);
+      // Continue with client-side logout even if backend fails
+    }
+    
+    // Client-side logout
     logoutAPI();
     setUser(null);
     setIsAuthenticated(false);

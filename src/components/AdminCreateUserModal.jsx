@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { UserPlus, AlertCircle, X, Mail, Lock, User, Shield } from 'lucide-react';
 import { createUser } from '../services/api';
 
-export default function AdminCreateUserModal({ onClose, onSuccess }) {
+export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,6 +10,8 @@ export default function AdminCreateUserModal({ onClose, onSuccess }) {
   const [role, setRole] = useState('agent');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,10 +51,10 @@ export default function AdminCreateUserModal({ onClose, onSuccess }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
-            <div className="bg-linear-to-r from-purple-500 to-pink-500 p-2 rounded">
+            <div className="bg-linear-to-r from-secondary-600 to-secondary-700 p-2 rounded">
               <UserPlus className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-cyan-400">Create New User</h2>
+            <h2 className="text-xl font-bold text-primary-500">Create New User</h2>
           </div>
           <button
             onClick={onClose}
@@ -177,7 +179,7 @@ export default function AdminCreateUserModal({ onClose, onSuccess }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-700 disabled:from-slate-600 disabled:to-slate-600 transition"
+              className="flex-1 px-4 py-2 bg-linear-to-r from-secondary-600 to-secondary-700 text-white rounded-lg font-semibold hover:from-secondary-700 hover:to-secondary-800 disabled:from-slate-600 disabled:to-slate-600 transition"
             >
               {isLoading ? 'Creating...' : 'Create User'}
             </button>

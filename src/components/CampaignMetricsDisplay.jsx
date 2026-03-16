@@ -34,8 +34,8 @@ export default function CampaignMetricsDisplay({ campaign }) {
             )}
           </div>
         </div>
-        <div className="bg-linear-to-r from-cyan-500/20 to-blue-500/20 p-3 rounded-lg border border-cyan-500/20">
-          <BarChart3 className="w-6 h-6 text-cyan-400" />
+        <div className="bg-linear-to-r from-primary-500/20 to-secondary-500/20 p-3 rounded-lg border border-primary-500/20">
+          <BarChart3 className="w-6 h-6 text-primary-500" />
         </div>
       </div>
 
@@ -58,10 +58,10 @@ export default function CampaignMetricsDisplay({ campaign }) {
             <PhoneCall className="w-3 h-3" /> Dialed
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-2xl font-bold text-cyan-400">{campaign.dialedLeads}</span>
+            <span className="text-2xl font-bold text-primary-500">{campaign.dialedLeads}</span>
             <div className="w-full bg-slate-800 rounded-full h-1">
               <div
-                className="bg-linear-to-r from-cyan-500 to-blue-500 h-1 rounded-full transition-all"
+                className="bg-linear-to-r from-primary-500 to-secondary-500 h-1 rounded-full transition-all"
                 style={{ width: `${dialedRate}%` }}
               ></div>
             </div>
@@ -107,7 +107,7 @@ export default function CampaignMetricsDisplay({ campaign }) {
             <div className="flex gap-1 h-3 bg-slate-800 rounded-full overflow-hidden">
               {/* Dialed */}
               <div
-                className="bg-linear-to-r from-cyan-500 to-blue-500 transition-all"
+                className="bg-linear-to-r from-primary-500 to-secondary-500 transition-all"
                 style={{ width: `${dialedRate}%` }}
                 title={`Dialed: ${campaign.dialedLeads}`}
               />

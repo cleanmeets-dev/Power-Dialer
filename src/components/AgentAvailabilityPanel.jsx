@@ -1,74 +1,147 @@
-import { User, Phone, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Phone, CheckCircle, XCircle, Loader, AlertCircle, Circle } from 'lucide-react';
+import { updateAgentAvailability } from '../services/api';
+import { useWebSocket } from '../hooks/useWebSocket';
 
-export default function AgentAvailabilityPanel({ agents, onStatusChange }) {
-  const getAvailabilityColor = (isAvailable) => {
-    return isAvailable ? 'text-emerald-400' : 'text-rose-400';
+export default function AgentAvailabilityPanel({ agents: initialAgents, onStatusChange }) {
+  const [agentsState, setAgentsState] = useState(initialAgents || []);
+  const [loadingAgentId, setLoadingAgentId] = useState(null);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  // Sync initial agents
+  useEffect(() => {
+    setAgentsState(initialAgents || []);
+  }, [initialAgents]);
+
+  // Listen for real-time availability changes via WebSocket
+  const handleAgentAvailabilityChanged = (data) => {
+    console.log('📡 Real-time agent availability:', data);
+    setAgentsState(prevAgents =>
+      prevAgents.map(agent =>
+        agent._id === data.agentId
+          ? { ...agent, isAvailable: data.isAvailable }
+          : agent
+      )
+    );
   };
 
-  const getAvailabilityIcon = (isAvailable) => {
-    return isAvailable ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />;
+  useWebSocket({
+    onAgentAvailabilityChanged: handleAgentAvailabilityChanged,
+  });
+
+  const handleToggleAvailability = async (agent) => {
+    const agentId = agent._id;
+    const newAvailabilityStatus = !agent.isAvailable;
+
+    // Optimistically update UI
+    setLoadingAgentId(agentId);
+    setError(null);
+    setSuccessMessage(null);
+
+    const previousAgents = [...agentsState];
+    setAgentsState(prevAgents =>
+      prevAgents.map(a =>
+        a._id === agentId ? { ...a, isAvailable: newAvailabilityStatus } : a
+      )
+    );
+
+    try {
+      await updateAgentAvailability(agentId, newAvailabilityStatus);
+      const statusText = newAvailabilityStatus ? 'available' : 'busy';
+      setSuccessMessage(`${agent.name} is now ${statusText}`);
+      onStatusChange?.(agentId, 'toggle-availability');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to update agent availability:', err);
+      // Revert optimistic update
+      setAgentsState(previousAgents);
+      setError(`Failed to update ${agent.name}'s status. Please try again.`);
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setLoadingAgentId(null);
+    }
   };
 
   return (
-    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-6">
+    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-6 w-full">
       <div className="flex items-center gap-3 mb-6">
-        <div className="bg-linear-to-r from-blue-500 to-cyan-500 p-2 rounded">
-          <User className="w-5 h-5 text-white" />
+        <div className="bg-linear-to-r from-blue-500 to-cyan-500 p-3 rounded-lg">
+          <User className="w-6 h-6 text-white" />
         </div>
-        <h2 className="text-xl font-bold text-cyan-400">Agent Availability</h2>
+        <div>
+          <h2 className="text-xl font-bold text-cyan-400">Agent Availability</h2>
+          <p className="text-xs text-slate-400 mt-1">Toggle agent status in real-time</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {agents && agents.length > 0 ? (
-          agents.map(agent => (
+      {/* Notifications */}
+      {error && (
+        <div className="mb-4 p-3 bg-rose-900/30 border border-rose-500/50 rounded-lg flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-rose-200">{error}</p>
+        </div>
+      )}
+      {successMessage && (
+        <div className="mb-4 p-3 bg-emerald-900/30 border border-emerald-500/50 rounded-lg flex items-start gap-2">
+          <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-emerald-200">{successMessage}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+        {agentsState && agentsState.length > 0 ? (
+          agentsState.map(agent => (
             <div
               key={agent._id}
-              className="bg-slate-700/50 border border-slate-700/50 rounded-lg p-4 hover:border-slate-600 transition"
+              className="bg-slate-700/50 border border-slate-700/50 rounded-lg p-4 hover:border-cyan-500/30 transition"
             >
               {/* Agent Info */}
-              <div className="mb-3">
-                <p className="font-semibold text-white text-sm mb-1">{agent.name}</p>
-                <p className="text-xs text-slate-400">{agent.email}</p>
+              <div className="mb-4">
+                <p className="font-semibold text-white text-base mb-1">{agent.name}</p>
+                <p className="text-xs text-slate-400 truncate">{agent.email}</p>
               </div>
 
               {/* Status Grid */}
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2.5 text-sm">
+                {/* Agent Status with automatic activity detection */}
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Status:</span>
+                  <div className="flex items-center gap-2">
+                    {!agent.isActive ? (
+                      <>
+                        <Circle className="w-3 h-3 text-slate-500 fill-slate-500" />
+                        <span className="text-slate-400 font-medium">Offline</span>
+                      </>
+                    ) : agent.activeLead ? (
+                      <>
+                        <Circle className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" />
+                        <span className="text-red-400 font-medium">On Call</span>
+                      </>
+                    ) : agent.isAvailable ? (
+                      <>
+                        <Circle className="w-3 h-3 text-emerald-500 fill-emerald-500" />
+                        <span className="text-emerald-400 font-medium">Available</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        <span className="text-yellow-400 font-medium">Break</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 {/* Role */}
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Role:</span>
-                  <span className="px-2 py-1 rounded bg-slate-800 text-cyan-400 font-medium capitalize">
+                  <span className="px-2 py-1 rounded bg-slate-800 text-primary-500 font-medium capitalize">
                     {agent.role}
                   </span>
-                </div>
-
-                {/* Active Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Active:</span>
-                  <div className="flex items-center gap-2">
-                    {agent.isActive ? (
-                      <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-rose-400" />
-                    )}
-                    <span className={agent.isActive ? 'text-emerald-400' : 'text-rose-400'}>
-                      {agent.isActive ? 'Yes' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Availability Status */}
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Available:</span>
-                  <div className="flex items-center gap-2">
-                    {agent.isAvailable ? (
-                      <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <XCircle className="w-4 h-4 text-rose-400" />
-                    )}
-                    <span className={agent.isAvailable ? 'text-emerald-400' : 'text-rose-400'}>
-                      {agent.isAvailable ? 'Available' : 'Busy'}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Calls Handled */}
@@ -82,30 +155,50 @@ export default function AgentAvailabilityPanel({ agents, onStatusChange }) {
                   </div>
                 )}
 
-                {/* Active Lead */}
-                {agent.activeLead && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Active Lead:</span>
-                    <span className="text-yellow-400 font-medium text-xs">In Progress</span>
-                  </div>
-                )}
+                {/* Active Lead is now shown in Status field above */}
               </div>
 
               {/* Action Buttons */}
-              {onStatusChange && (
-                <div className="mt-4 pt-3 border-t border-slate-600/50 flex gap-2">
+              <div className="mt-4 pt-4 border-t border-slate-600/50">
+                {agent.activeLead ? (
+                  // Agent is on a call - show disabled state
+                  <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-600 text-slate-300 border border-slate-500 cursor-not-allowed">
+                    <Circle className="w-3 h-3 fill-current animate-pulse" />
+                    In Call
+                  </div>
+                ) : !agent.isActive ? (
+                  // Agent is offline - show disabled state
+                  <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-600 text-slate-300 border border-slate-500 cursor-not-allowed">
+                    <Circle className="w-3 h-3 fill-current" />
+                    Offline
+                  </div>
+                ) : (
+                  // Agent is logged in - allow toggle between available/break
                   <button
-                    onClick={() => onStatusChange(agent._id, 'toggle-availability')}
-                    className="flex-1 px-2 py-1.5 text-xs font-medium rounded transition cursor-pointer"
-                    style={{
-                      backgroundColor: agent.isAvailable ? 'rgba(248, 113, 113, 0.2)' : 'rgba(34, 197, 94, 0.2)',
-                      color: agent.isAvailable ? '#fca5a5' : '#86efac',
-                    }}
+                    onClick={() => handleToggleAvailability(agent)}
+                    disabled={loadingAgentId === agent._id}
+                    className={`w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                      agent.isAvailable
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white border border-rose-500'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    {agent.isAvailable ? 'Set Busy' : 'Set Available'}
+                    {loadingAgentId === agent._id ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : agent.isAvailable ? (
+                      <>
+                        <Circle className="w-3 h-3 fill-current" />
+                        Take Break
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-3 h-3 fill-current" />
+                        Return
+                      </>
+                    )}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))
         ) : (

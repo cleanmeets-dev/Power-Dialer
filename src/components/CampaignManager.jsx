@@ -95,7 +95,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
                 <div
                   key={campaign._id}
                   className={`px-4 py-3 border-b border-slate-700 last:border-0 cursor-pointer flex items-center justify-between group hover:bg-slate-700 transition ${
-                    selectedCampaignId === campaign._id ? 'bg-cyan-500/10 border-l-2 border-l-cyan-500' : ''
+                    selectedCampaignId === campaign._id ? 'bg-primary-500/10 border-l-2 border-l-primary-500' : ''
                   }`}
                   onClick={() => {
                     onCampaignSelect?.(campaign._id);
@@ -113,7 +113,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
                         setSelectedCampaign(campaign);
                         setShowEditModal(true);
                       }}
-                      className="p-1.5 bg-cyan-500/20 text-cyan-400 rounded hover:bg-cyan-500/30 transition cursor-pointer"
+                      className="p-1.5 bg-primary-500/20 text-primary-500 rounded hover:bg-primary-500/30 transition cursor-pointer"
                       title="Edit campaign"
                     >
                       <Edit2 className="w-3 h-3" />
@@ -139,7 +139,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
                 setShowCreateModal(true);
                 setIsDropdownOpen(false);
               }}
-              className="w-full px-4 py-3 border-t border-slate-700 text-cyan-400 hover:bg-slate-700 transition flex items-center gap-2 font-medium cursor-pointer"
+              className="w-full px-4 py-3 border-t border-slate-700 text-primary-500 hover:bg-slate-700 transition flex items-center gap-2 font-medium cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               New Campaign
@@ -151,7 +151,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
         {!isDropdownOpen && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="absolute right-0 top-0 bottom-0 px-3 text-slate-400 hover:text-cyan-400 transition cursor-pointer"
+            className="absolute right-0 top-0 bottom-0 px-3 text-slate-400 hover:text-primary-500 transition cursor-pointer"
             title="Create new campaign"
           >
             <Plus className="w-5 h-5" />
@@ -161,7 +161,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
 
       {/* Loading State */}
       {isLoading && (
-        <div className="mt-2 flex items-center gap-2 text-cyan-400">
+        <div className="mt-2 flex items-center gap-2 text-primary-500">
           <Loader className="w-4 h-4 animate-spin" />
           <span className="text-sm">Loading campaigns...</span>
         </div>

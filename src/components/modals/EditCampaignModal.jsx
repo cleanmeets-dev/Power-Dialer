@@ -75,7 +75,7 @@ export default function EditCampaignModal({ isOpen, campaign, onClose, onSuccess
           <button
             type="submit"
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader className="w-4 h-4 animate-spin" />}
             Update Campaign

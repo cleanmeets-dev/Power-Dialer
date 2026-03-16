@@ -1,14 +1,16 @@
+import { useLeads } from '../hooks/useLeads';
 import StatsCard from './StatsCard';
 
 /**
  * DashboardStats - Displays stats cards (Total Leads, Dialed, Connected, In Progress)
  */
 export default function DashboardStats({ 
-  totalLeads, 
+
+}) {
+  const {  totalLeads, 
   dialedCount, 
   successCount, 
-  callsInProgress 
-}) {
+  callsInProgress } = useLeads();
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
       <StatsCard

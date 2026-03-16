@@ -130,6 +130,21 @@ export const logout = () => {
   localStorage.removeItem('user');
 };
 
+/**
+ * Logout from backend - triggers auto-availability disable
+ */
+export const logoutFromBackend = async () => {
+  try {
+    const response = await api.post('/auth/logout');
+    console.log('✅ Backend logout successful');
+    return response.data;
+  } catch (error) {
+    console.error('⚠️ Backend logout failed (frontend logout still completed):', error.message);
+    // Still clear local storage even if backend fails
+    throw error;
+  }
+};
+
 // ==================== Campaigns ====================
 
 export const createCampaign = async (name) => {
@@ -219,6 +234,71 @@ export const getDialerStatus = async (campaignId) => {
 
 export const getCallLogs = async (campaignId) => {
   const response = await api.get(`/dialer/calls?campaignId=${campaignId}`);
+  return response.data.data;
+};
+
+// ==================== Call Management ====================
+
+/**
+ * Complete a call with disposition and notes
+ * @param {string} leadId - Lead ID
+ * @param {object} data - Call completion data
+ * @returns {Promise} Updated lead, callLog, and agent
+ */
+export const completeCall = async (leadId, data) => {
+  const response = await api.post(`/leads/${leadId}/complete-call`, data);
+  return response.data.data;
+};
+
+/**
+ * Schedule a callback for a lead
+ * @param {string} leadId - Lead ID
+ * @param {string} followUpDate - ISO date string
+ * @returns {Promise} Updated lead with followUpDate
+ */
+export const scheduleCallback = async (leadId, followUpDate) => {
+  const response = await api.post(`/leads/${leadId}/schedule-callback`, { followUpDate });
+  return response.data.data;
+};
+
+/**
+ * Cancel a scheduled callback
+ * @param {string} leadId - Lead ID
+ * @returns {Promise} Updated lead
+ */
+export const cancelCallback = async (leadId) => {
+  const response = await api.post(`/leads/${leadId}/cancel-callback`);
+  return response.data.data;
+};
+
+// ==================== Agent Management ====================
+
+/**
+ * Get available agents
+ * @returns {Promise} List of available agents
+ */
+export const getAvailableAgents = async () => {
+  const response = await api.get('/auth/agents/available');
+  return response.data.data;
+};
+
+/**
+ * Update agent availability status
+ * @param {string} agentId - Agent ID
+ * @param {boolean} isAvailable - Availability status
+ * @returns {Promise} Updated agent
+ */
+export const updateAgentAvailability = async (agentId, isAvailable) => {
+  const response = await api.put(`/auth/agents/${agentId}/availability`, { isAvailable });
+  return response.data.data;
+};
+
+/**
+ * Get agent statistics
+ * @returns {Promise} List of agents with stats
+ */
+export const getAgentStats = async () => {
+  const response = await api.get('/auth/agents/stats');
   return response.data.data;
 };
 

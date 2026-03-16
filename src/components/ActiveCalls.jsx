@@ -23,7 +23,7 @@ export default function ActiveCalls({ calls, isLoading }) {
 
   return (
     <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
-      <h2 className="text-xl font-bold mb-4 text-cyan-400">
+      <h2 className="text-xl font-bold mb-4 text-primary-500">
         Active Calls ({calls.length})
       </h2>
 

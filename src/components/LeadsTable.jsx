@@ -10,12 +10,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Phone,
+  Calendar,
 } from "lucide-react";
 import { useLeads } from "../hooks/useLeads";
-import { useNotification } from "../hooks/useNotification";
 import LeadDetailModal from "./modals/LeadDetailModal.jsx";
 import EditLeadModal from "./modals/EditLeadModal.jsx";
 import UpdateLeadStatusModal from "./modals/UpdateLeadStatusModal.jsx";
+import CompleteCallModal from "./modals/CompleteCallModal.jsx";
+import ScheduleCallbackModal from "./modals/ScheduleCallbackModal.jsx";
 import ConfirmModal from "./common/ConfirmModal.jsx";
 
 const STATUSES = ["pending", "dialing", "connected", "completed", "failed"];
@@ -29,7 +32,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export default function LeadsTable() {
+export default function LeadsTable({ showNotification }) {
   const {
     leads,
     isLoading,
@@ -43,7 +46,6 @@ export default function LeadsTable() {
     deleteMultipleLeads,
     updateLead,
   } = useLeads();
-  const { showNotification } = useNotification();
 
   const [searchInput, setSearchInput] = useState("");
 
@@ -57,6 +59,10 @@ export default function LeadsTable() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState(null);
   const [selectedRows, setSelectedRows] = useState(new Set());
+  const [selectedLeadForCompleteCall, setSelectedLeadForCompleteCall] = useState(null);
+  const [showCompleteCallModal, setShowCompleteCallModal] = useState(false);
+  const [selectedLeadForCallback, setSelectedLeadForCallback] = useState(null);
+  const [showScheduleCallbackModal, setShowScheduleCallbackModal] = useState(false);
 
   // Modal handlers
   const handleViewLead = (leadId) => {
@@ -108,6 +114,30 @@ export default function LeadsTable() {
     updateLead(updated);
     showNotification("Lead status updated successfully", "success");
     setShowStatusModal(false);
+  };
+
+  const handleCompleteCall = (lead) => {
+    setSelectedLeadForCompleteCall(lead);
+    setShowCompleteCallModal(true);
+  };
+
+  const handleCompleteCallSuccess = (result) => {
+    updateLead(result.lead);
+    showNotification("Call completed successfully", "success");
+    setShowCompleteCallModal(false);
+    setSelectedLeadForCompleteCall(null);
+  };
+
+  const handleScheduleCallback = (lead) => {
+    setSelectedLeadForCallback(lead);
+    setShowScheduleCallbackModal(true);
+  };
+
+  const handleScheduleCallbackSuccess = (updated) => {
+    updateLead(updated);
+    showNotification("Callback scheduled successfully", "success");
+    setShowScheduleCallbackModal(false);
+    setSelectedLeadForCallback(null);
   };
 
   // Selection handlers
@@ -219,49 +249,50 @@ export default function LeadsTable() {
     <>
       <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 mt-6 border border-slate-700">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-cyan-400">Leads</h2>
-            <p className="text-slate-400 text-sm mt-1">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+          <div className="min-w-0">
+            <h2 className="text-xl md:text-2xl font-bold text-primary-500">Leads</h2>
+            <p className="text-slate-400 text-xs md:text-sm mt-1 truncate">
               {selectedRows.size > 0
                 ? `${selectedRows.size} selected of ${totalLeads} total`
                 : `Showing ${startLead}-${endLead} of ${totalLeads} leads`}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {selectedRows.size > 0 && (
               <button
                 onClick={handleBulkDelete}
                 disabled={isLoading}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                className="px-3 md:px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
               >
-                <Trash2 className="w-4 h-4" />
-                Delete ({selectedRows.size})
+                <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Delete ({selectedRows.size})</span>
+                <span className="sm:hidden">({selectedRows.size})</span>
               </button>
             )}
             <button
               onClick={handleExport}
               disabled={isLoading || leads.length === 0}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-sm flex items-center gap-2"
+              className="px-3 md:px-4 py-2 bg-secondary-600 hover:bg-secondary-700 disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
               title="Export as CSV"
             >
-              <Download className="w-4 h-4" />
-              Export
+              <Download className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden sm:inline">Export</span>
             </button>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
           <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by business name, phone, or city..."
+              placeholder="Search..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:bg-slate-700/50"
+              className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 text-xs md:text-sm"
             />
           </div>
 
@@ -271,9 +302,9 @@ export default function LeadsTable() {
               value={filters.status}
               onChange={(e) => setStatus(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:bg-slate-700/50 appearance-none cursor-pointer"
+              className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
             >
-              <option value="">All Statuses</option>
+              <option value="">All Status</option>
               {STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -417,6 +448,22 @@ export default function LeadsTable() {
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
+                        onClick={() => handleCompleteCall(lead)}
+                        disabled={isLoading}
+                        className="text-green-400 hover:text-green-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        title="Complete call"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleScheduleCallback(lead)}
+                        disabled={isLoading}
+                        className="text-purple-400 hover:text-purple-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        title="Schedule callback"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleUpdateStatus(lead._id)}
                         disabled={isLoading}
                         className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
@@ -556,6 +603,28 @@ export default function LeadsTable() {
           setLeadToDelete(null);
         }}
         danger
+      />
+
+      <CompleteCallModal
+        isOpen={showCompleteCallModal}
+        lead={selectedLeadForCompleteCall}
+        onClose={() => {
+          setShowCompleteCallModal(false);
+          setSelectedLeadForCompleteCall(null);
+        }}
+        onSuccess={handleCompleteCallSuccess}
+        onError={(error) => showNotification(error, "error")}
+      />
+
+      <ScheduleCallbackModal
+        isOpen={showScheduleCallbackModal}
+        lead={selectedLeadForCallback}
+        onClose={() => {
+          setShowScheduleCallbackModal(false);
+          setSelectedLeadForCallback(null);
+        }}
+        onSuccess={handleScheduleCallbackSuccess}
+        onError={(error) => showNotification(error, "error")}
       />
     </>
   );

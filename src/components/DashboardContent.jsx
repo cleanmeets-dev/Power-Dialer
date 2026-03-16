@@ -1,15 +1,15 @@
-import FileUpload from './FileUpload';
-import DialerControls from './DialerControls';
-import ActiveCalls from './ActiveCalls';
-import LeadsTable from './LeadsTable';
-import LoadingSpinner from './LoadingSpinner';
-import DashboardStats from './DashboardStats';
-import { useLeads } from '../hooks/useLeads';
-import { useDialer } from '../hooks/useDialer';
-import { useNotification } from '../hooks/useNotification';
+import FileUpload from "./FileUpload";
+import DialerControls from "./DialerControls";
+import ActiveCalls from "./ActiveCalls";
+import LeadsTable from "./LeadsTable";
+import LoadingSpinner from "./LoadingSpinner";
+import DashboardStats from "./DashboardStats";
+import { useLeads } from "../hooks/useLeads";
+import { useDialer } from "../hooks/useDialer";
+import { useNotification } from "../hooks/useNotification";
 
 export default function DashboardContent({ selectedCampaignId }) {
-  const { leads, isLoading, loadLeads } = useLeads();
+  const { leads, pagination, isLoading, loadLeads } = useLeads();
   const { showNotification } = useNotification();
   const {
     isDialing,
@@ -21,23 +21,23 @@ export default function DashboardContent({ selectedCampaignId }) {
   } = useDialer(selectedCampaignId, showNotification);
 
   const handleUploadSuccess = () => {
-    showNotification('Leads uploaded successfully', 'success');
+    showNotification("Leads uploaded successfully", "success");
     loadLeads();
   };
 
   const handleShowError = (message) => {
-    showNotification(message, 'error');
+    showNotification(message, "error");
   };
 
   const handleShowSuccess = (message) => {
-    showNotification(message, 'success');
+    showNotification(message, "success");
   };
 
   return (
     <>
       {/* Stats Cards */}
       <DashboardStats
-        totalLeads={leads.length}
+        totalLeads={pagination.total}
         dialedCount={dialedCount}
         successCount={successCount}
         callsInProgress={callsInProgress}

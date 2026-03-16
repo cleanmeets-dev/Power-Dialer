@@ -14,7 +14,7 @@ export const generateTestLeads = async (campaignId, count = 10) => {
     return response.data.data;
   } catch (error) {
     console.error('Failed to generate test leads:', error);
-    throw error;
+    throw new Error(error.response?.data?.error || error.message || 'Failed to generate test leads');
   }
 };
 
@@ -34,7 +34,7 @@ export const simulateCall = async (leadId, agentId, duration = 5) => {
     return response.data;
   } catch (error) {
     console.error('Failed to simulate call:', error);
-    throw error;
+    throw new Error(error.response?.data?.error || error.message || 'Failed to simulate call');
   }
 };
 
@@ -52,7 +52,7 @@ export const autoSimulateCalls = async (count = 5, interval = 2000) => {
     return response.data;
   } catch (error) {
     console.error('Failed to start auto-simulation:', error);
-    throw error;
+    throw new Error(error.response?.data?.error || error.message || 'Failed to start auto-simulation');
   }
 };
 
@@ -61,11 +61,13 @@ export const autoSimulateCalls = async (count = 5, interval = 2000) => {
  */
 export const getSystemStatus = async () => {
   try {
+    console.log('🔄 Fetching system status...');
     const response = await api.get('/test/status');
+    console.log('✅ System status received:', response.data);
     return response.data.data;
   } catch (error) {
-    console.error('Failed to get system status:', error);
-    throw error;
+    console.error('Failed to get system status:', error.message);
+    throw new Error(error.response?.data?.error || error.message || 'Failed to get system status');
   }
 };
 
@@ -78,6 +80,6 @@ export const resetTestData = async () => {
     return response.data;
   } catch (error) {
     console.error('Failed to reset test data:', error);
-    throw error;
+    throw new Error(error.response?.data?.error || error.message || 'Failed to reset test data');
   }
 };

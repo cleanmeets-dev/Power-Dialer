@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { LeadsProvider } from './context/LeadsContext';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
 import OverviewPage from './pages/OverviewPage';
@@ -17,7 +18,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardLayout />
+              <LeadsProvider campaignId="">
+                <DashboardLayout />
+              </LeadsProvider>
             </ProtectedRoute>
           }
         >

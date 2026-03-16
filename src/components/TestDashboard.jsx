@@ -12,8 +12,18 @@ export default function TestDashboard() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    loadStatus();
-    loadCampaigns();
+    const initializeStatus = async () => {
+      try {
+        await Promise.all([loadStatus(), loadCampaigns()]);
+      } catch (error) {
+        console.error('Failed to initialize:', error);
+        setMessage('⚠️ Failed to load system status. Retrying...');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeStatus();
     const interval = setInterval(loadStatus, 3000); // Refresh every 3 seconds
     return () => clearInterval(interval);
   }, []);
@@ -22,8 +32,10 @@ export default function TestDashboard() {
     try {
       const data = await getSystemStatus();
       setStatus(data);
+      setMessage(''); // Clear error message on success
     } catch (error) {
       console.error('Failed to load status:', error);
+      setMessage(`❌ Error: ${error.message || 'Failed to load system status'}`);
     }
   };
 
@@ -36,6 +48,7 @@ export default function TestDashboard() {
       }
     } catch (error) {
       console.error('Failed to load campaigns:', error);
+      setMessage(`❌ Error loading campaigns: ${error.message}`);
     }
   };
 

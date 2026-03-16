@@ -114,17 +114,15 @@ export default function DashboardContent({ selectedCampaignId }) {
         <TestDashboard />
       ) : (
         <>
-          {/* Stats Cards */}
-      <DashboardStats
+        
+      {/* <DashboardStats
         totalLeads={pagination.total}
         dialedCount={dialedCount}
         successCount={successCount}
         callsInProgress={callsInProgress}
       />
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - File Upload & Dialer */}
         <div className="lg:col-span-2 space-y-6">
           <FileUpload
             campaignId={selectedCampaignId}
@@ -143,7 +141,6 @@ export default function DashboardContent({ selectedCampaignId }) {
           />
         </div>
 
-        {/* Right Column - Active Calls & Agent Panel */}
         <div className="space-y-6">
           <ActiveCalls calls={activeCalls} isLoading={isLoading} />
           <AgentAvailabilityPanel 
@@ -153,8 +150,7 @@ export default function DashboardContent({ selectedCampaignId }) {
         </div>
       </div>
 
-      {/* Leads Table */}
-      <LeadsTable />
+      <LeadsTable /> */}
 
       {/* Loading State */}
       {isLoading && leads.length === 0 && <LoadingSpinner />}

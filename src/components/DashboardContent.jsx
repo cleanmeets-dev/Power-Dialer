@@ -4,33 +4,35 @@ import ActiveCalls from './ActiveCalls';
 import LeadsTable from './LeadsTable';
 import LoadingSpinner from './LoadingSpinner';
 import DashboardStats from './DashboardStats';
+import { useLeads } from '../hooks/useLeads';
+import { useDialer } from '../hooks/useDialer';
+import { useNotification } from '../hooks/useNotification';
 
-/**
- * DashboardContent - Main dashboard content area
- * Shows stats, file upload, dialer controls, active calls, and leads table
- */
-export default function DashboardContent({
-  selectedCampaignId,
-  isDialing,
-  setIsDialing,
-  isLoading,
-  leads,
-  dialedCount,
-  successCount,
-  callsInProgress,
-  activeCalls,
-  pagination,
-  onUploadSuccess,
-  onShowError,
-  onShowSuccess,
-  onLeadDeleted,
-  onLeadUpdated,
-  onShowNotification,
-  onChangePage,
-  onChangePageSize,
-  onSearchLeads,
-  onFilterByStatus,
-}) {
+export default function DashboardContent({ selectedCampaignId }) {
+  const { leads, isLoading, loadLeads } = useLeads();
+  const { showNotification } = useNotification();
+  const {
+    isDialing,
+    setIsDialing,
+    dialedCount,
+    successCount,
+    callsInProgress,
+    activeCalls,
+  } = useDialer(selectedCampaignId, showNotification);
+
+  const handleUploadSuccess = () => {
+    showNotification('Leads uploaded successfully', 'success');
+    loadLeads();
+  };
+
+  const handleShowError = (message) => {
+    showNotification(message, 'error');
+  };
+
+  const handleShowSuccess = (message) => {
+    showNotification(message, 'success');
+  };
+
   return (
     <>
       {/* Stats Cards */}
@@ -48,15 +50,15 @@ export default function DashboardContent({
           <FileUpload
             campaignId={selectedCampaignId}
             isLoading={isLoading}
-            onSuccess={onUploadSuccess}
-            onError={onShowError}
+            onSuccess={handleUploadSuccess}
+            onError={handleShowError}
           />
           <DialerControls
             campaignId={selectedCampaignId}
             isDialing={isDialing}
             setIsDialing={setIsDialing}
-            onError={onShowError}
-            onSuccess={onShowSuccess}
+            onError={handleShowError}
+            onSuccess={handleShowSuccess}
             totalLeads={leads.length}
             isLoading={isLoading}
           />
@@ -67,20 +69,7 @@ export default function DashboardContent({
       </div>
 
       {/* Leads Table */}
-      {(
-        <LeadsTable
-          leads={leads}
-          isLoading={isLoading}
-          pagination={pagination}
-          onLeadDeleted={onLeadDeleted}
-          onLeadUpdated={onLeadUpdated}
-          onShowNotification={onShowNotification}
-          onChangePage={onChangePage}
-          onChangePageSize={onChangePageSize}
-          onSearchLeads={onSearchLeads}
-          onFilterByStatus={onFilterByStatus}
-        />
-      )}
+      <LeadsTable />
 
       {/* Loading State */}
       {isLoading && leads.length === 0 && <LoadingSpinner />}

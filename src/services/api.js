@@ -114,6 +114,15 @@ export const getAllAgents = async () => {
 };
 
 /**
+ * Get all users
+ * @returns {Promise} List of all users
+ */
+export const getUsers = async () => {
+  const response = await api.get('/auth/agents');
+  return response.data.data;
+};
+
+/**
  * Logout (client-side only)
  */
 export const logout = () => {
@@ -133,7 +142,7 @@ export const getCampaigns = async () => {
   return response.data.data;
 };
 
-export const getCampaign = async (id) => {
+export const getCampaignById = async (id) => {
   const response = await api.get(`/campaigns/${id}`);
   return response.data.data;
 };
@@ -160,16 +169,35 @@ export const uploadLeads = async (file, campaignId) => {
   return response.data;
 };
 
-export const getLeads = async (campaignId, status = null) => {
-  let url = `/leads?campaignId=${campaignId}`;
+export const getLeads = async (campaignId, options = {}) => {
+  const { status = null, page = 1, limit = 20, search = null } = options;
+  
+  let url = `/leads?campaignId=${campaignId}&page=${page}&limit=${limit}`;
   if (status) url += `&status=${status}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
   
   const response = await api.get(url);
   return response.data.data;
 };
 
+export const getLead = async (id) => {
+  const response = await api.get(`/leads/${id}`);
+  return response.data.data;
+};
+
+export const updateLeadStatus = async (id, status) => {
+  const response = await api.put(`/leads/${id}/status`, { status });
+  return response.data.data;
+};
+
+export const updateLead = async (id, updates) => {
+  const response = await api.put(`/leads/${id}`, updates);
+  return response.data.data;
+};
+
 export const deleteLead = async (id) => {
-  await api.delete(`/leads/${id}`);
+  const response = await api.delete(`/leads/${id}`);
+  return response.data;
 };
 
 // ==================== Dialer ====================

@@ -51,7 +51,7 @@ export default function CampaignSelector({ onSelect, selectedId, isLoading }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700 mb-6">
+    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700 mb-6">
       <h2 className="text-xl font-bold mb-4 text-cyan-400">Select Campaign</h2>
 
       <div className="flex gap-4 mb-4">
@@ -73,7 +73,7 @@ export default function CampaignSelector({ onSelect, selectedId, isLoading }) {
         {/* Create Campaign Button */}
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg font-semibold hover:from-cyan-600 hover:to-cyan-700 flex items-center gap-2 transition"
+          className="px-4 py-2 bg-linear-to-r from-cyan-500 to-cyan-600 text-white rounded-lg font-semibold hover:from-cyan-600 hover:to-cyan-700 flex items-center gap-2 transition"
         >
           <Plus className="w-5 h-5" />
           New

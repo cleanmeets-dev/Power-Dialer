@@ -17,7 +17,7 @@ export default function StatsCard({ label, value, icon, color }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-lg shadow-lg p-6 border border-slate-700 hover:border-cyan-500 transition-all">
+    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-lg p-6 border border-slate-700 hover:border-cyan-500 transition-all">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-slate-400 text-sm">{label}</p>

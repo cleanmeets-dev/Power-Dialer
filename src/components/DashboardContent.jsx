@@ -19,10 +19,17 @@ export default function DashboardContent({
   successCount,
   callsInProgress,
   activeCalls,
+  pagination,
   onUploadSuccess,
   onShowError,
   onShowSuccess,
   onLeadDeleted,
+  onLeadUpdated,
+  onShowNotification,
+  onChangePage,
+  onChangePageSize,
+  onSearchLeads,
+  onFilterByStatus,
 }) {
   return (
     <>
@@ -60,11 +67,18 @@ export default function DashboardContent({
       </div>
 
       {/* Leads Table */}
-      {leads.length > 0 && (
+      {(
         <LeadsTable
           leads={leads}
           isLoading={isLoading}
+          pagination={pagination}
           onLeadDeleted={onLeadDeleted}
+          onLeadUpdated={onLeadUpdated}
+          onShowNotification={onShowNotification}
+          onChangePage={onChangePage}
+          onChangePageSize={onChangePageSize}
+          onSearchLeads={onSearchLeads}
+          onFilterByStatus={onFilterByStatus}
         />
       )}
 

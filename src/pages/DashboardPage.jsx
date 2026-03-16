@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { useDialer } from '../hooks/useDialer';
 import { useCampaignData } from '../hooks/useCampaignData';
+import { getCampaigns, getUsers } from '../services/api';
 import Navbar from '../components/Navbar';
-import CampaignSelector from '../components/CampaignSelector';
+import CampaignManager from '../components/CampaignManager';
+import CampaignMetricsDisplay from '../components/CampaignMetricsDisplay';
+// import AgentAvailabilityPanel from '../components/AgentAvailabilityPanel';
 import NotificationSystem from '../components/NotificationSystem';
 import DashboardContent from '../components/DashboardContent';
 
@@ -18,7 +21,20 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { successMessage, errorMessage, showNotification } = useNotification();
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
-  const { leads, isLoading, loadLeads, handleLeadDeleted } = useCampaignData(selectedCampaignId);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  // const [agents, setAgents] = useState([]);
+  const {
+    leads,
+    isLoading,
+    pagination,
+    loadLeads,
+    handleLeadDeleted,
+    handleLeadUpdated,
+    changePage,
+    changePageSize,
+    searchLeads,
+    filterByStatus,
+  } = useCampaignData(selectedCampaignId);
   const {
     isDialing,
     setIsDialing,
@@ -27,6 +43,36 @@ export default function DashboardPage() {
     callsInProgress,
     activeCalls,
   } = useDialer(selectedCampaignId, showNotification);
+
+  // Load selected campaign data
+  useEffect(() => {
+    if (selectedCampaignId) {
+      const loadCampaignData = async () => {
+        try {
+          const campaigns = await getCampaigns();
+          const campaign = campaigns.find(c => c._id === selectedCampaignId);
+          setSelectedCampaign(campaign);
+        } catch (error) {
+          console.error('Failed to load campaign data:', error);
+        }
+      };
+      loadCampaignData();
+    }
+  }, [selectedCampaignId]);
+
+  // Load agents
+  // useEffect(() => {
+  //   const loadAgents = async () => {
+  //     try {
+  //       const users = await getUsers();
+  //       const agentsOnly = Array.isArray(users) ? users.filter(u => u.role === 'agent') : [];
+  //       setAgents(agentsOnly);
+  //     } catch (error) {
+  //       console.error('Failed to load agents:', error);
+  //     }
+  //   };
+  //   loadAgents();
+  // }, []);
 
   const handleLogout = () => {
     logout();
@@ -47,9 +93,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
       <Navbar
         user={user}
+        campaignId={selectedCampaignId}
         onLogout={handleLogout}
         onShowNotification={showNotification}
       />
@@ -59,21 +106,42 @@ export default function DashboardPage() {
         errorMessage={errorMessage}
       />
 
-      <div className="max-w-6xl mx-auto p-4 md:p-8">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 mb-6 border border-slate-700">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
+        <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 mb-6 border border-slate-700">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
             Power Dialer Dashboard
           </h1>
           <p className="text-slate-300">Upload leads and start automated calling</p>
         </div>
 
-        {/* Campaign Selector */}
-        <CampaignSelector
-          onSelect={setSelectedCampaignId}
-          selectedId={selectedCampaignId}
-          isLoading={isLoading}
+        {/* Campaign Manager */}
+        <CampaignManager
+          selectedCampaignId={selectedCampaignId}
+          onCampaignSelect={setSelectedCampaignId}
+          onShowNotification={showNotification}
         />
+
+        {/* Campaign Metrics & Agent Availability - COMMENTED OUT */}
+        {/* 
+        {selectedCampaignId && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6">
+            <div className="lg:col-span-2">
+              {selectedCampaign && (
+                <CampaignMetricsDisplay campaign={selectedCampaign} />
+              )}
+            </div>
+            <div>
+              <AgentAvailabilityPanel 
+                agents={agents}
+                onStatusChange={(agentId, action) => {
+                  console.log(`Agent ${agentId} status changed: ${action}`);
+                }}
+              />
+            </div>
+          </div>
+        )}
+        */}
 
         {/* Dashboard Content */}
         {selectedCampaignId && (
@@ -87,10 +155,17 @@ export default function DashboardPage() {
             successCount={successCount}
             callsInProgress={callsInProgress}
             activeCalls={activeCalls}
+            pagination={pagination}
             onUploadSuccess={handleUploadSuccess}
             onShowError={handleShowError}
             onShowSuccess={handleShowSuccess}
             onLeadDeleted={handleLeadDeleted}
+            onLeadUpdated={handleLeadUpdated}
+            onShowNotification={showNotification}
+            onChangePage={changePage}
+            onChangePageSize={changePageSize}
+            onSearchLeads={searchLeads}
+            onFilterByStatus={filterByStatus}
           />
         )}
       </div>

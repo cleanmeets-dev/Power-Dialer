@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { Plus, Edit2, Trash2, TrendingUp } from "lucide-react";
 import api, { getCampaigns } from "../services/api";
 import CreateCampaignModal from "../components/modals/CreateCampaignModal";
 import EditCampaignModal from "../components/modals/EditCampaignModal";
+import { useAuth } from "../hooks/useAuth";
 
 export default function CampaignsPage() {
   const { showNotification } = useOutletContext();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [campaigns, setCampaigns] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +22,16 @@ export default function CampaignsPage() {
   useEffect(() => {
     loadCampaigns();
   }, []);
+
+  useEffect(() => {
+    if (user && user.role !== "manager") {
+      showNotification(
+        "You do not have permission to access this page",
+        "error",
+      );
+      navigate("/dashboard");
+    }
+  }, [user, navigate, showNotification]);
 
   const loadCampaigns = async () => {
     try {
@@ -51,7 +64,7 @@ export default function CampaignsPage() {
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this campaign?"
+      "Are you sure you want to delete this campaign?",
     );
 
     if (!confirmDelete) return;

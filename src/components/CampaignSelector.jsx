@@ -21,10 +21,11 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
   const loadCampaigns = async () => {
     try {
       const data = await getCampaigns();
-      setCampaigns(data || []);
+      const campaignList = Array.isArray(data) ? data : (data?.data || []);
+      setCampaigns(campaignList);
       // Auto-select first campaign if none selected
-      if (data && data.length > 0 && !currentSelectedId) {
-        handleSelect(data[0]._id);
+      if (campaignList && campaignList.length > 0 && !currentSelectedId && handleSelect) {
+        handleSelect(campaignList[0]._id);
       }
     } catch (err) {
       setError('Failed to load campaigns');

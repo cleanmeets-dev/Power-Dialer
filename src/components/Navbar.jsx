@@ -15,7 +15,9 @@ export default function Navbar({ user, onLogout, activePage, onNavigate }) {
     { id: 'overview', label: 'Dashboard', icon: LayoutGrid },
     { id: 'leads', label: 'Leads', icon: FileText },
     { id: 'call-logs', label: 'Call Logs', icon: Phone },
-    { id: 'campaigns', label: 'Campaigns', icon: Settings },
+    { id: 'campaigns', label: 'Campaigns', icon: Settings, roleRequired: 'manager' },
+    { id: 'my-availability', label: 'My Status', icon: Users, roleRequired: 'agent' },
+    { id: 'agents', label: 'Agents', icon: Users, roleRequired: 'manager' },
   ];
 
   const handleNavigate = (pageId) => {
@@ -55,7 +57,12 @@ export default function Navbar({ user, onLogout, activePage, onNavigate }) {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-1">
-              {navigationLinks.map(({ id, label, icon: Icon }) => (
+              {navigationLinks
+                .filter(({ roleRequired }) => {
+                  if (!roleRequired) return true; // Show if no role required
+                  return roleRequired === (isManager ? 'manager' : 'agent');
+                })
+                .map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => handleNavigate(id)}
@@ -126,7 +133,12 @@ export default function Navbar({ user, onLogout, activePage, onNavigate }) {
           {/* Mobile Navigation Menu */}
           {showMobileMenu && (
             <div className="md:hidden mt-4 pt-4 border-t border-slate-700 space-y-2">
-              {navigationLinks.map(({ id, label, icon: Icon }) => (
+              {navigationLinks
+                .filter(({ roleRequired }) => {
+                  if (!roleRequired) return true; // Show if no role required
+                  return roleRequired === (isManager ? 'manager' : 'agent');
+                })
+                .map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => handleNavigate(id)}

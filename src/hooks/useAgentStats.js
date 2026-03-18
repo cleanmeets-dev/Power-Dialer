@@ -41,8 +41,20 @@ export function useAgentStats() {
   // Load agents on mount
   useEffect(() => {
     loadAgents();
+    
     // Reload agents every 30 seconds to sync with server
-    const interval = setInterval(loadAgents, 30000);
+    const interval = setInterval(async () => {
+      setIsLoading(true);
+      try {
+        const agentsList = await getAgentStats();
+        setAgents(agentsList);
+      } catch (error) {
+        console.error('Failed to load agent stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 30000);
+    
     return () => clearInterval(interval);
   }, [loadAgents]);
 

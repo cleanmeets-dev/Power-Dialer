@@ -17,6 +17,8 @@ export default function DashboardLayout() {
     if (path.includes('leads')) return 'leads';
     if (path.includes('call-logs')) return 'call-logs';
     if (path.includes('campaigns')) return 'campaigns';
+    if (path.includes('my-availability')) return 'my-availability';
+    if (path.includes('agents')) return 'agents';
     return 'overview';
   };
 
@@ -40,6 +42,12 @@ export default function DashboardLayout() {
         break;
       case 'campaigns':
         navigate('/dashboard/campaigns');
+        break;
+      case 'my-availability':
+        navigate('/dashboard/my-availability');
+        break;
+      case 'agents':
+        navigate('/dashboard/agents');
         break;
       default:
         navigate('/dashboard');

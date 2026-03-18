@@ -187,12 +187,16 @@ export const uploadLeads = async (file, campaignId) => {
 export const getLeads = async (campaignId, options = {}) => {
   const { status = null, page = 1, limit = 20, search = null } = options;
   
-  let url = `/leads?campaignId=${campaignId}&page=${page}&limit=${limit}`;
+  let url = `/leads?page=${page}&limit=${limit}`;
+  if (campaignId) url = `/leads?campaignId=${campaignId}&page=${page}&limit=${limit}`;
   if (status) url += `&status=${status}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   
   const response = await api.get(url);
-  return response.data.data;
+  return {
+    leads: response.data.data || [],
+    pagination: response.data.pagination || { total: 0, page, limit, totalPages: 0 }
+  };
 };
 
 export const getLead = async (id) => {

@@ -6,6 +6,8 @@ import OverviewPage from './pages/OverviewPage';
 import LeadsPage from './pages/LeadsPage';
 import CallLogsPage from './pages/CallLogsPage';
 import CampaignsPage from './pages/CampaignsPage';
+import AgentAvailabilityPage from './pages/AgentAvailabilityPage';
+import MyAvailabilityPage from './pages/MyAvailabilityPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
           <Route path="leads" element={<LeadsPage />} />
           <Route path="call-logs" element={<CallLogsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="my-availability" element={<MyAvailabilityPage />} />
+          <Route path="agents" element={<AgentAvailabilityPage />} />
         </Route>
 
         {/* Root Route - Redirect to dashboard overview */}

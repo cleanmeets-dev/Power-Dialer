@@ -23,3 +23,8 @@
   --color-secondary-800: oklch(0.33 0.20 264);
   --color-secondary-900: oklch(0.28 0.15 264);
 }
+
+/* Global button cursor style */
+button {
+  cursor: pointer;
+}

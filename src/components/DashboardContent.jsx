@@ -30,7 +30,7 @@ export default function DashboardContent({ selectedCampaignId }) {
   // WebSocket listeners for real-time updates
   const handleCallInitiated = (data) => {
     console.log('📞 Call initiated:', data);
-    showNotification(`Call initiated: ${data.businessName}`, 'info');
+    showNotification(`Call initiated: ${data.businessName || data.phoneNumber}`, 'info');
   };
 
   const handleCallCompleted = (data) => {
@@ -114,46 +114,46 @@ export default function DashboardContent({ selectedCampaignId }) {
         <TestDashboard />
       ) : (
         <>
-        
-      {/* <DashboardStats
-        totalLeads={pagination.total}
-        dialedCount={dialedCount}
-        successCount={successCount}
-        callsInProgress={callsInProgress}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <FileUpload
-            campaignId={selectedCampaignId}
-            isLoading={isLoading}
-            onSuccess={handleUploadSuccess}
-            onError={handleShowError}
+          {/* Dashboard Stats */}
+          <DashboardStats
+            totalLeads={pagination.total}
+            dialedCount={dialedCount}
+            successCount={successCount}
+            callsInProgress={callsInProgress}
           />
-          <DialerControls
-            campaignId={selectedCampaignId}
-            isDialing={isDialing}
-            setIsDialing={setIsDialing}
-            onError={handleShowError}
-            onSuccess={handleShowSuccess}
-            totalLeads={leads.length}
-            isLoading={isLoading}
-          />
-        </div>
 
-        <div className="space-y-6">
-          <ActiveCalls calls={activeCalls} isLoading={isLoading} />
-          <AgentAvailabilityPanel 
-            agents={agents} 
-            onStatusChange={refreshAgents}
-          />
-        </div>
-      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <FileUpload
+                campaignId={selectedCampaignId}
+                isLoading={isLoading}
+                onSuccess={handleUploadSuccess}
+                onError={handleShowError}
+              />
+              <DialerControls
+                campaignId={selectedCampaignId}
+                isDialing={isDialing}
+                setIsDialing={setIsDialing}
+                onError={handleShowError}
+                onSuccess={handleShowSuccess}
+                totalLeads={leads.length}
+                isLoading={isLoading}
+              />
+            </div>
 
-      <LeadsTable /> */}
+            <div className="space-y-6">
+              <ActiveCalls calls={activeCalls} isLoading={isLoading} />
+              <AgentAvailabilityPanel 
+                agents={agents} 
+                onStatusChange={refreshAgents}
+              />
+            </div>
+          </div>
 
-      {/* Loading State */}
-      {isLoading && leads.length === 0 && <LoadingSpinner />}
+          <LeadsTable />
+
+          {/* Loading State */}
+          {isLoading && leads.length === 0 && <LoadingSpinner />}
         </>
       )}
     </>

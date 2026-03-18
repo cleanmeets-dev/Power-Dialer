@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Phone, Clock, MessageSquare, RefreshCw } from 'lucide-react';
 import CampaignSelector from '../components/CampaignSelector';
 import { getCallLogs } from '../services/api';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export default function CallLogsPage() {
   const { showNotification } = useOutletContext();
@@ -43,32 +44,63 @@ export default function CallLogsPage() {
     }
   }, [selectedCampaignId, showNotification]);
 
-  // Initial load when campaign changes
-  useEffect(() => {
-    if (selectedCampaignId) {
-      lastLogCountRef.current = 0;
-      loadCallLogs();
-    } else {
-      setCallLogs([]);
-      setError(null);
-      lastLogCountRef.current = 0;
+  // Handle real-time call completed events via WebSocket
+  const handleCallCompleted = useCallback((data) => {
+    if (data.campaignId === selectedCampaignId) {
+      // Add new call log to the list
+      setCallLogs((prev) => [data, ...prev]);
+      lastLogCountRef.current += 1;
+      showNotification('New call log recorded', 'success');
     }
-  }, [selectedCampaignId, loadCallLogs]);
+  }, [selectedCampaignId, showNotification]);
 
-  // Auto-refresh polling every 3 seconds while campaign is selected
+  // Subscribe to WebSocket call events
+  useWebSocket({
+    onCallCompleted: handleCallCompleted,
+  });
+
+  // Periodic sync fallback (every 10 seconds) - WebSocket is primary for real-time updates
   useEffect(() => {
     if (!selectedCampaignId) return;
 
+    // Load initial logs
+    const loadLogs = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const logs = await getCallLogs(selectedCampaignId);
+        
+        const logsArray = Array.isArray(logs) ? logs : logs?.data || [];
+        setCallLogs(logsArray);
+
+        if (logsArray.length > lastLogCountRef.current) {
+          const newLogCount = logsArray.length - lastLogCountRef.current;
+          showNotification(`${newLogCount} new call log(s)`, 'success');
+        }
+        lastLogCountRef.current = logsArray.length;
+      } catch (err) {
+        setError('Failed to load call logs');
+        showNotification('Failed to load call logs', 'error');
+        setCallLogs([]);
+        console.error('Error loading call logs:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLogs();
+
+    // Fallback sync every 10 seconds to ensure data consistency
     pollIntervalRef.current = setInterval(() => {
-      loadCallLogs();
-    }, 3000);
+      loadLogs();
+    }, 10000);
 
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
       }
     };
-  }, [selectedCampaignId, loadCallLogs]);
+  }, [selectedCampaignId, showNotification]);
 
   // Manual refresh handler
   const handleRefresh = async () => {
@@ -158,7 +190,7 @@ export default function CallLogsPage() {
           {callLogs.length > 0 && (
             <div className="p-4 bg-blue-500/10 border-b border-blue-500/30 flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-              <span className="text-blue-400 text-xs font-semibold">Auto-refreshing every 3 seconds</span>
+              <span className="text-blue-400 text-xs font-semibold">Auto-refreshing every 10 seconds (WebSocket enabled)</span>
             </div>
           )}
 

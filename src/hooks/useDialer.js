@@ -26,6 +26,7 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
       {
         _id: data.callSid || `call_${Date.now()}_${Math.random()}`,
         callSid: data.callSid,
+        leadId: data.leadId?.toString(), // 🔴 FIX #6: Store leadId so matching works
         lead: { phoneNumber: data.phoneNumber },
         phoneNumber: data.phoneNumber,
         businessName: data.businessName,
@@ -46,10 +47,11 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     setCallsInProgress((prev) => Math.max(0, prev - 1));
     setDialedCount((prev) => prev + 1);
     
+    // 🔴 FIX #5: callSid is now included in the emit, so matching works properly
     // Remove from active calls and mark as completed
     setActiveCalls((prev) =>
       prev.map((call) =>
-        call.callSid === data.callSid || call._id === data.callSid
+        call.callSid === data.callSid
           ? { ...call, outcome: 'connected', status: 'completed', endTime: new Date() }
           : call
       )
@@ -62,11 +64,12 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     setCallsInProgress((prev) => Math.max(0, prev - 1));
     setDialedCount((prev) => prev + 1);
     
+    // 🔴 FIX #5: callSid is now included in the emit, use it for matching
     // Update failed call in active calls
     setActiveCalls((prev) =>
       prev.map((call) =>
-        call.callSid === data.callSid || call._id === data.callSid
-          ? { ...call, outcome: 'failed', status: 'failed', error: data.error }
+        call.callSid === data.callSid
+          ? { ...call, outcome: 'failed', status: 'failed', error: data.reason }
           : call
       )
     );
@@ -85,11 +88,70 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     }
   }, [selectedCampaignId, onStatusUpdate]);
 
+  // 🔴 FIX #4: Handle call connected to agent event
+  const handleCallConnectedToAgent = useCallback((data) => {
+    if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
+    
+    setActiveCalls((prev) =>
+      prev.map((call) =>
+        call.leadId === data.leadId?.toString() // Match by leadId
+          ? { 
+              ...call, 
+              agentName: data.agentName, 
+              agentId: data.agentId, 
+              status: 'connected',
+              agent: { name: data.agentName, _id: data.agentId }
+            }
+          : call
+      )
+    );
+  }, [selectedCampaignId]);
+
+  // 🔴 FIX #4: Handle call dropped event
+  const handleCallDropped = useCallback((data) => {
+    if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
+    
+    setCallsInProgress((prev) => Math.max(0, prev - 1));
+    
+    setActiveCalls((prev) =>
+      prev.map((call) =>
+        call.leadId === data.leadId?.toString()
+          ? { 
+              ...call, 
+              status: 'dropped', 
+              outcome: 'failed',
+              error: data.reason 
+            }
+          : call
+      )
+    );
+  }, [selectedCampaignId]);
+
+  // 🔴 FIX #3: Handle campaign status updated event
+  const handleCampaignStatusUpdated = useCallback((data) => {
+    if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
+    
+    // Update dialer state based on campaign status
+    setIsDialing(data.status === 'active');
+  }, [selectedCampaignId]);
+
+  // 🔴 FIX #3: Handle campaign completed event
+  const handleCampaignCompleted = useCallback((data) => {
+    if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
+    
+    setIsDialing(false);
+    onStatusUpdate?.('Campaign completed!', 'success');
+  }, [selectedCampaignId, onStatusUpdate]);
+
   // Subscribe to WebSocket events
   useWebSocket({
     onCallInitiated: handleCallInitiated,
     onCallCompleted: handleCallCompleted,
     onCallFailed: handleCallFailed,
+    onCallConnectedToAgent: handleCallConnectedToAgent,
+    onCallDropped: handleCallDropped,
+    onCampaignStatusUpdated: handleCampaignStatusUpdated,
+    onCampaignCompleted: handleCampaignCompleted,
   });
 
   // Fetch initial status when dialing starts

@@ -3,8 +3,9 @@ import { LogOut, Users, UserPlus, LayoutGrid, FileText, Phone, Settings, Menu, X
 import { useNavigate } from 'react-router-dom';
 import AdminCreateUserModal from './AdminCreateUserModal';
 import AgentListModal from './modals/AgentListModal.jsx';
+import api from '../services/api.js';
 
-export default function Navbar({ user, onLogout, activePage, onNavigate }) {
+export default function Navbar({ user, onLogout, activePage, onNavigate, onShowNotification }) {
   const navigate = useNavigate();
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showAgentListModal, setShowAgentListModal] = useState(false);
@@ -33,6 +34,17 @@ export default function Navbar({ user, onLogout, activePage, onNavigate }) {
   const handleUserCreated = (message) => {
     // Show notification via parent
     setShowCreateUserModal(false);
+  };
+
+  const handleDeleteAgent = async (agentId) => {
+    try {
+      await api.delete(`/auth/agents/${agentId}`);
+      onShowNotification?.('Agent deleted successfully', 'success');
+      setShowAgentListModal(false);
+    } catch (error) {
+      console.error('Failed to delete agent:', error);
+      onShowNotification?.('Failed to delete agent', 'error');
+    }
   };
 
   return (
@@ -163,7 +175,12 @@ export default function Navbar({ user, onLogout, activePage, onNavigate }) {
         onClose={() => setShowCreateUserModal(false)}
         onUserCreated={handleUserCreated}
       />
-      <AgentListModal isOpen={showAgentListModal} onClose={() => setShowAgentListModal(false)} />
+      <AgentListModal
+        isOpen={showAgentListModal}
+        onClose={() => setShowAgentListModal(false)}
+        onDeleteAgent={handleDeleteAgent}
+        onShowNotification={onShowNotification}
+      />
     </>
   );
 }

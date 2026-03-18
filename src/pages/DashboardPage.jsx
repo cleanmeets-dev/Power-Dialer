@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Navbar user={user} onLogout={handleLogout} activePage={activePage} onNavigate={setActivePage} />
+      <Navbar user={user} onLogout={handleLogout} activePage={activePage} onNavigate={setActivePage} onShowNotification={showNotification} />
 
       <NotificationSystem successMessage={successMessage} errorMessage={errorMessage} />
 

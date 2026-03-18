@@ -40,6 +40,19 @@ class WebSocketService {
       this.socket.on('connect', () => {
         console.log('✅ WebSocket connected:', this.socket.id);
         this.isConnecting = false;
+
+        // If an agent is logged in, register them for targeted events.
+        try {
+          const rawUser = localStorage.getItem('user');
+          const user = rawUser ? JSON.parse(rawUser) : null;
+          const agentId = user?._id || user?.id;
+          if (user?.role === 'agent' && agentId) {
+            this.socket.emit('agent:register', agentId);
+            console.log(`✅ Agent registered on socket: ${agentId}`);
+          }
+        } catch (e) {
+          // Ignore malformed localStorage user
+        }
       });
 
       this.socket.on('disconnect', () => {

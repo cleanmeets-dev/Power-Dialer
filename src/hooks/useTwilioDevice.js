@@ -32,10 +32,19 @@ export function useTwilioDevice(isAgent = false) {
         setIsInitializing(true);
         setError(null);
 
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+          throw new Error('Missing auth token (authToken). Please login again.');
+        }
+
+        // Use the same base URL convention as the rest of the app
+        const API_BASE_URL =
+          import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
         // Get Twilio token from backend
-        const { data } = await axios.get('/api/dialer/token', {
+        const { data } = await axios.get(`${API_BASE_URL}/dialer/token`, {
           headers: { 
-            Authorization: `Bearer ${localStorage.getItem('token')}` 
+            Authorization: `Bearer ${authToken}` 
           }
         });
 
@@ -81,9 +90,9 @@ export function useTwilioDevice(isAgent = false) {
         device.on('tokenWillExpire', async () => {
           console.log('🔄 Twilio token expiring - refreshing...');
           try {
-            const { data: newData } = await axios.get('/api/dialer/token', {
+            const { data: newData } = await axios.get(`${API_BASE_URL}/dialer/token`, {
               headers: { 
-                Authorization: `Bearer ${localStorage.getItem('token')}` 
+                Authorization: `Bearer ${authToken}` 
               }
             });
             device.updateToken(newData.token);
@@ -105,9 +114,9 @@ export function useTwilioDevice(isAgent = false) {
           // Setup token refresh interval (every 40 minutes for 1-hour token)
           tokenRefreshIntervalRef.current = setInterval(async () => {
             try {
-              const { data } = await axios.get('/api/dialer/token', {
+              const { data } = await axios.get(`${API_BASE_URL}/dialer/token`, {
                 headers: { 
-                  Authorization: `Bearer ${localStorage.getItem('token')}` 
+                  Authorization: `Bearer ${authToken}` 
                 }
               });
               device.updateToken(data.token);

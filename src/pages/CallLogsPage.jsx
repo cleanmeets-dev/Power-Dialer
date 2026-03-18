@@ -277,6 +277,16 @@ export default function CallLogsPage() {
                         <span className="text-slate-200 font-semibold">{new Date(log.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
+                    
+                    {log.recordingUrl && (
+                      <div className="border-t border-slate-600 pt-3">
+                        <span className="text-slate-400 block text-xs uppercase tracking-wide mb-2">Call Recording</span>
+                        <audio controls className="w-full h-8" src={log.recordingUrl}>
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    )}
+
                     {log.agentNotes && (
                       <div className="border-t border-slate-600 pt-3">
                         <span className="text-slate-400 block text-xs uppercase tracking-wide mb-1">Agent Notes</span>

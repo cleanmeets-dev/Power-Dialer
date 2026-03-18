@@ -20,7 +20,12 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
     setAgentsState(prevAgents =>
       prevAgents.map(agent =>
         agent._id === data.agentId
-          ? { ...agent, isAvailable: data.isAvailable }
+          ? {
+            ...agent,
+            ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
+            ...(data.isOnline !== undefined && { isOnline: data.isOnline }),
+            ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {})
+          }
           : agent
       )
     );
@@ -51,7 +56,7 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
       const statusText = newAvailabilityStatus ? 'available' : 'busy';
       setSuccessMessage(`${agent.name} is now ${statusText}`);
       onStatusChange?.(agentId, 'toggle-availability');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
@@ -59,7 +64,7 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
       // Revert optimistic update
       setAgentsState(previousAgents);
       setError(`Failed to update ${agent.name}'s status. Please try again.`);
-      
+
       // Clear error message after 5 seconds
       setTimeout(() => setError(null), 5000);
     } finally {
@@ -112,7 +117,7 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Status:</span>
                   <div className="flex items-center gap-2">
-                    {!agent.isActive ? (
+                    {!agent.isOnline ? (
                       <>
                         <Circle className="w-3 h-3 text-slate-500 fill-slate-500" />
                         <span className="text-slate-400 font-medium">Offline</span>
@@ -166,7 +171,7 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
                     <Circle className="w-3 h-3 fill-current animate-pulse" />
                     In Call
                   </div>
-                ) : !agent.isActive ? (
+                ) : !agent.isOnline ? (
                   // Agent is offline - show disabled state
                   <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-600 text-slate-300 border border-slate-500 cursor-not-allowed">
                     <Circle className="w-3 h-3 fill-current" />
@@ -177,11 +182,10 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
                   <button
                     onClick={() => handleToggleAvailability(agent)}
                     disabled={loadingAgentId === agent._id}
-                    className={`w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
-                      agent.isAvailable
+                    className={`w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${agent.isAvailable
                         ? 'bg-rose-600 hover:bg-rose-700 text-white border border-rose-500'
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {loadingAgentId === agent._id ? (
                       <Loader className="w-4 h-4 animate-spin" />

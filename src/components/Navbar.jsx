@@ -32,7 +32,7 @@ export default function Navbar({ user, onLogout, activePage, onNavigate, onShowN
   };
 
   const handleUserCreated = (message) => {
-    // Show notification via parent
+    onShowNotification?.(message, 'success');
     setShowCreateUserModal(false);
   };
 
@@ -173,7 +173,7 @@ export default function Navbar({ user, onLogout, activePage, onNavigate, onShowN
       <AdminCreateUserModal
         isOpen={showCreateUserModal}
         onClose={() => setShowCreateUserModal(false)}
-        onUserCreated={handleUserCreated}
+        onSuccess={handleUserCreated}
       />
       <AgentListModal
         isOpen={showAgentListModal}

@@ -98,14 +98,17 @@ class WebSocketService {
 
     if (!this.listeners.has(event)) {
       this.listeners.set(event, []);
+      
+      // Attach the socket listener ONLY ONCE per event type
+      this.socket.on(event, (data) => {
+        console.log(`📡 Event received: ${event}`, data);
+        const callbacks = this.listeners.get(event) || [];
+        // Use a shallow copy to prevent issues if callbacks array mutates during iteration
+        [...callbacks].forEach(cb => cb(data));
+      });
     }
 
     this.listeners.get(event).push(callback);
-
-    this.socket.on(event, (data) => {
-      console.log(`📡 Event received: ${event}`, data);
-      callback(data);
-    });
     console.log(`📡 Listening to event: ${event}`);
   }
 
@@ -117,13 +120,17 @@ class WebSocketService {
   off(event, callback) {
     if (!this.socket) return;
 
-    this.socket.off(event, callback);
-
     if (this.listeners.has(event)) {
       const callbacks = this.listeners.get(event);
       const index = callbacks.indexOf(callback);
       if (index > -1) {
         callbacks.splice(index, 1);
+      }
+      
+      // If no more callbacks are subscribed, properly clean up from socket.io
+      if (callbacks.length === 0) {
+        this.socket.off(event);
+        this.listeners.delete(event);
       }
     }
   }

@@ -100,6 +100,7 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
               agentName: data.agentName, 
               agentId: data.agentId, 
               status: 'connected',
+              outcome: 'connected', // FIX: update outcome as well!
               agent: { name: data.agentName, _id: data.agentId }
             }
           : call

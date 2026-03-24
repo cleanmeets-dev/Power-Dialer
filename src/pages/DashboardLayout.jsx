@@ -4,6 +4,7 @@ import { useNotification } from '../hooks/useNotification';
 import { useTwilioDevice } from '../hooks/useTwilioDevice';
 import Navbar from '../components/Navbar';
 import NotificationSystem from '../components/NotificationSystem';
+import ActiveCallPanel from '../components/ActiveCallPanel';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -12,7 +13,12 @@ export default function DashboardLayout() {
   const { successMessage, errorMessage, showNotification } = useNotification();
 
   // Initialize Twilio Voice SDK for agent browsers (receiving calls)
-  const { isReady: isTwilioReady, error: twilioError } = useTwilioDevice(user?.role === 'agent');
+  const { 
+    isReady: isTwilioReady, 
+    error: twilioError,
+    activeCall,
+    callStatus
+  } = useTwilioDevice(user?.role === 'agent');
 
   // Surface Twilio device issues to the user (non-blocking)
   if (user?.role === 'agent' && twilioError) {
@@ -90,6 +96,11 @@ export default function DashboardLayout() {
         )}
         <Outlet context={{ showNotification }} />
       </div>
+
+      {/* Render ActiveCallPanel globally for agents */}
+      {user?.role === 'agent' && (
+        <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} />
+      )}
     </div>
   );
 }

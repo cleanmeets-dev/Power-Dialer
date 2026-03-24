@@ -9,12 +9,14 @@ import axios from 'axios';
  * When an agent is assigned a call, they'll hear it ring in their browser.
  * 
  * @param {boolean} isAgent - Whether current user is an agent
- * @returns {Object} { isReady, error, deviceRef }
+ * @returns {Object} { isReady, error, deviceRef, activeCall, callStatus }
  */
 export function useTwilioDevice(isAgent = false) {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [activeCall, setActiveCall] = useState(null);
+  const [callStatus, setCallStatus] = useState('idle'); // idle, ringing, connected
   const deviceRef = useRef(null);
   const tokenRefreshIntervalRef = useRef(null);
 
@@ -43,17 +45,15 @@ export function useTwilioDevice(isAgent = false) {
 
         // Get Twilio token from backend
         const { data } = await axios.get(`${API_BASE_URL}/dialer/token`, {
-          headers: { 
-            Authorization: `Bearer ${authToken}` 
+          headers: {
+            Authorization: `Bearer ${authToken}`
           }
         });
 
         if (!isMounted) return;
 
-        const device = new Device(data.token, { 
+        const device = new Device(data.token, {
           logLevel: 1,
-          edge: 'sydney', // Use appropriate edge for your region
-          region: 'ie1',
         });
 
         // Device registered - ready to receive calls
@@ -68,14 +68,39 @@ export function useTwilioDevice(isAgent = false) {
         // Incoming call from lead
         device.on('incoming', (call) => {
           console.log('📞 Incoming call from lead:', call.parameters);
-          
-          // Optional: Auto-answer calls (remove if you want manual acceptance)
-          try {
-            call.accept();
-            console.log('✅ Call accepted');
-          } catch (err) {
-            console.error('Failed to accept call:', err);
+
+          if (isMounted) {
+            setActiveCall(call);
+            setCallStatus('ringing');
+
+            // Auto-answer removed. The agent must click "Accept" in the UI so the browser
+            // doesn't block the microphone due to auto-play policies.
           }
+
+          call.on('accept', () => {
+            if (isMounted) setCallStatus('connected');
+          });
+
+          call.on('disconnect', () => {
+            if (isMounted) {
+              setCallStatus('idle');
+              setActiveCall(null);
+            }
+          });
+
+          call.on('cancel', () => {
+            if (isMounted) {
+              setCallStatus('idle');
+              setActiveCall(null);
+            }
+          });
+
+          call.on('reject', () => {
+            if (isMounted) {
+              setCallStatus('idle');
+              setActiveCall(null);
+            }
+          });
         });
 
         // Device error (e.g., network issues)
@@ -91,8 +116,8 @@ export function useTwilioDevice(isAgent = false) {
           console.log('🔄 Twilio token expiring - refreshing...');
           try {
             const { data: newData } = await axios.get(`${API_BASE_URL}/dialer/token`, {
-              headers: { 
-                Authorization: `Bearer ${authToken}` 
+              headers: {
+                Authorization: `Bearer ${authToken}`
               }
             });
             device.updateToken(newData.token);
@@ -107,16 +132,16 @@ export function useTwilioDevice(isAgent = false) {
 
         // Register device to receive calls
         await device.register();
-        
+
         if (isMounted) {
           deviceRef.current = device;
-          
+
           // Setup token refresh interval (every 40 minutes for 1-hour token)
           tokenRefreshIntervalRef.current = setInterval(async () => {
             try {
               const { data } = await axios.get(`${API_BASE_URL}/dialer/token`, {
-                headers: { 
-                  Authorization: `Bearer ${authToken}` 
+                headers: {
+                  Authorization: `Bearer ${authToken}`
                 }
               });
               device.updateToken(data.token);
@@ -144,7 +169,7 @@ export function useTwilioDevice(isAgent = false) {
     // Cleanup on unmount
     return () => {
       isMounted = false;
-      
+
       if (tokenRefreshIntervalRef.current) {
         clearInterval(tokenRefreshIntervalRef.current);
       }
@@ -160,10 +185,12 @@ export function useTwilioDevice(isAgent = false) {
     };
   }, [isAgent]);
 
-  return { 
-    isReady, 
-    error, 
+  return {
+    isReady,
+    error,
     isInitializing,
-    deviceRef 
+    deviceRef,
+    activeCall,
+    callStatus
   };
 }

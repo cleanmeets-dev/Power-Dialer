@@ -20,24 +20,28 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     
     setCallsInProgress((prev) => prev + 1);
     
-    // Add call to active calls with unique ID
-    setActiveCalls((prev) => [
-      ...prev,
-      {
-        _id: data.callSid || `call_${Date.now()}_${Math.random()}`,
-        callSid: data.callSid,
-        leadId: data.leadId?.toString(), // 🔴 FIX #6: Store leadId so matching works
-        lead: { phoneNumber: data.phoneNumber },
-        phoneNumber: data.phoneNumber,
-        businessName: data.businessName,
-        agent: { name: data.agentName, _id: data.agentId },
-        agentId: data.agentId,
-        agentName: data.agentName,
-        outcome: 'connecting',
-        status: 'connecting',
-        startTime: new Date(),
-      },
-    ]);
+    setActiveCalls((prev) => {
+      // Prevent duplicates in case the event fires twice or socket reconnects
+      if (prev.some(call => call.callSid === data.callSid)) return prev;
+      
+      return [
+        ...prev,
+        {
+          _id: data.callSid || `call_${Date.now()}_${Math.random()}`,
+          callSid: data.callSid,
+          leadId: data.leadId?.toString(), 
+          lead: { phoneNumber: data.phoneNumber },
+          phoneNumber: data.phoneNumber,
+          businessName: data.businessName,
+          agent: { name: data.agentName, _id: data.agentId },
+          agentId: data.agentId,
+          agentName: data.agentName,
+          outcome: 'connecting',
+          status: 'connecting',
+          startTime: new Date(),
+        },
+      ];
+    });
   }, [selectedCampaignId]);
 
   const handleCallCompleted = useCallback((data) => {

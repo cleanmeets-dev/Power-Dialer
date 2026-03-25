@@ -1,7 +1,7 @@
 import { Phone, PhoneOff, Mic, MicOff, User, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export default function ActiveCallPanel({ activeCall, callStatus }) {
+export default function ActiveCallPanel({ activeCall, callStatus, callDirection }) {
   const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState(0);
 
@@ -53,24 +53,26 @@ export default function ActiveCallPanel({ activeCall, callStatus }) {
   const customBusinessName = activeCall?.customParameters?.get?.('businessName');
   const displayPhoneNumber =
     customPhoneNumber ||
+    activeCall?.parameters?.To ||
     activeCall?.parameters?.From ||
     'Unknown caller';
   const displayBusinessName =
     customBusinessName ||
     activeCall?.parameters?.businessName ||
     'Connected via Dialer';
+  const isIncoming = callDirection !== 'outgoing';
 
   return (
     <div className="fixed bottom-6 right-6 w-80 bg-slate-800 rounded-xl shadow-2xl border border-cyan-500/30 overflow-hidden z-50">
       <div className="bg-cyan-600/20 px-4 py-3 border-b border-cyan-500/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {callStatus === 'ringing' ? (
+          {callStatus === 'ringing' && isIncoming ? (
             <Phone className="w-5 h-5 text-amber-400 animate-pulse" />
           ) : (
             <Phone className="w-5 h-5 text-emerald-400 animate-pulse" />
           )}
           <span className="font-semibold text-white">
-            {callStatus === 'ringing' ? 'Incoming Call...' : 'Active Call'}
+            {callStatus === 'ringing' && isIncoming ? 'Incoming Call...' : callStatus === 'ringing' ? 'Calling...' : 'Active Call'}
           </span>
         </div>
         {callStatus === 'connected' && (
@@ -97,7 +99,7 @@ export default function ActiveCallPanel({ activeCall, callStatus }) {
         </div>
 
         <div className="flex gap-3">
-          {callStatus === 'ringing' ? (
+          {callStatus === 'ringing' && isIncoming ? (
             <button
               onClick={handleAcceptCall}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg flex justify-center items-center gap-2 transition-colors font-medium border border-emerald-500"

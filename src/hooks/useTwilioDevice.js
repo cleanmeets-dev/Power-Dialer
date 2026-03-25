@@ -17,12 +17,14 @@ export function useTwilioDevice(isAgent = false) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [activeCall, setActiveCall] = useState(null);
   const [callStatus, setCallStatus] = useState('idle'); // idle, ringing, connected
+  const [callDirection, setCallDirection] = useState(null); // incoming, outgoing, null
   const deviceRef = useRef(null);
   const tokenRefreshIntervalRef = useRef(null);
 
-  const bindCallLifecycle = useCallback((call, initialStatus = 'ringing') => {
+  const bindCallLifecycle = useCallback((call, initialStatus = 'ringing', direction = 'incoming') => {
     setActiveCall(call);
     setCallStatus(initialStatus);
+    setCallDirection(direction);
 
     call.on('accept', () => {
       setCallStatus('connected');
@@ -31,16 +33,19 @@ export function useTwilioDevice(isAgent = false) {
     call.on('disconnect', () => {
       setCallStatus('idle');
       setActiveCall(null);
+      setCallDirection(null);
     });
 
     call.on('cancel', () => {
       setCallStatus('idle');
       setActiveCall(null);
+      setCallDirection(null);
     });
 
     call.on('reject', () => {
       setCallStatus('idle');
       setActiveCall(null);
+      setCallDirection(null);
     });
   }, []);
 
@@ -65,7 +70,7 @@ export function useTwilioDevice(isAgent = false) {
 
     try {
       const call = await device.connect({ params: { To: to, to } });
-      bindCallLifecycle(call, 'ringing');
+      bindCallLifecycle(call, 'ringing', 'outgoing');
       return { success: true, number: to };
     } catch (err) {
       const message = err?.message || 'Failed to place direct call';
@@ -135,7 +140,7 @@ export function useTwilioDevice(isAgent = false) {
           if (isMounted) {
             // Auto-answer removed. The agent must click "Accept" in the UI so the browser
             // doesn't block the microphone due to auto-play policies.
-            bindCallLifecycle(call, 'ringing');
+            bindCallLifecycle(call, 'ringing', 'incoming');
           }
         });
 
@@ -214,6 +219,7 @@ export function useTwilioDevice(isAgent = false) {
         try {
           deviceRef.current.destroy();
           setIsReady(false);
+          setCallDirection(null);
         } catch (err) {
           console.error('Error destroying Twilio device:', err);
         }
@@ -228,6 +234,7 @@ export function useTwilioDevice(isAgent = false) {
     deviceRef,
     activeCall,
     callStatus,
+    callDirection,
     placeOutgoingCall,
     hangupActiveCall,
   };

@@ -19,6 +19,7 @@ export default function DashboardLayout() {
     error: twilioError,
     activeCall,
     callStatus,
+    callDirection,
     placeOutgoingCall,
     hangupActiveCall,
   } = useTwilioDevice(user?.role === 'agent');
@@ -109,6 +110,7 @@ export default function DashboardLayout() {
           twilioDialer: {
             isReady: isTwilioReady,
             callStatus,
+            callDirection,
             activeCall,
             placeOutgoingCall,
             hangupActiveCall,
@@ -118,7 +120,7 @@ export default function DashboardLayout() {
 
       {/* Render ActiveCallPanel globally for agents */}
       {user?.role === 'agent' && (
-        <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} />
+        <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} callDirection={callDirection} />
       )}
     </div>
   );

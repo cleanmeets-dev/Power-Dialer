@@ -17,12 +17,12 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
   const handleCallInitiated = useCallback((data) => {
     // Add campaign filter
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
-    
-    setCallsInProgress((prev) => prev + 1);
-    
+
     setActiveCalls((prev) => {
       // Prevent duplicates in case the event fires twice or socket reconnects
       if (prev.some(call => call.callSid === data.callSid)) return prev;
+
+      setCallsInProgress((prevCount) => prevCount + 1);
       
       return [
         ...prev,
@@ -51,15 +51,8 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     setCallsInProgress((prev) => Math.max(0, prev - 1));
     setDialedCount((prev) => prev + 1);
     
-    // 🔴 FIX #5: callSid is now included in the emit, so matching works properly
-    // Remove from active calls and mark as completed
-    setActiveCalls((prev) =>
-      prev.map((call) =>
-        call.callSid === data.callSid
-          ? { ...call, outcome: 'connected', status: 'completed', endTime: new Date() }
-          : call
-      )
-    );
+    // Keep active calls list truly active by removing terminal calls.
+    setActiveCalls((prev) => prev.filter((call) => call.callSid !== data.callSid));
   }, [selectedCampaignId]);
 
   const handleCallFailed = useCallback((data) => {
@@ -68,15 +61,8 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     setCallsInProgress((prev) => Math.max(0, prev - 1));
     setDialedCount((prev) => prev + 1);
     
-    // 🔴 FIX #5: callSid is now included in the emit, use it for matching
-    // Update failed call in active calls
-    setActiveCalls((prev) =>
-      prev.map((call) =>
-        call.callSid === data.callSid
-          ? { ...call, outcome: 'failed', status: 'failed', error: data.reason }
-          : call
-      )
-    );
+    // Keep active calls list truly active by removing terminal calls.
+    setActiveCalls((prev) => prev.filter((call) => call.callSid !== data.callSid));
   }, [selectedCampaignId]);
 
   const handleStatusUpdate = useCallback((data) => {
@@ -116,18 +102,9 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
     
     setCallsInProgress((prev) => Math.max(0, prev - 1));
-    
+
     setActiveCalls((prev) =>
-      prev.map((call) =>
-        call.leadId === data.leadId?.toString()
-          ? { 
-              ...call, 
-              status: 'dropped', 
-              outcome: 'failed',
-              error: data.reason 
-            }
-          : call
-      )
+      prev.filter((call) => call.leadId !== data.leadId?.toString())
     );
   }, [selectedCampaignId]);
 

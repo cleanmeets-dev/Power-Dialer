@@ -49,6 +49,17 @@ export default function ActiveCallPanel({ activeCall, callStatus }) {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const customPhoneNumber = activeCall?.customParameters?.get?.('phoneNumber');
+  const customBusinessName = activeCall?.customParameters?.get?.('businessName');
+  const displayPhoneNumber =
+    customPhoneNumber ||
+    activeCall?.parameters?.From ||
+    'Unknown caller';
+  const displayBusinessName =
+    customBusinessName ||
+    activeCall?.parameters?.businessName ||
+    'Connected via Dialer';
+
   return (
     <div className="fixed bottom-6 right-6 w-80 bg-slate-800 rounded-xl shadow-2xl border border-cyan-500/30 overflow-hidden z-50">
       <div className="bg-cyan-600/20 px-4 py-3 border-b border-cyan-500/30 flex items-center justify-between">
@@ -77,10 +88,10 @@ export default function ActiveCallPanel({ activeCall, callStatus }) {
           </div>
           <div>
             <h3 className="text-lg font-bold text-white mb-1">
-              {activeCall?.parameters?.From || 'Customer'}
+              {displayPhoneNumber}
             </h3>
             <p className="text-sm text-slate-400">
-              {activeCall?.parameters?.businessName || 'Connected via Dialer'}
+              {displayBusinessName}
             </p>
           </div>
         </div>

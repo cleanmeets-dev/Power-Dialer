@@ -8,6 +8,7 @@ class WebSocketService {
   constructor() {
     this.socket = null;
     this.listeners = new Map();
+    this.wrappedListeners = new Map();
     this.isConnecting = false;
   }
 
@@ -102,10 +103,17 @@ class WebSocketService {
 
     this.listeners.get(event).push(callback);
 
-    this.socket.on(event, (data) => {
+    const wrappedCallback = (data) => {
       console.log(`📡 Event received: ${event}`, data);
       callback(data);
-    });
+    };
+
+    if (!this.wrappedListeners.has(event)) {
+      this.wrappedListeners.set(event, new Map());
+    }
+    this.wrappedListeners.get(event).set(callback, wrappedCallback);
+
+    this.socket.on(event, wrappedCallback);
     console.log(`📡 Listening to event: ${event}`);
   }
 
@@ -117,7 +125,11 @@ class WebSocketService {
   off(event, callback) {
     if (!this.socket) return;
 
-    this.socket.off(event, callback);
+    const wrappedCallback = this.wrappedListeners.get(event)?.get(callback);
+    if (wrappedCallback) {
+      this.socket.off(event, wrappedCallback);
+      this.wrappedListeners.get(event).delete(callback);
+    }
 
     if (this.listeners.has(event)) {
       const callbacks = this.listeners.get(event);

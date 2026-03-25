@@ -2,6 +2,7 @@ import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { useTwilioDevice } from '../hooks/useTwilioDevice';
+import { useWebSocket } from '../hooks/useWebSocket';
 import Navbar from '../components/Navbar';
 import NotificationSystem from '../components/NotificationSystem';
 import ActiveCallPanel from '../components/ActiveCallPanel';
@@ -19,6 +20,9 @@ export default function DashboardLayout() {
     activeCall,
     callStatus
   } = useTwilioDevice(user?.role === 'agent');
+
+  // Keep websocket connected globally across dashboard pages.
+  useWebSocket();
 
   // Surface Twilio device issues to the user (non-blocking)
   if (user?.role === 'agent' && twilioError) {

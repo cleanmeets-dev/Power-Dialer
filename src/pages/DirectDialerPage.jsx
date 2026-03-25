@@ -1,0 +1,126 @@
+import { useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Phone, PhoneOff, Keyboard } from 'lucide-react';
+
+const formatDisplayNumber = (value) => String(value || '').replace(/[^\d+]/g, '');
+
+export default function DirectDialerPage() {
+  const { showNotification, twilioDialer } = useOutletContext();
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isDialing, setIsDialing] = useState(false);
+
+  const callStatus = twilioDialer?.callStatus || 'idle';
+  const isReady = Boolean(twilioDialer?.isReady);
+  const hasActiveCall = callStatus === 'ringing' || callStatus === 'connected';
+
+  const statusText = useMemo(() => {
+    if (!isReady) return 'Twilio device not ready';
+    if (callStatus === 'connected') return 'Connected';
+    if (callStatus === 'ringing') return 'Ringing';
+    return 'Ready to dial';
+  }, [callStatus, isReady]);
+
+  const appendDigit = (digit) => {
+    setPhoneNumber((prev) => `${prev}${digit}`.slice(0, 20));
+  };
+
+  const clearNumber = () => setPhoneNumber('');
+
+  const handleDial = async () => {
+    if (!twilioDialer?.placeOutgoingCall) {
+      showNotification('Twilio dialer is not available', 'error');
+      return;
+    }
+
+    setIsDialing(true);
+    const result = await twilioDialer.placeOutgoingCall(phoneNumber);
+    setIsDialing(false);
+
+    if (!result.success) {
+      showNotification(result.error || 'Failed to place call', 'error');
+      return;
+    }
+
+    showNotification(`Calling ${result.number}`, 'success');
+  };
+
+  const handleHangup = () => {
+    twilioDialer?.hangupActiveCall?.();
+    showNotification('Call ended', 'success');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
+        <h1 className="text-3xl font-bold text-primary-500">Direct Dialer</h1>
+        <p className="text-slate-400 mt-2">Call any number directly from your browser</p>
+      </div>
+
+      <div className="max-w-md mx-auto bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-6">
+        <div className="mb-4 rounded-lg border border-slate-600 bg-slate-700/40 px-4 py-3">
+          <p className="text-xs text-slate-400 mb-1">Status</p>
+          <p className="text-sm font-semibold text-cyan-300">{statusText}</p>
+        </div>
+
+        <label className="block text-sm text-slate-300 mb-2">Phone Number</label>
+        <input
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(formatDisplayNumber(e.target.value))}
+          placeholder="+1 405 555 1212"
+          className="w-full mb-4 rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white outline-none focus:border-cyan-500"
+        />
+
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((digit) => (
+            <button
+              key={digit}
+              onClick={() => appendDigit(digit)}
+              className="rounded-lg bg-slate-700/80 py-3 text-slate-200 font-semibold hover:bg-slate-600 transition"
+              type="button"
+            >
+              {digit}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={clearNumber}
+            type="button"
+            className="rounded-lg bg-slate-600/60 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-600"
+          >
+            Clear
+          </button>
+          <button
+            onClick={handleDial}
+            disabled={!isReady || !phoneNumber || isDialing || hasActiveCall}
+            type="button"
+            className="rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-600 disabled:text-slate-400"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              {isDialing ? 'Calling...' : 'Call'}
+            </span>
+          </button>
+        </div>
+
+        <button
+          onClick={handleHangup}
+          disabled={!hasActiveCall}
+          type="button"
+          className="mt-3 w-full rounded-lg bg-rose-600 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:bg-slate-600 disabled:text-slate-400"
+        >
+          <span className="inline-flex items-center gap-2">
+            <PhoneOff className="w-4 h-4" />
+            Hang Up
+          </span>
+        </button>
+
+        <div className="mt-4 text-xs text-slate-400 flex items-center gap-2">
+          <Keyboard className="w-4 h-4" />
+          Browser mic permission is required for audio.
+        </div>
+      </div>
+    </div>
+  );
+}

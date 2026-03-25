@@ -18,7 +18,9 @@ export default function DashboardLayout() {
     isReady: isTwilioReady, 
     error: twilioError,
     activeCall,
-    callStatus
+    callStatus,
+    placeOutgoingCall,
+    hangupActiveCall,
   } = useTwilioDevice(user?.role === 'agent');
 
   // Keep websocket connected globally across dashboard pages.
@@ -39,6 +41,7 @@ export default function DashboardLayout() {
     if (path.includes('call-logs')) return 'call-logs';
     if (path.includes('campaigns')) return 'campaigns';
     if (path.includes('my-availability')) return 'my-availability';
+    if (path.includes('direct-dialer')) return 'direct-dialer';
     if (path.includes('agents')) return 'agents';
     return 'overview';
   };
@@ -66,6 +69,9 @@ export default function DashboardLayout() {
         break;
       case 'my-availability':
         navigate('/dashboard/my-availability');
+        break;
+      case 'direct-dialer':
+        navigate('/dashboard/direct-dialer');
         break;
       case 'agents':
         navigate('/dashboard/agents');
@@ -98,7 +104,16 @@ export default function DashboardLayout() {
             </div>
           </div>
         )}
-        <Outlet context={{ showNotification }} />
+        <Outlet context={{
+          showNotification,
+          twilioDialer: {
+            isReady: isTwilioReady,
+            callStatus,
+            activeCall,
+            placeOutgoingCall,
+            hangupActiveCall,
+          },
+        }} />
       </div>
 
       {/* Render ActiveCallPanel globally for agents */}

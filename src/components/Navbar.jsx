@@ -18,6 +18,7 @@ export default function Navbar({ user, onLogout, activePage, onNavigate, onShowN
     { id: 'call-logs', label: 'Call Logs', icon: Phone },
     { id: 'campaigns', label: 'Campaigns', icon: Settings, roleRequired: 'manager' },
     { id: 'my-availability', label: 'My Status', icon: Users, roleRequired: 'agent' },
+    { id: 'direct-dialer', label: 'Direct Dialer', icon: Phone, roleRequired: 'agent' },
     { id: 'agents', label: 'Agents', icon: Users, roleRequired: 'manager' },
   ];
 

@@ -322,6 +322,26 @@ export const getMyAttendance = async () => {
   return response.data.data;
 };
 
+export const managerCheckInAgent = async (agentId) => {
+  const response = await api.post(`/auth/attendance/agents/${agentId}/check-in`);
+  return response.data.data;
+};
+
+export const managerCheckOutAgent = async (agentId) => {
+  const response = await api.post(`/auth/attendance/agents/${agentId}/check-out`);
+  return response.data.data;
+};
+
+export const managerStartAgentBreak = async (agentId) => {
+  const response = await api.post(`/auth/attendance/agents/${agentId}/break/start`);
+  return response.data.data;
+};
+
+export const managerEndAgentBreak = async (agentId) => {
+  const response = await api.post(`/auth/attendance/agents/${agentId}/break/end`);
+  return response.data.data;
+};
+
 /**
  * Get agent statistics
  * @returns {Promise} List of agents with stats

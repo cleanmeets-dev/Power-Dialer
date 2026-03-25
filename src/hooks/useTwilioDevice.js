@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Device } from '@twilio/voice-sdk';
 import axios from 'axios';
 
@@ -19,6 +19,69 @@ export function useTwilioDevice(isAgent = false) {
   const [callStatus, setCallStatus] = useState('idle'); // idle, ringing, connected
   const deviceRef = useRef(null);
   const tokenRefreshIntervalRef = useRef(null);
+
+  const bindCallLifecycle = useCallback((call, initialStatus = 'ringing') => {
+    setActiveCall(call);
+    setCallStatus(initialStatus);
+
+    call.on('accept', () => {
+      setCallStatus('connected');
+    });
+
+    call.on('disconnect', () => {
+      setCallStatus('idle');
+      setActiveCall(null);
+    });
+
+    call.on('cancel', () => {
+      setCallStatus('idle');
+      setActiveCall(null);
+    });
+
+    call.on('reject', () => {
+      setCallStatus('idle');
+      setActiveCall(null);
+    });
+  }, []);
+
+  const normalizeDialNumber = useCallback((value) => {
+    const cleaned = String(value || '').replace(/[^\d+]/g, '');
+    if (!cleaned) return '';
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.length === 10) return `+1${cleaned}`;
+    return `+${cleaned}`;
+  }, []);
+
+  const placeOutgoingCall = useCallback(async (rawNumber) => {
+    const device = deviceRef.current;
+    if (!device) {
+      return { success: false, error: 'Twilio device is not initialized yet' };
+    }
+
+    const to = normalizeDialNumber(rawNumber);
+    if (!to) {
+      return { success: false, error: 'Enter a valid phone number' };
+    }
+
+    try {
+      const call = await device.connect({ params: { To: to, to } });
+      bindCallLifecycle(call, 'ringing');
+      return { success: true, number: to };
+    } catch (err) {
+      const message = err?.message || 'Failed to place direct call';
+      setError(message);
+      return { success: false, error: message };
+    }
+  }, [bindCallLifecycle, normalizeDialNumber]);
+
+  const hangupActiveCall = useCallback(() => {
+    if (!activeCall) return;
+    try {
+      activeCall.disconnect();
+    } catch (err) {
+      console.error('Failed to disconnect active call:', err);
+    }
+  }, [activeCall]);
 
   useEffect(() => {
     // Only initialize for agents
@@ -54,6 +117,7 @@ export function useTwilioDevice(isAgent = false) {
 
         const device = new Device(data.token, {
           logLevel: 1,
+          edge: [import.meta.env.VITE_TWILIO_EDGE || 'ashburn'],
         });
 
         // Device registered - ready to receive calls
@@ -68,39 +132,11 @@ export function useTwilioDevice(isAgent = false) {
         // Incoming call from lead
         device.on('incoming', (call) => {
           console.log('📞 Incoming call from lead:', call.parameters);
-
           if (isMounted) {
-            setActiveCall(call);
-            setCallStatus('ringing');
-
             // Auto-answer removed. The agent must click "Accept" in the UI so the browser
             // doesn't block the microphone due to auto-play policies.
+            bindCallLifecycle(call, 'ringing');
           }
-
-          call.on('accept', () => {
-            if (isMounted) setCallStatus('connected');
-          });
-
-          call.on('disconnect', () => {
-            if (isMounted) {
-              setCallStatus('idle');
-              setActiveCall(null);
-            }
-          });
-
-          call.on('cancel', () => {
-            if (isMounted) {
-              setCallStatus('idle');
-              setActiveCall(null);
-            }
-          });
-
-          call.on('reject', () => {
-            if (isMounted) {
-              setCallStatus('idle');
-              setActiveCall(null);
-            }
-          });
         });
 
         // Device error (e.g., network issues)
@@ -183,7 +219,7 @@ export function useTwilioDevice(isAgent = false) {
         }
       }
     };
-  }, [isAgent]);
+  }, [bindCallLifecycle, isAgent]);
 
   return {
     isReady,
@@ -191,6 +227,8 @@ export function useTwilioDevice(isAgent = false) {
     isInitializing,
     deviceRef,
     activeCall,
-    callStatus
+    callStatus,
+    placeOutgoingCall,
+    hangupActiveCall,
   };
 }

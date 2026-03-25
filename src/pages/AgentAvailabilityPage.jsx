@@ -2,7 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { User, Clock, Phone, CheckCircle, XCircle, RefreshCw, Users, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getAgentStats, updateAgentAvailability } from '../services/api';
+import {
+  getAgentStats,
+  managerCheckInAgent,
+  managerCheckOutAgent,
+  managerEndAgentBreak,
+  managerStartAgentBreak,
+  updateAgentAvailability,
+} from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 export default function AgentAvailabilityPage() {
@@ -86,6 +93,33 @@ export default function AgentAvailabilityPage() {
       // Revert on error
       setAgents(previousAgents);
       showNotification(`Failed to update ${agent.name}'s status`, 'error');
+    } finally {
+      setLoadingAgentId(null);
+    }
+  };
+
+  const handleAttendanceAction = async (agent, action) => {
+    setLoadingAgentId(agent._id);
+    try {
+      if (action === 'check-in') {
+        await managerCheckInAgent(agent._id);
+        showNotification(`${agent.name} checked in`, 'success');
+      } else if (action === 'check-out') {
+        await managerCheckOutAgent(agent._id);
+        showNotification(`${agent.name} checked out`, 'success');
+      } else if (action === 'break-start') {
+        await managerStartAgentBreak(agent._id);
+        showNotification(`${agent.name} is now on break`, 'success');
+      } else if (action === 'break-end') {
+        await managerEndAgentBreak(agent._id);
+        showNotification(`${agent.name} break ended`, 'success');
+      }
+
+      await loadAgents();
+    } catch (err) {
+      console.error(`Failed attendance action (${action}) for ${agent.name}:`, err);
+      const message = err.response?.data?.error || `Failed to update ${agent.name} attendance`;
+      showNotification(message, 'error');
     } finally {
       setLoadingAgentId(null);
     }
@@ -289,26 +323,59 @@ export default function AgentAvailabilityPage() {
             </div>
 
             {/* Toggle Button */}
-            <button
-              onClick={() => handleToggleAvailability(agent)}
-              disabled={loadingAgentId === agent._id || !agent.attendance || !agent.attendance.isCheckedIn || Boolean(agent.activeLead)}
-              className={`w-full py-2 rounded-lg font-semibold transition text-sm ${
-                agent.isAvailable
-                  ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 disabled:bg-slate-700 disabled:text-slate-500'
-                  : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:bg-slate-700 disabled:text-slate-500'
-              }`}
-            >
-              {loadingAgentId === agent._id ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                  Updating...
-                </span>
-              ) : agent.isAvailable ? (
-                'Mark as Busy'
-              ) : (
-                'Mark as Available'
-              )}
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleToggleAvailability(agent)}
+                disabled={loadingAgentId === agent._id || !agent.attendance || !agent.attendance.isCheckedIn || Boolean(agent.activeLead)}
+                className={`w-full py-2 rounded-lg font-semibold transition text-sm ${
+                  agent.isAvailable
+                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 disabled:bg-slate-700 disabled:text-slate-500'
+                    : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:bg-slate-700 disabled:text-slate-500'
+                }`}
+              >
+                {loadingAgentId === agent._id ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    Updating...
+                  </span>
+                ) : agent.isAvailable ? (
+                  'Mark as Busy'
+                ) : (
+                  'Mark as Available'
+                )}
+              </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleAttendanceAction(agent, 'check-in')}
+                  disabled={loadingAgentId === agent._id || Boolean(agent.activeLead) || Boolean(agent.attendance?.isCheckedIn)}
+                  className="py-2 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 disabled:bg-slate-700 disabled:text-slate-500"
+                >
+                  Check In
+                </button>
+                <button
+                  onClick={() => handleAttendanceAction(agent, 'check-out')}
+                  disabled={loadingAgentId === agent._id || Boolean(agent.activeLead) || !Boolean(agent.attendance?.isCheckedIn)}
+                  className="py-2 rounded-lg text-xs font-semibold bg-slate-500/20 text-slate-200 hover:bg-slate-500/30 disabled:bg-slate-700 disabled:text-slate-500"
+                >
+                  Check Out
+                </button>
+                <button
+                  onClick={() => handleAttendanceAction(agent, 'break-start')}
+                  disabled={loadingAgentId === agent._id || Boolean(agent.activeLead) || !Boolean(agent.attendance?.isCheckedIn) || Boolean(agent.attendance?.onBreak)}
+                  className="py-2 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 disabled:bg-slate-700 disabled:text-slate-500"
+                >
+                  Start Break
+                </button>
+                <button
+                  onClick={() => handleAttendanceAction(agent, 'break-end')}
+                  disabled={loadingAgentId === agent._id || !Boolean(agent.attendance?.onBreak)}
+                  className="py-2 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:bg-slate-700 disabled:text-slate-500"
+                >
+                  End Break
+                </button>
+              </div>
+            </div>
           </div>
         ))}
       </div>

@@ -65,19 +65,6 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     setActiveCalls((prev) => prev.filter((call) => call.callSid !== data.callSid));
   }, [selectedCampaignId]);
 
-  const handleStatusUpdate = useCallback((data) => {
-    if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
-    
-    setDialedCount(data.dialedLeads || 0);
-    setSuccessCount(data.connectedCalls || 0);
-    setCallsInProgress(data.callsInProgress || 0);
-
-    if (data.status === 'completed') {
-      setIsDialing(false);
-      onStatusUpdate?.('Campaign completed!', 'success');
-    }
-  }, [selectedCampaignId, onStatusUpdate]);
-
   // 🔴 FIX #4: Handle call connected to agent event
   const handleCallConnectedToAgent = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
@@ -142,9 +129,28 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     const fetchInitialStatus = async () => {
       try {
         const status = await getDialerStatus(selectedCampaignId);
-        setDialedCount(status.dialedLeads || status.totalDialled || 0);
-        setSuccessCount(status.connectedCalls || status.connected || 0);
-        setCallsInProgress(status.callsInProgress || status.inProgress || 0);
+
+        // Backend currently returns { isRunning, dialingCount, maxParallel }.
+        // Only overwrite fields that are actually provided to avoid resetting live counters.
+        if (typeof status.dialingCount === 'number') {
+          setCallsInProgress(status.dialingCount);
+        } else if (typeof status.callsInProgress === 'number') {
+          setCallsInProgress(status.callsInProgress);
+        } else if (typeof status.inProgress === 'number') {
+          setCallsInProgress(status.inProgress);
+        }
+
+        if (typeof status.dialedLeads === 'number') {
+          setDialedCount(status.dialedLeads);
+        } else if (typeof status.totalDialled === 'number') {
+          setDialedCount(status.totalDialled);
+        }
+
+        if (typeof status.connectedCalls === 'number') {
+          setSuccessCount(status.connectedCalls);
+        } else if (typeof status.connected === 'number') {
+          setSuccessCount(status.connected);
+        }
 
         // Note: activeCalls are tracked via WebSocket events (call-initiated, call-completed, call-failed)
         // We don't fetch full call logs here because that would be 50 records by default

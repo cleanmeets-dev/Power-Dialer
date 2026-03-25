@@ -297,6 +297,31 @@ export const updateAgentAvailability = async (agentId, isAvailable) => {
   return response.data.data;
 };
 
+export const checkIn = async () => {
+  const response = await api.post('/auth/attendance/check-in');
+  return response.data.data;
+};
+
+export const checkOut = async () => {
+  const response = await api.post('/auth/attendance/check-out');
+  return response.data.data;
+};
+
+export const startBreak = async () => {
+  const response = await api.post('/auth/attendance/break/start');
+  return response.data.data;
+};
+
+export const endBreak = async () => {
+  const response = await api.post('/auth/attendance/break/end');
+  return response.data.data;
+};
+
+export const getMyAttendance = async () => {
+  const response = await api.get('/auth/attendance/me');
+  return response.data.data;
+};
+
 /**
  * Get agent statistics
  * @returns {Promise} List of agents with stats

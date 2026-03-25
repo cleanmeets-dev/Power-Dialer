@@ -47,12 +47,12 @@ export default function CallLogsPage() {
   // Handle real-time call completed events via WebSocket
   const handleCallCompleted = useCallback((data) => {
     if (data.campaignId === selectedCampaignId) {
-      // Add new call log to the list
-      setCallLogs((prev) => [data, ...prev]);
+      // WebSocket payload is summary-level; re-fetch to keep row schema consistent.
+      loadCallLogs();
       lastLogCountRef.current += 1;
       showNotification('New call log recorded', 'success');
     }
-  }, [selectedCampaignId, showNotification]);
+  }, [selectedCampaignId, showNotification, loadCallLogs]);
 
   // Subscribe to WebSocket call events
   useWebSocket({

@@ -46,7 +46,12 @@ export default function AgentAvailabilityPage() {
     setAgents((prevAgents) =>
       prevAgents.map((agent) =>
         agent._id === data.agentId
-          ? { ...agent, isAvailable: data.isAvailable }
+          ? {
+              ...agent,
+              ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
+              ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {}),
+              ...(data.attendance ? { attendance: data.attendance } : {}),
+            }
           : agent
       )
     );
@@ -107,14 +112,22 @@ export default function AgentAvailabilityPage() {
     await loadAgents();
   };
 
-  const getAvailabilityColor = (isAvailable) => {
-    return isAvailable
+  const getAvailabilityColor = (agent) => {
+    if (!agent.attendance || !agent.attendance.isCheckedIn) {
+      return 'bg-slate-900/50 border-slate-500/50 text-slate-300';
+    }
+
+    return agent.isAvailable && !agent.attendance.onBreak && !agent.activeLead
       ? 'bg-emerald-900/50 border-emerald-500/50 text-emerald-300'
       : 'bg-rose-900/50 border-rose-500/50 text-rose-300';
   };
 
-  const getAvailabilityIcon = (isAvailable) => {
-    return isAvailable ? (
+  const getAvailabilityIcon = (agent) => {
+    if (!agent.attendance || !agent.attendance.isCheckedIn) {
+      return <Clock className="w-5 h-5 text-slate-400" />;
+    }
+
+    return agent.isAvailable && !agent.attendance.onBreak && !agent.activeLead ? (
       <CheckCircle className="w-5 h-5 text-emerald-400" />
     ) : (
       <XCircle className="w-5 h-5 text-rose-400" />
@@ -123,8 +136,8 @@ export default function AgentAvailabilityPage() {
 
   const stats = {
     total: agents.length,
-    available: agents.filter((a) => a.isAvailable).length,
-    busy: agents.filter((a) => !a.isAvailable).length,
+    available: agents.filter((a) => a.attendance && a.attendance.isCheckedIn && !a.attendance.onBreak && !a.activeLead && a.isAvailable).length,
+    busy: agents.filter((a) => a.attendance && a.attendance.isCheckedIn && (a.attendance.onBreak || a.activeLead || !a.isAvailable)).length,
     totalCalls: agents.reduce((sum, a) => sum + (a.callsHandled || 0), 0),
   };
 
@@ -225,7 +238,7 @@ export default function AgentAvailabilityPage() {
             {/* Agent Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="bg-linear-to-r from-cyan-500 to-blue-500 rounded-full p-3 flex-shrink-0">
+                <div className="bg-linear-to-r from-cyan-500 to-blue-500 rounded-full p-3 shrink-0">
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -239,11 +252,19 @@ export default function AgentAvailabilityPage() {
             <div className="mb-4">
               <span
                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border ${getAvailabilityColor(
-                  agent.isAvailable
+                  agent
                 )}`}
               >
-                {getAvailabilityIcon(agent.isAvailable)}
-                {agent.isAvailable ? 'Available' : 'Busy'}
+                {getAvailabilityIcon(agent)}
+                {!agent.attendance || !agent.attendance.isCheckedIn
+                  ? 'Checked Out'
+                  : agent.activeLead
+                    ? 'On Call'
+                    : agent.attendance.onBreak
+                      ? 'On Break'
+                      : agent.isAvailable
+                        ? 'Available'
+                        : 'Busy'}
               </span>
             </div>
 
@@ -270,7 +291,7 @@ export default function AgentAvailabilityPage() {
             {/* Toggle Button */}
             <button
               onClick={() => handleToggleAvailability(agent)}
-              disabled={loadingAgentId === agent._id}
+              disabled={loadingAgentId === agent._id || !agent.attendance || !agent.attendance.isCheckedIn || Boolean(agent.activeLead)}
               className={`w-full py-2 rounded-lg font-semibold transition text-sm ${
                 agent.isAvailable
                   ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 disabled:bg-slate-700 disabled:text-slate-500'

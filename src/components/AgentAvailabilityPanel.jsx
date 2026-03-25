@@ -23,8 +23,8 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
           ? {
             ...agent,
             ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
-            ...(data.isOnline !== undefined && { isOnline: data.isOnline }),
-            ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {})
+            ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {}),
+            ...(data.attendance ? { attendance: data.attendance } : {})
           }
           : agent
       )
@@ -72,6 +72,36 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
     }
   };
 
+  // Returns color class for agent availability
+  const getAvailabilityColor = (agent) => {
+    if (!agent.attendance || !agent.attendance.isCheckedIn) {
+      return 'bg-slate-900/50 border-slate-500/50 text-slate-300';
+    }
+    return agent.isAvailable && !agent.attendance.onBreak && !agent.activeLead
+      ? 'bg-emerald-900/50 border-emerald-500/50 text-emerald-300'
+      : 'bg-rose-900/50 border-rose-500/50 text-rose-300';
+  };
+
+  // Returns icon for agent availability
+  const getAvailabilityIcon = (agent) => {
+    if (!agent.attendance || !agent.attendance.isCheckedIn) {
+      return <Clock className="w-5 h-5 text-slate-400" />;
+    }
+    return agent.isAvailable && !agent.attendance.onBreak && !agent.activeLead ? (
+      <CheckCircle className="w-5 h-5 text-emerald-400" />
+    ) : (
+      <XCircle className="w-5 h-5 text-rose-400" />
+    );
+  };
+
+  // Stats for agent availability
+  const stats = {
+    total: agentsState.length,
+    available: agentsState.filter((a) => a.attendance && a.attendance.isCheckedIn && !a.attendance.onBreak && !a.activeLead && a.isAvailable).length,
+    busy: agentsState.filter((a) => a.attendance && a.attendance.isCheckedIn && (a.attendance.onBreak || a.activeLead || !a.isAvailable)).length,
+    totalCalls: agentsState.reduce((sum, a) => sum + (a.callsHandled || 0), 0),
+  };
+
   return (
     <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-6 w-full">
       <div className="flex items-center gap-3 mb-6">
@@ -117,15 +147,20 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Status:</span>
                   <div className="flex items-center gap-2">
-                    {!agent.isOnline ? (
+                    {!agent.attendance || !agent.attendance.isCheckedIn ? (
                       <>
                         <Circle className="w-3 h-3 text-slate-500 fill-slate-500" />
-                        <span className="text-slate-400 font-medium">Offline</span>
+                        <span className="text-slate-400 font-medium">Checked Out</span>
                       </>
                     ) : agent.activeLead ? (
                       <>
                         <Circle className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" />
                         <span className="text-red-400 font-medium">On Call</span>
+                      </>
+                    ) : agent.attendance?.onBreak ? (
+                      <>
+                        <Circle className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        <span className="text-yellow-400 font-medium">Break</span>
                       </>
                     ) : agent.isAvailable ? (
                       <>
@@ -171,11 +206,11 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
                     <Circle className="w-3 h-3 fill-current animate-pulse" />
                     In Call
                   </div>
-                ) : !agent.isOnline ? (
-                  // Agent is offline - show disabled state
+                ) : !agent.attendance || !agent.attendance.isCheckedIn ? (
+                  // Agent has not checked in - show disabled state
                   <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-600 text-slate-300 border border-slate-500 cursor-not-allowed">
                     <Circle className="w-3 h-3 fill-current" />
-                    Offline
+                    Checked Out
                   </div>
                 ) : (
                   // Agent is logged in - allow toggle between available/break

@@ -27,7 +27,12 @@ export function useAgentStats() {
     setAgents(prevAgents =>
       prevAgents.map(agent =>
         agent._id === data.agentId
-          ? { ...agent, isAvailable: data.isAvailable }
+          ? {
+              ...agent,
+              ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
+              ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {}),
+              ...(data.attendance ? { attendance: data.attendance } : {}),
+            }
           : agent
       )
     );

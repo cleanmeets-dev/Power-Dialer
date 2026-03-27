@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useDialer } from '../hooks/useDialer';
 import CampaignSelector from '../components/CampaignSelector';
 import DialerControls from '../components/DialerControls';
+import { LeadsProvider } from '../context/LeadsContext';
+import LeadsTable from '../components/LeadsTable';
 import { PhoneCall } from 'lucide-react';
 
 export default function AutoDialerPage() {
@@ -54,6 +56,16 @@ export default function AutoDialerPage() {
           />
         )}
       </div>
+
+      {/* Auto Dialer Queue / Leads Display */}
+      {selectedCampaignId && (
+        <div className="pt-4 border-t border-slate-700/50">
+          <h2 className="text-xl font-semibold text-slate-200 mb-4 px-1">Campaign Queue</h2>
+          <LeadsProvider campaignId={selectedCampaignId}>
+            <LeadsTable showNotification={showNotification} />
+          </LeadsProvider>
+        </div>
+      )}
     </div>
   );
 }

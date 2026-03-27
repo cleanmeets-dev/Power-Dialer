@@ -245,6 +245,8 @@ export default function LeadsTable({ showNotification }) {
   const startLead = (currentPage - 1) * pageSize + 1;
   const endLead = Math.min(currentPage * pageSize, totalLeads);
 
+  const nextPendingLeadId = leads.find((l) => l.status === "pending")?._id;
+
   return (
     <>
       <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 mt-6 border border-slate-700">
@@ -379,10 +381,12 @@ export default function LeadsTable({ showNotification }) {
               {leads.map((lead) => (
                 <tr
                   key={lead._id}
-                  className={`border-b border-slate-700/50 transition ${
+                  className={`border-b transition ${
                     selectedRows.has(lead._id)
-                      ? "bg-cyan-900/30"
-                      : "hover:bg-slate-700/30"
+                      ? "bg-cyan-900/30 border-slate-700/50"
+                      : lead._id === nextPendingLeadId
+                      ? "bg-emerald-900/20 border-l-off border-emerald-500/50 shadow-[inset_4px_0_0_0_rgba(16,185,129,0.5)]"
+                      : "hover:bg-slate-700/30 border-slate-700/50"
                   }`}
                 >
                   <td className="py-3 px-3">
@@ -395,7 +399,14 @@ export default function LeadsTable({ showNotification }) {
                     />
                   </td>
                   <td className="py-3 px-3 text-slate-200 max-w-xs truncate font-medium">
-                    {lead.businessName || "—"}
+                    <div className="flex items-center gap-2">
+                      <span>{lead.businessName || "—"}</span>
+                      {lead._id === nextPendingLeadId && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                          Next up
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3 px-3 text-slate-200 font-mono text-xs">
                     {lead.phoneNumber}

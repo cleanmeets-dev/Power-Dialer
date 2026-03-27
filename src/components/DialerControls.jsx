@@ -1,5 +1,5 @@
 import { Play, Square } from 'lucide-react';
-import { startDialing, stopDialing } from '../services/api';
+import { startDialing, stopDialing, startAgentAutoDialing, stopAgentAutoDialing } from '../services/api';
 
 export default function DialerControls({
   campaignId,
@@ -8,8 +8,12 @@ export default function DialerControls({
   onError,
   onSuccess,
   totalLeads,
-  isLoading
+  isLoading,
+  mode = 'power',
+  agentId = null,
 }) {
+  const isAgentMode = mode === 'agent';
+
   const handleStartDialer = async () => {
     if (!campaignId) {
       onError('Please select a campaign first');
@@ -22,9 +26,17 @@ export default function DialerControls({
     }
 
     try {
-      await startDialing(campaignId);
+      if (isAgentMode) {
+        if (!agentId) {
+          onError('Agent is required for auto dialer');
+          return;
+        }
+        await startAgentAutoDialing(campaignId, agentId);
+      } else {
+        await startDialing(campaignId);
+      }
       setIsDialing(true);
-      onSuccess('Dialing started');
+      onSuccess(isAgentMode ? 'Agent auto dialer started' : 'Power dialing started');
     } catch (error) {
       onError(error.response?.data?.error || 'Failed to start dialing');
       console.error(error);
@@ -33,9 +45,17 @@ export default function DialerControls({
 
   const handleStopDialer = async () => {
     try {
-      await stopDialing(campaignId);
+      if (isAgentMode) {
+        if (!agentId) {
+          onError('Agent is required for auto dialer');
+          return;
+        }
+        await stopAgentAutoDialing(campaignId, agentId);
+      } else {
+        await stopDialing(campaignId);
+      }
       setIsDialing(false);
-      onSuccess('Dialing stopped');
+      onSuccess(isAgentMode ? 'Agent auto dialer stopped' : 'Power dialing stopped');
     } catch (error) {
       onError(error.response?.data?.error || 'Failed to stop dialing');
       console.error(error);
@@ -44,7 +64,9 @@ export default function DialerControls({
 
   return (
     <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
-      <h2 className="text-xl font-bold mb-4 text-cyan-400">Dialer Controls</h2>
+      <h2 className="text-xl font-bold mb-4 text-cyan-400">
+        {isAgentMode ? 'Agent Auto Dialer Controls' : 'Power Dialer Controls'}
+      </h2>
 
       <div className="flex gap-4 mb-4">
         <button
@@ -57,7 +79,7 @@ export default function DialerControls({
           }`}
         >
           <Play className="w-5 h-5" />
-          Start Dialer
+          {isAgentMode ? 'Start Agent Auto Dialer' : 'Start Power Dialer'}
         </button>
 
         <button
@@ -70,14 +92,16 @@ export default function DialerControls({
           }`}
         >
           <Square className="w-5 h-5" />
-          Stop Dialer
+          {isAgentMode ? 'Stop Agent Auto Dialer' : 'Stop Power Dialer'}
         </button>
       </div>
 
       {isDialing && (
         <div className="p-4 bg-blue-500/20 border border-blue-500/50 rounded flex items-center gap-3">
           <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
-          <span className="text-blue-400 font-semibold">Dialer is running...</span>
+          <span className="text-blue-400 font-semibold">
+            {isAgentMode ? 'Agent auto dialer is running...' : 'Power dialer is running...'}
+          </span>
         </div>
       )}
     </div>

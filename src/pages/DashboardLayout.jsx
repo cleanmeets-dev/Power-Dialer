@@ -42,6 +42,7 @@ export default function DashboardLayout() {
     if (path.includes('call-logs')) return 'call-logs';
     if (path.includes('campaigns')) return 'campaigns';
     if (path.includes('my-availability')) return 'my-availability';
+    if (path.includes('auto-dialer')) return 'auto-dialer';
     if (path.includes('direct-dialer')) return 'direct-dialer';
     if (path.includes('agents')) return 'agents';
     return 'overview';
@@ -70,6 +71,9 @@ export default function DashboardLayout() {
         break;
       case 'my-availability':
         navigate('/dashboard/my-availability');
+        break;
+      case 'auto-dialer':
+        navigate('/dashboard/auto-dialer');
         break;
       case 'direct-dialer':
         navigate('/dashboard/direct-dialer');

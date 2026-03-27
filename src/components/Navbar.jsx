@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Users, UserPlus, LayoutGrid, FileText, Phone, Settings, Menu, X } from 'lucide-react';
+import { LogOut, Users, UserPlus, LayoutGrid, FileText, Phone, Settings, Menu, X, PhoneCall } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminCreateUserModal from './AdminCreateUserModal';
 import AgentListModal from './modals/AgentListModal.jsx';
@@ -18,6 +18,7 @@ export default function Navbar({ user, onLogout, activePage, onNavigate, onShowN
     { id: 'call-logs', label: 'Call Logs', icon: Phone },
     { id: 'campaigns', label: 'Campaigns', icon: Settings, roleRequired: 'manager' },
     { id: 'my-availability', label: 'My Status', icon: Users, roleRequired: 'agent' },
+    { id: 'auto-dialer', label: 'Auto Dialer', icon: PhoneCall, roleRequired: 'agent' },
     { id: 'direct-dialer', label: 'Direct Dialer', icon: Phone, roleRequired: 'agent' },
     { id: 'agents', label: 'Agents', icon: Users, roleRequired: 'manager' },
   ];

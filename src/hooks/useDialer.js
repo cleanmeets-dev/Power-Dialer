@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDialerStatus } from '../services/api';
+import { getDialerStatus, getAgentAutoDialerStatus } from '../services/api';
 import { useWebSocket } from './useWebSocket';
 
 /**
  * useDialer - Manages dialer state using WebSocket for real-time updates
  * Handles parallel calling with multiple agents
  */
-export const useDialer = (selectedCampaignId, onStatusUpdate) => {
+export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
+  const mode = options.mode || 'power';
+  const agentId = options.agentId || null;
+  const isAgentMode = mode === 'agent';
   const [isDialing, setIsDialing] = useState(false);
   const [dialedCount, setDialedCount] = useState(0);
   const [successCount, setSuccessCount] = useState(0);
@@ -98,18 +101,22 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
   // 🔴 FIX #3: Handle campaign status updated event
   const handleCampaignStatusUpdated = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
+    if (isAgentMode && data.mode === 'agent' && data.agentId && data.agentId !== agentId) return;
+    if (!isAgentMode && data.mode === 'agent') return;
     
     // Update dialer state based on campaign status
     setIsDialing(data.status === 'active');
-  }, [selectedCampaignId]);
+  }, [selectedCampaignId, isAgentMode, agentId]);
 
   // 🔴 FIX #3: Handle campaign completed event
   const handleCampaignCompleted = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
+    if (isAgentMode && data.mode === 'agent' && data.agentId && data.agentId !== agentId) return;
+    if (!isAgentMode && data.mode === 'agent') return;
     
     setIsDialing(false);
     onStatusUpdate?.('Campaign completed!', 'success');
-  }, [selectedCampaignId, onStatusUpdate]);
+  }, [selectedCampaignId, onStatusUpdate, isAgentMode, agentId]);
 
   // Subscribe to WebSocket events
   useWebSocket({
@@ -125,10 +132,13 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
   // Fetch initial status when dialing starts
   useEffect(() => {
     if (!isDialing || !selectedCampaignId) return;
+    if (isAgentMode && !agentId) return;
 
     const fetchInitialStatus = async () => {
       try {
-        const status = await getDialerStatus(selectedCampaignId);
+        const status = isAgentMode
+          ? await getAgentAutoDialerStatus(selectedCampaignId, agentId)
+          : await getDialerStatus(selectedCampaignId);
 
         // Backend currently returns { isRunning, dialingCount, maxParallel }.
         // Only overwrite fields that are actually provided to avoid resetting live counters.
@@ -166,7 +176,7 @@ export const useDialer = (selectedCampaignId, onStatusUpdate) => {
     const interval = setInterval(fetchInitialStatus, 5000);
     
     return () => clearInterval(interval);
-  }, [isDialing, selectedCampaignId]);
+  }, [isDialing, selectedCampaignId, isAgentMode, agentId]);
 
   // Reset dialer state when campaign changes
   useEffect(() => {

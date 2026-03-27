@@ -4,13 +4,23 @@ import { User, RefreshCw, ClipboardList, Phone } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getCurrentUser } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useDialer } from '../hooks/useDialer';
 import AttendanceModal from '../components/modals/AttendanceModal';
+import CampaignSelector from '../components/CampaignSelector';
+import DialerControls from '../components/DialerControls';
 
 export default function MyAvailabilityPage() {
   const { showNotification } = useOutletContext();
   const { user } = useAuth();
   const [agent, setAgent] = useState(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { isDialing, setIsDialing } = useDialer(
+    selectedCampaignId,
+    (message, type = 'success') => showNotification(message, type),
+    { mode: 'agent', agentId: user?._id }
+  );
+
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [error, setError] = useState(null);
 
@@ -94,6 +104,8 @@ export default function MyAvailabilityPage() {
           {isLoading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
+
+      {/* Auto Dialer moved to its own dedicated page */}
 
       {/* Error Alert */}
       {error && (

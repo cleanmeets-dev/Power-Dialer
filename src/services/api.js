@@ -226,13 +226,28 @@ export const startDialing = async (campaignId) => {
   return response.data;
 };
 
+export const startAgentAutoDialing = async (campaignId, agentId) => {
+  const response = await api.post('/dialer/start', { campaignId, agentId });
+  return response.data;
+};
+
 export const stopDialing = async (campaignId) => {
   const response = await api.post('/dialer/stop', { campaignId });
   return response.data;
 };
 
+export const stopAgentAutoDialing = async (campaignId, agentId) => {
+  const response = await api.post('/dialer/stop', { campaignId, agentId });
+  return response.data;
+};
+
 export const getDialerStatus = async (campaignId) => {
   const response = await api.get(`/dialer/status?campaignId=${campaignId}`);
+  return response.data.data;
+};
+
+export const getAgentAutoDialerStatus = async (campaignId, agentId) => {
+  const response = await api.get(`/dialer/status?campaignId=${campaignId}&agentId=${agentId}`);
   return response.data.data;
 };
 

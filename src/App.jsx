@@ -8,6 +8,7 @@ import CallLogsPage from './pages/CallLogsPage';
 import CampaignsPage from './pages/CampaignsPage';
 import AgentAvailabilityPage from './pages/AgentAvailabilityPage';
 import MyAvailabilityPage from './pages/MyAvailabilityPage';
+import AutoDialerPage from './pages/AutoDialerPage';
 import DirectDialerPage from './pages/DirectDialerPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
@@ -32,6 +33,7 @@ function App() {
           <Route path="call-logs" element={<CallLogsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="my-availability" element={<MyAvailabilityPage />} />
+          <Route path="auto-dialer" element={<AutoDialerPage />} />
           <Route path="direct-dialer" element={<DirectDialerPage />} />
           <Route path="agents" element={<AgentAvailabilityPage />} />
         </Route>

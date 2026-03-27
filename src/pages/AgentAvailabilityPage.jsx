@@ -26,7 +26,8 @@ export default function AgentAvailabilityPage() {
   useEffect(() => {
     if (user && user.role !== 'manager') {
       showNotification('You do not have permission to access this page', 'error');
-      navigate('/dashboard');
+      const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+      navigate(roleHome);
     }
   }, [user, navigate, showNotification]);
 

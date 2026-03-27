@@ -8,7 +8,8 @@ export default function LoginPage() {
 
   const handleLoginSuccess = (user) => {
     login(user);
-    navigate('/dashboard');
+    const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+    navigate(roleHome);
   };
 
   return <Login onLoginSuccess={handleLoginSuccess} />;

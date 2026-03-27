@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LeadsProvider } from './context/LeadsContext';
+import { useAuth } from './hooks/useAuth';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
 import OverviewPage from './pages/OverviewPage';
@@ -12,6 +13,21 @@ import AutoDialerPage from './pages/AutoDialerPage';
 import DirectDialerPage from './pages/DirectDialerPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
+function RoleHomeRedirect() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+  return <Navigate to={roleHome} replace />;
+}
+
 function App() {
   return (
     <Router>
@@ -19,9 +35,9 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route
-          path="/dashboard"
+          path="/manager"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['manager']}>
               <LeadsProvider campaignId="">
                 <DashboardLayout />
               </LeadsProvider>
@@ -32,17 +48,34 @@ function App() {
           <Route path="leads" element={<LeadsPage />} />
           <Route path="call-logs" element={<CallLogsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
-          <Route path="my-availability" element={<MyAvailabilityPage />} />
-          <Route path="auto-dialer" element={<AutoDialerPage />} />
-          <Route path="direct-dialer" element={<DirectDialerPage />} />
           <Route path="agents" element={<AgentAvailabilityPage />} />
         </Route>
 
-        {/* Root Route - Redirect to dashboard overview */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/agent"
+          element={
+            <ProtectedRoute allowedRoles={['agent']}>
+              <LeadsProvider campaignId="">
+                <DashboardLayout />
+              </LeadsProvider>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<OverviewPage />} />
+          <Route path="leads" element={<LeadsPage />} />
+          <Route path="call-logs" element={<CallLogsPage />} />
+          <Route path="my-availability" element={<MyAvailabilityPage />} />
+          <Route path="auto-dialer" element={<AutoDialerPage />} />
+          <Route path="direct-dialer" element={<DirectDialerPage />} />
+        </Route>
 
-        {/* Catch-all - Redirect to dashboard */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<RoleHomeRedirect />} />
+
+        {/* Root Route - Redirect to role dashboard */}
+        <Route path="/" element={<RoleHomeRedirect />} />
+
+        {/* Catch-all - Redirect to role dashboard */}
+        <Route path="*" element={<RoleHomeRedirect />} />
       </Routes>
     </Router>
   );

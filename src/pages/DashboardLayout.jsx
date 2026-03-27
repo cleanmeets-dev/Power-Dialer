@@ -1,9 +1,10 @@
-import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { useTwilioDevice } from '../hooks/useTwilioDevice';
 import { useWebSocket } from '../hooks/useWebSocket';
 import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 import NotificationSystem from '../components/NotificationSystem';
 import ActiveCallPanel from '../components/ActiveCallPanel';
 import LeadDetailModal from '../components/modals/LeadDetailModal';
@@ -12,7 +13,6 @@ import { useState, useEffect } from 'react';
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { successMessage, errorMessage, showNotification } = useNotification();
 
   // Initialize Twilio Voice SDK for agent browsers (receiving calls)
@@ -30,6 +30,7 @@ export default function DashboardLayout() {
   useWebSocket();
 
   const [autoLeadId, setAutoLeadId] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Automatically pop open the lead details when a call connects
   useEffect(() => {
@@ -51,56 +52,9 @@ export default function DashboardLayout() {
     console.error('Twilio Device init error:', twilioError);
   }
 
-  // Determine active page based on current route
-  const getActivePage = () => {
-    const path = location.pathname;
-    if (path === '/dashboard' || path === '/dashboard/') return 'overview';
-    if (path.includes('leads')) return 'leads';
-    if (path.includes('call-logs')) return 'call-logs';
-    if (path.includes('campaigns')) return 'campaigns';
-    if (path.includes('my-availability')) return 'my-availability';
-    if (path.includes('auto-dialer')) return 'auto-dialer';
-    if (path.includes('direct-dialer')) return 'direct-dialer';
-    if (path.includes('agents')) return 'agents';
-    return 'overview';
-  };
-
-  const activePage = getActivePage();
-
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleNavigate = (pageId) => {
-    switch (pageId) {
-      case 'overview':
-        navigate('/dashboard');
-        break;
-      case 'leads':
-        navigate('/dashboard/leads');
-        break;
-      case 'call-logs':
-        navigate('/dashboard/call-logs');
-        break;
-      case 'campaigns':
-        navigate('/dashboard/campaigns');
-        break;
-      case 'my-availability':
-        navigate('/dashboard/my-availability');
-        break;
-      case 'auto-dialer':
-        navigate('/dashboard/auto-dialer');
-        break;
-      case 'direct-dialer':
-        navigate('/dashboard/direct-dialer');
-        break;
-      case 'agents':
-        navigate('/dashboard/agents');
-        break;
-      default:
-        navigate('/dashboard');
-    }
   };
 
   return (
@@ -108,42 +62,50 @@ export default function DashboardLayout() {
       <Navbar 
         user={user} 
         onLogout={handleLogout} 
-        activePage={activePage} 
-        onNavigate={handleNavigate}
-        showNotification={showNotification}
+        onShowNotification={showNotification}
+        onToggleSidebar={() => setIsSidebarOpen(true)}
       />
 
       <NotificationSystem successMessage={successMessage} errorMessage={errorMessage} />
 
       <div className="max-w-7xl mx-auto p-4 md:p-8">
-        {user?.role === 'agent' && (
-          <div className="mb-4">
-            <div className="text-sm text-slate-300">
-              Twilio Device:{" "}
-              <span className={isTwilioReady ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"}>
-                {isTwilioReady ? "Ready" : "Initializing..."}
-              </span>
-            </div>
-          </div>
-        )}
-        <Outlet context={{
-          showNotification,
-          twilioDialer: {
-            isReady: isTwilioReady,
-            callStatus,
-            callDirection,
-            activeCall,
-            placeOutgoingCall,
-            hangupActiveCall,
-          },
-        }} />
+        <div className="flex gap-4 lg:gap-6">
+          <Sidebar user={user} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+          <main className="flex-1 min-w-0">
+            {user?.role === 'agent' && (
+              <div className="mb-4">
+                <div className="text-sm text-slate-300">
+                  Twilio Device:{' '}
+                  <span className={isTwilioReady ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}>
+                    {isTwilioReady ? 'Ready' : 'Initializing...'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <Outlet
+              context={{
+                showNotification,
+                twilioDialer: {
+                  isReady: isTwilioReady,
+                  callStatus,
+                  callDirection,
+                  activeCall,
+                  placeOutgoingCall,
+                  hangupActiveCall,
+                },
+              }}
+            />
+          </main>
+        </div>
       </div>
 
       {/* Render ActiveCallPanel globally for agents */}
       {user?.role === 'agent' && (
         <>
           <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} callDirection={callDirection} />
-          <LeadDetailModal 
+          <LeadDetailModal
             isOpen={!!autoLeadId}
             leadId={autoLeadId}
             onClose={() => setAutoLeadId(null)}

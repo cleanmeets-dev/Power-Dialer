@@ -358,6 +358,22 @@ export const managerEndAgentBreak = async (agentId) => {
 };
 
 /**
+ * Get historical attendance reports (Manager only)
+ * @param {string} startDate - ISO date string
+ * @param {string} endDate - ISO date string
+ * @param {string} agentId - Optional agent ID filter
+ */
+export const getAttendanceHistory = async (startDate, endDate, agentId = null) => {
+  let url = `/auth/attendance/history?`;
+  if (startDate) url += `startDate=${encodeURIComponent(startDate)}&`;
+  if (endDate) url += `endDate=${encodeURIComponent(endDate)}&`;
+  if (agentId) url += `agentId=${agentId}&`;
+  
+  const response = await api.get(url);
+  return response.data.data;
+};
+
+/**
  * Get agent statistics
  * @returns {Promise} List of agents with stats
  */

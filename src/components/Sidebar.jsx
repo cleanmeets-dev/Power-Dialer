@@ -7,6 +7,7 @@ import {
 	Users,
 	Clock,
 	PhoneCall,
+	CalendarDays
 } from 'lucide-react';
 
 function getSidebarItems(role) {
@@ -16,7 +17,8 @@ function getSidebarItems(role) {
 			{ id: 'campaigns', label: 'Campaigns', icon: Megaphone, path: '/manager/campaigns' },
 			{ id: 'leads', label: 'Leads', icon: FileText, path: '/manager/leads' },
 			{ id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
-			{ id: 'agents', label: 'Agents', icon: Users, path: '/manager/agents' },
+			{ id: 'agents', label: 'Agents (Live)', icon: Users, path: '/manager/agents' },
+			{ id: 'attendance', label: 'Attendance Logs', icon: CalendarDays, path: '/manager/attendance' },
 		];
 	}
 

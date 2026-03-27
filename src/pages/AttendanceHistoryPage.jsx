@@ -82,13 +82,13 @@ export default function AttendanceHistoryPage() {
   };
 
   const handleExportCSV = () => {
-    if (logs.length === 0) {
+    if (filteredLogs.length === 0) {
       showNotification('No data to export', 'error');
       return;
     }
 
     const headers = ['Date', 'Agent Name', 'Email', 'Check In', 'Check Out', 'Total Shift (excluding breaks)', 'Break Time', 'Breaks Taken'];
-    const csvRows = logs.map(log => [
+    const csvRows = filteredLogs.map(log => [
       log.dateKey,
       log.agent?.name || 'Unknown',
       log.agent?.email || '',
@@ -102,9 +102,9 @@ export default function AttendanceHistoryPage() {
     const csvContent = [
       headers.join(','),
       ...csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    ].join('\\n');
+    ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

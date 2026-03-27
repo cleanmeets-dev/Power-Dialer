@@ -6,6 +6,8 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import Navbar from '../components/Navbar';
 import NotificationSystem from '../components/NotificationSystem';
 import ActiveCallPanel from '../components/ActiveCallPanel';
+import LeadDetailModal from '../components/modals/LeadDetailModal';
+import { useState, useEffect } from 'react';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -26,6 +28,21 @@ export default function DashboardLayout() {
 
   // Keep websocket connected globally across dashboard pages.
   useWebSocket();
+
+  const [autoLeadId, setAutoLeadId] = useState(null);
+
+  // Automatically pop open the lead details when a call connects
+  useEffect(() => {
+    if (activeCall && (callStatus === 'ringing' || callStatus === 'connected')) {
+      const customLeadId = activeCall.customParameters?.get?.('leadId');
+      if (customLeadId && customLeadId !== autoLeadId) {
+        setAutoLeadId(customLeadId);
+      }
+    } else if (callStatus === 'idle') {
+      // Don't auto-close it when hanging up right away so they can take notes,
+      // but if the call is entirely dead, we can leave it open until they close it manually.
+    }
+  }, [activeCall, callStatus, autoLeadId]);
 
   // Surface Twilio device issues to the user (non-blocking)
   if (user?.role === 'agent' && twilioError) {
@@ -124,7 +141,14 @@ export default function DashboardLayout() {
 
       {/* Render ActiveCallPanel globally for agents */}
       {user?.role === 'agent' && (
-        <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} callDirection={callDirection} />
+        <>
+          <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} callDirection={callDirection} />
+          <LeadDetailModal 
+            isOpen={!!autoLeadId}
+            leadId={autoLeadId}
+            onClose={() => setAutoLeadId(null)}
+          />
+        </>
       )}
     </div>
   );

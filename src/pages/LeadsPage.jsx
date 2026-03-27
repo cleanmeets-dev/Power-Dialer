@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { LeadsProvider } from '../context/LeadsContext';
 import CampaignSelector from '../components/CampaignSelector';
 import LeadsTable from '../components/LeadsTable';
@@ -11,6 +12,9 @@ import { getLeads } from '../services/api';
 
 export default function LeadsPage() {
   const { showNotification } = useOutletContext();
+  const { user } = useAuth();
+  const isManager = user?.role === 'manager';
+  
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [totalLeads, setTotalLeads] = useState(0);
   const { isDialing, setIsDialing, activeCalls } = useDialer(selectedCampaignId, showNotification);
@@ -85,8 +89,8 @@ export default function LeadsPage() {
         onShowNotification={showNotification}
       />
 
-      {/* Dialer Controls */}
-      {selectedCampaignId && (
+      {/* Dialer Controls (Agents Only) */}
+      {!isManager && selectedCampaignId && (
         <DialerControls
           campaignId={selectedCampaignId}
           isDialing={isDialing}
@@ -98,8 +102,8 @@ export default function LeadsPage() {
         />
       )}
 
-      {/* Active Calls */}
-      {selectedCampaignId && (
+      {/* Active Calls (Agents Only) */}
+      {!isManager && selectedCampaignId && (
         <ActiveCalls 
           calls={activeCalls}
           isLoading={false}

@@ -12,6 +12,7 @@ import AttendanceHistoryPage from './pages/AttendanceHistoryPage';
 import MyAvailabilityPage from './pages/MyAvailabilityPage';
 import AutoDialerPage from './pages/AutoDialerPage';
 import DirectDialerPage from './pages/DirectDialerPage';
+import PowerDialerPage from './pages/PowerDialerPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 
 function RoleHomeRedirect() {
@@ -64,7 +65,7 @@ function App() {
           }
         >
           <Route index element={<OverviewPage />} />
-          <Route path="leads" element={<LeadsPage />} />
+          <Route path="leads" element={<PowerDialerPage />} />
           <Route path="call-logs" element={<CallLogsPage />} />
           <Route path="my-availability" element={<MyAvailabilityPage />} />
           <Route path="auto-dialer" element={<AutoDialerPage />} />

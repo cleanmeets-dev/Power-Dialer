@@ -5,6 +5,7 @@ import { LeadsProvider } from '../context/LeadsContext';
 import CampaignSelector from '../components/CampaignSelector';
 import LeadsTable from '../components/LeadsTable';
 import FileUpload from '../components/FileUpload';
+import LeadAssignmentPanel from '../components/LeadAssignmentPanel';
 import DialerControls from '../components/DialerControls';
 import ActiveCalls from '../components/ActiveCalls';
 import { useDialer } from '../hooks/useDialer';
@@ -113,13 +114,28 @@ export default function LeadsPage() {
       {/* Leads Table */}
       {selectedCampaignId && (
         <LeadsProvider campaignId={selectedCampaignId}>
-          <FileUpload 
-            campaignId={selectedCampaignId} 
-            onSuccess={handleUploadSuccess}
-            onError={handleUploadError}
-            onLeadsChange={setTotalLeads}
-            onUploadComplete={handleUploadComplete}
-          />
+          {/* File Upload (Managers Only) */}
+          {isManager && (
+            <FileUpload 
+              campaignId={selectedCampaignId} 
+              onSuccess={handleUploadSuccess}
+              onError={handleUploadError}
+              onLeadsChange={setTotalLeads}
+              onUploadComplete={handleUploadComplete}
+            />
+          )}
+
+          {/* Lead Assignment Panel (Managers Only) */}
+          {isManager && (
+            <LeadAssignmentPanel
+              campaignId={selectedCampaignId}
+              onAssignmentComplete={() => {
+                // Optionally refresh leads after assignment
+              }}
+              showNotification={showNotification}
+            />
+          )}
+
           <LeadsTable showNotification={showNotification} />
         </LeadsProvider>
       )}

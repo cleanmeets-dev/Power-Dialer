@@ -382,4 +382,28 @@ export const getAgentStats = async () => {
   return response.data.data;
 };
 
+// ==================== Lead Assignment ====================
+
+/**
+ * Assign a single lead to an agent
+ * @param {string} leadId - Lead ID
+ * @param {string} agentId - Agent ID
+ * @returns {Promise} Updated lead
+ */
+export const assignLead = async (leadId, agentId) => {
+  const response = await api.put(`/leads/${leadId}/assign`, { agentId });
+  return response.data.data;
+};
+
+/**
+ * Assign multiple leads to an agent
+ * @param {array} leadIds - Array of lead IDs
+ * @param {string} agentId - Agent ID
+ * @returns {Promise} Assignment result
+ */
+export const assignLeadsToAgent = async (leadIds, agentId) => {
+  const response = await api.post('/leads/assign-batch', { leadIds, agentId });
+  return response.data.data;
+};
+
 export default api;

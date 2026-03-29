@@ -250,7 +250,7 @@ export default function LeadsTable({ showNotification }) {
   const startLead = (currentPage - 1) * pageSize + 1;
   const endLead = Math.min(currentPage * pageSize, totalLeads);
 
-  const nextPendingLeadId = leads.find((l) => l.status === "pending")?._id;
+  const nextPendingLeadId = leads.find((l) => l.dialerStatus === "pending")?._id;
 
   return (
     <>
@@ -455,6 +455,19 @@ export default function LeadsTable({ showNotification }) {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+                      {/* Zoom Phone Integration */}
+                      <button
+                        onClick={() => {
+                          const cleanNumber = String(lead.phoneNumber).replace(/[^\d+]/g, '');
+                          window.open(`zoomphonecall://${cleanNumber}`, '_self');
+                          showNotification(`Calling ${lead.phoneNumber} via Zoom`, 'success');
+                        }}
+                        disabled={isLoading || !lead.phoneNumber}
+                        className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        title="Direct Call (Zoom)"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleEditLead(lead)}
                         disabled={isLoading}
@@ -467,9 +480,9 @@ export default function LeadsTable({ showNotification }) {
                         onClick={() => handleCompleteCall(lead)}
                         disabled={isLoading}
                         className="text-green-400 hover:text-green-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
-                        title="Complete call"
+                        title="Log Call Outcome"
                       >
-                        <Phone className="w-4 h-4" />
+                        <CheckCircle className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleScheduleCallback(lead)}
@@ -479,14 +492,7 @@ export default function LeadsTable({ showNotification }) {
                       >
                         <Calendar className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleUpdateStatus(lead._id)}
-                        disabled={isLoading}
-                        className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
-                        title="Update call status"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
+
                       <button
                         onClick={() => handleDeleteClick(lead)}
                         disabled={isLoading}

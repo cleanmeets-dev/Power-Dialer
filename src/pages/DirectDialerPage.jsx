@@ -9,16 +9,9 @@ export default function DirectDialerPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isDialing, setIsDialing] = useState(false);
 
-  const callStatus = twilioDialer?.callStatus || 'idle';
-  const isReady = Boolean(twilioDialer?.isReady);
-  const hasActiveCall = callStatus === 'ringing' || callStatus === 'connected';
-
   const statusText = useMemo(() => {
-    if (!isReady) return 'Twilio device not ready';
-    if (callStatus === 'connected') return 'Connected';
-    if (callStatus === 'ringing') return 'Ringing';
-    return 'Ready to dial';
-  }, [callStatus, isReady]);
+    return isDialing ? 'Calling...' : 'Ready to dial';
+  }, [isDialing]);
 
   const appendDigit = (digit) => {
     setPhoneNumber((prev) => `${prev}${digit}`.slice(0, 20));
@@ -27,26 +20,24 @@ export default function DirectDialerPage() {
   const clearNumber = () => setPhoneNumber('');
 
   const handleDial = async () => {
-    if (!twilioDialer?.placeOutgoingCall) {
-      showNotification('Twilio dialer is not available', 'error');
-      return;
-    }
+    if (!phoneNumber) return;
 
     setIsDialing(true);
-    const result = await twilioDialer.placeOutgoingCall(phoneNumber);
-    setIsDialing(false);
-
-    if (!result.success) {
-      showNotification(result.error || 'Failed to place call', 'error');
-      return;
+    try {
+      // Zoom Phone Integration
+      window.open(`zoomphonecall://${phoneNumber}`, '_self');
+      showNotification(`Calling ${phoneNumber} via Zoom`, 'success');
+    } catch (error) {
+      showNotification('Failed to launch Zoom Phone', 'error');
+    } finally {
+      setIsDialing(false);
     }
-
-    showNotification(`Calling ${result.number}`, 'success');
   };
 
   const handleHangup = () => {
-    twilioDialer?.hangupActiveCall?.();
-    showNotification('Call ended', 'success');
+    // Twilio - Power Dial Only
+    // Zoom calls are handled externally
+    showNotification('Not applicable for Zoom Phone', 'info');
   };
 
   return (
@@ -93,20 +84,20 @@ export default function DirectDialerPage() {
           </button>
           <button
             onClick={handleDial}
-            disabled={!isReady || !phoneNumber || isDialing || hasActiveCall}
+            disabled={!phoneNumber || isDialing}
             type="button"
             className="rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-600 disabled:text-slate-400"
           >
             <span className="inline-flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              {isDialing ? 'Calling...' : 'Call'}
+              {isDialing ? 'Calling...' : 'Call (Zoom)'}
             </span>
           </button>
         </div>
 
         <button
           onClick={handleHangup}
-          disabled={!hasActiveCall}
+          disabled={true} // Zoom doesn't support remote hangup from browser
           type="button"
           className="mt-3 w-full rounded-lg bg-rose-600 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:bg-slate-600 disabled:text-slate-400"
         >

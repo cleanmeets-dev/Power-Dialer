@@ -42,30 +42,30 @@ export default function AutoDialerPage() {
           onCampaignSelect={setSelectedCampaignId}
           onShowNotification={showNotification}
         />
+
         {selectedCampaignId && (
-          <DialerControls
-            campaignId={selectedCampaignId}
-            isDialing={isDialing}
-            setIsDialing={setIsDialing}
-            onError={(message) => showNotification(message, 'error')}
-            onSuccess={(message) => showNotification(message, 'success')}
-            totalLeads={1}
-            isLoading={isLoading}
-            mode="agent"
-            agentId={user?._id}
-          />
+          <LeadsProvider campaignId={selectedCampaignId}>
+            <div className="mt-4 mb-6">
+              <DialerControls
+                campaignId={selectedCampaignId}
+                isDialing={isDialing}
+                setIsDialing={setIsDialing}
+                onError={(message) => showNotification(message, 'error')}
+                onSuccess={(message) => showNotification(message, 'success')}
+                totalLeads={1}
+                isLoading={isLoading}
+                mode="agent"
+                agentId={user?._id}
+              />
+            </div>
+
+            <div className="pt-4 border-t border-slate-700/50">
+              <h2 className="text-xl font-semibold text-slate-200 mb-4 px-1">Campaign Queue</h2>
+              <LeadsTable showNotification={showNotification} />
+            </div>
+          </LeadsProvider>
         )}
       </div>
-
-      {/* Auto Dialer Queue / Leads Display */}
-      {selectedCampaignId && (
-        <div className="pt-4 border-t border-slate-700/50">
-          <h2 className="text-xl font-semibold text-slate-200 mb-4 px-1">Campaign Queue</h2>
-          <LeadsProvider campaignId={selectedCampaignId}>
-            <LeadsTable showNotification={showNotification} />
-          </LeadsProvider>
-        </div>
-      )}
     </div>
   );
 }

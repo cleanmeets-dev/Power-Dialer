@@ -47,7 +47,7 @@ export default function PowerDialerPage() {
           onSuccess={(message) => showNotification(message, 'success')}
           totalLeads={totalLeads}
           isLoading={false}
-          mode="agent"
+          mode="power"
           agentId={user?._id}
         />
       )}

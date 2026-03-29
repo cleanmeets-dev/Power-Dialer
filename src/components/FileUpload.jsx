@@ -1,6 +1,7 @@
 import { Upload, AlertCircle, CheckCircle } from "lucide-react";
 import { uploadLeads } from "../services/api";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { LeadsContext } from "../context/LeadsContext";
 
 export default function FileUpload({
   campaignId,
@@ -12,6 +13,7 @@ export default function FileUpload({
 }) {
   const [fileError, setFileError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const leadsCtx = useContext(LeadsContext);
 
   // Validate file before upload
   const validateFile = (file) => {
@@ -102,6 +104,11 @@ export default function FileUpload({
 
       // Notify parent to refresh leads count
       onUploadComplete?.();
+
+      // Reload Context leads for LeadsTable rendering
+      if (leadsCtx?.loadLeads) {
+        leadsCtx.loadLeads();
+      }
 
       // Reset after 1.5 seconds
       setTimeout(() => {

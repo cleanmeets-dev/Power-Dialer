@@ -85,13 +85,8 @@ export default function DashboardContent({ selectedCampaignId }) {
     <>
       {/* Dashboard Stats */}
       <DashboardStats
-<<<<<<< HEAD
-        totalLeads={pagination.total}
-        dialedCount={dialedCount}
-=======
             totalLeads={pagination.total}
             dialedCount={dialedCount}
->>>>>>> zoom-integration
             successCount={successCount}
             callsInProgress={callsInProgress}
           />

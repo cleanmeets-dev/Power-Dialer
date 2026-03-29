@@ -1,6 +1,6 @@
 import { Upload, AlertCircle, CheckCircle } from "lucide-react";
-import { uploadLeads } from "../services/api";
-import { useState, useContext } from "react";
+import { uploadLeads, getAllAgents } from "../services/api";
+import { useState, useContext, useEffect } from "react";
 import { LeadsContext } from "../context/LeadsContext";
 
 export default function FileUpload({
@@ -13,7 +13,22 @@ export default function FileUpload({
 }) {
   const [fileError, setFileError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [agents, setAgents] = useState([]);
+  const [selectedAgent, setSelectedAgent] = useState("");
   const leadsCtx = useContext(LeadsContext);
+
+  // Load agents on mount
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const data = await getAllAgents();
+        setAgents(data || []);
+      } catch (e) {
+        setAgents([]);
+      }
+    }
+    fetchAgents();
+  }, []);
 
   // Validate file before upload
   const validateFile = (file) => {
@@ -70,6 +85,12 @@ export default function FileUpload({
       e.target.value = ""; // Reset input
       return;
     }
+    if (!selectedAgent) {
+      onError("Please select an agent first");
+      setFileError("Please select an agent first");
+      e.target.value = "";
+      return;
+    }
 
     try {
       setUploadProgress(0);
@@ -86,7 +107,7 @@ export default function FileUpload({
         });
       }, 200);
 
-      const response = await uploadLeads(file, campaignId);
+      const response = await uploadLeads(file, campaignId, selectedAgent);
       
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -149,12 +170,30 @@ export default function FileUpload({
         </div>
       )}
 
+      {/* Agent Select */}
+      <div className="mb-4">
+        <label className="block text-sm text-slate-300 mb-2">Select Agent to Assign</label>
+        <select
+          value={selectedAgent}
+          onChange={e => setSelectedAgent(e.target.value)}
+          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white outline-none focus:border-cyan-500"
+          disabled={isLoading || uploadProgress > 0}
+        >
+          <option value="">Choose an agent...</option>
+          {agents.map(agent => (
+            <option key={agent._id} value={agent._id}>
+              {agent.name} ({agent.email})
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="border-2 border-dashed border-primary-500 rounded-lg p-8 text-center bg-slate-900/50 hover:bg-slate-900 transition cursor-pointer relative group">
         <input
           type="file"
           accept=".csv"
           onChange={handleFileUpload}
-          disabled={!campaignId || isLoading || uploadProgress > 0}
+          disabled={!campaignId || !selectedAgent || isLoading || uploadProgress > 0}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         <Upload className="w-12 h-12 text-primary-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
@@ -180,10 +219,14 @@ export default function FileUpload({
         ) : null}
       </div>
 
-      {!campaignId && (
+      {(!campaignId || !selectedAgent) && (
         <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-          <p className="text-yellow-400 text-sm">Select a campaign first</p>
+          <p className="text-yellow-400 text-sm">
+            {!campaignId
+              ? "Select a campaign first"
+              : "Select an agent to assign leads to"}
+          </p>
         </div>
       )}
     </div>

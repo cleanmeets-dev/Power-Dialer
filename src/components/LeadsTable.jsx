@@ -377,6 +377,9 @@ export default function LeadsTable({ showNotification }) {
                 <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
                   Status
                 </th>
+                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
+                  Assigned Agent
+                </th>
                 <th className="text-center py-3 px-3 text-cyan-400 font-semibold">
                   Actions
                 </th>
@@ -444,6 +447,9 @@ export default function LeadsTable({ showNotification }) {
                     >
                       {lead.dialerStatus}
                     </span>
+                  </td>
+                  <td className="py-3 px-3 text-slate-300 text-xs truncate max-w-xs">
+                    {lead.assignedCallerName || lead.assignedCloserName || lead.assignedCaller || lead.assignedCloser || '—'}
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex gap-2 justify-center">

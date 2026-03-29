@@ -54,16 +54,18 @@ export default function DialerControls({
   };
 
   const advanceNextCall = (prevState) => {
-    const nextIndex = prevState.currentIndex + 1;
-    if (nextIndex >= leads.length) {
+    // Find the NEXT pending lead
+    const nextPendingIndex = leads.findIndex((l, index) => index > prevState.currentIndex && l.dialerStatus === 'pending');
+    
+    if (nextPendingIndex === -1) {
       setIsDialing(false);
-      onSuccess("Auto Dialer completed all leads on this page.");
+      onSuccess("Auto Dialer completed all pending leads on this page.");
       return { active: false, currentIndex: 0, timeLeft: 60, status: 'idle' };
     }
     setTimeout(() => {
-      triggerZoomCall(leads[nextIndex]);
+      triggerZoomCall(leads[nextPendingIndex]);
     }, 100);
-    return { ...prevState, currentIndex: nextIndex, timeLeft: 60 };
+    return { ...prevState, currentIndex: nextPendingIndex, timeLeft: 60 };
   };
 
   useEffect(() => {
@@ -122,9 +124,18 @@ export default function DialerControls({
       onError('No leads available on this page to dial');
       return;
     }
+
+    // Find the FIRST pending lead
+    const firstPendingIndex = leads.findIndex(l => l.dialerStatus === 'pending');
+    
+    if (firstPendingIndex === -1) {
+      onError('All leads on this page have been dialed.');
+      return;
+    }
+
     setIsDialing(true);
-    setAutoDialState({ active: true, currentIndex: 0, timeLeft: 60, status: 'calling' });
-    triggerZoomCall(leads[0]);
+    setAutoDialState({ active: true, currentIndex: firstPendingIndex, timeLeft: 60, status: 'calling' });
+    triggerZoomCall(leads[firstPendingIndex]);
   };
 
   const handleStopAutoDialer = () => {

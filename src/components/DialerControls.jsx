@@ -1,5 +1,7 @@
-import { Play, Square } from 'lucide-react';
-import { startDialing, stopDialing, startAgentAutoDialing, stopAgentAutoDialing } from '../services/api';
+import { useContext, useState, useEffect, useRef } from 'react';
+import { Play, Square, Pause, SkipForward, Phone } from 'lucide-react';
+import { startDialing, stopDialing, updateLeadStatus } from '../services/api';
+import { LeadsContext } from '../context/LeadsContext';
 
 export default function DialerControls({
   campaignId,
@@ -13,95 +15,255 @@ export default function DialerControls({
   agentId = null,
 }) {
   const isAgentMode = mode === 'agent';
+  const leadsContext = useContext(LeadsContext);
+  const leads = leadsContext ? leadsContext.leads : [];
 
-  const handleStartDialer = async () => {
+  // Frontend Auto Dialer State (Zoom Integration)
+  const [autoDialState, setAutoDialState] = useState({
+    active: false,
+    currentIndex: 0,
+    timeLeft: 60,
+    status: 'idle', // 'idle' | 'calling' | 'paused'
+  });
+  const timerRef = useRef(null);
+  
+  const currentLead = autoDialState.active ? leads[autoDialState.currentIndex] : null;
+
+  const triggerZoomCall = async (lead) => {
+    if (!lead || !lead.phoneNumber) {
+      onError("Lead missing phone number");
+      return;
+    }
+    // Clean phone number: remove all characters except digits and +
+    const cleanNumber = String(lead.phoneNumber).replace(/[^\d+]/g, '');
+    
+    // Zoom Phone Integration
+    window.open(`zoomphonecall://${cleanNumber}`, '_self');
+    onSuccess(`Dialing ${lead.businessName || lead.phoneNumber} via Zoom`);
+
+    try {
+      // Update backend status to track progress
+      await updateLeadStatus(lead._id, 'dialing');
+      // Update local context so Next Up label moves in UI
+      if (leadsContext?.updateLead) {
+        leadsContext.updateLead({ ...lead, dialerStatus: 'dialing' });
+      }
+    } catch (e) {
+      console.error('Failed to update lead status', e);
+    }
+  };
+
+  const advanceNextCall = (prevState) => {
+    // Find the NEXT pending lead
+    const nextPendingIndex = leads.findIndex((l, index) => index > prevState.currentIndex && l.dialerStatus === 'pending');
+    
+    if (nextPendingIndex === -1) {
+      setIsDialing(false);
+      onSuccess("Auto Dialer completed all pending leads on this page.");
+      return { active: false, currentIndex: 0, timeLeft: 60, status: 'idle' };
+    }
+    setTimeout(() => {
+      triggerZoomCall(leads[nextPendingIndex]);
+    }, 100);
+    return { ...prevState, currentIndex: nextPendingIndex, timeLeft: 60 };
+  };
+
+  useEffect(() => {
+    if (autoDialState.active && autoDialState.status === 'calling') {
+      timerRef.current = setInterval(() => {
+        setAutoDialState((prev) => {
+          if (prev.timeLeft <= 1) {
+            return advanceNextCall(prev);
+          }
+          return { ...prev, timeLeft: prev.timeLeft - 1 };
+        });
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [autoDialState.active, autoDialState.status, leads]);
+
+  // Handle Power Dialer (Twilio Backend)
+  const handleStartPowerDialer = async () => {
     if (!campaignId) {
       onError('Please select a campaign first');
       return;
     }
-
     if (totalLeads === 0) {
       onError('Please upload leads first');
       return;
     }
-
     try {
-      if (isAgentMode) {
-        if (!agentId) {
-          onError('Agent is required for auto dialer');
-          return;
-        }
-        await startAgentAutoDialing(campaignId, agentId);
-      } else {
-        await startDialing(campaignId);
-      }
+      // Twilio - Power Dial Only
+      await startDialing(campaignId);
       setIsDialing(true);
-      onSuccess(isAgentMode ? 'Agent auto dialer started' : 'Power dialing started');
+      onSuccess('Power dialing started');
     } catch (error) {
       onError(error.response?.data?.error || 'Failed to start dialing');
-      console.error(error);
     }
   };
 
-  const handleStopDialer = async () => {
+  const handleStopPowerDialer = async () => {
     try {
-      if (isAgentMode) {
-        if (!agentId) {
-          onError('Agent is required for auto dialer');
-          return;
-        }
-        await stopAgentAutoDialing(campaignId, agentId);
-      } else {
-        await stopDialing(campaignId);
-      }
+      await stopDialing(campaignId);
       setIsDialing(false);
-      onSuccess(isAgentMode ? 'Agent auto dialer stopped' : 'Power dialing stopped');
+      onSuccess('Power dialing stopped');
     } catch (error) {
       onError(error.response?.data?.error || 'Failed to stop dialing');
-      console.error(error);
     }
+  };
+
+  // Handle Agent Auto Dialer (Zoom Frontend)
+  const handleStartAutoDialer = () => {
+    if (!campaignId) {
+      onError('Please select a campaign first');
+      return;
+    }
+    if (leads.length === 0) {
+      onError('No leads available on this page to dial');
+      return;
+    }
+
+    // Find the FIRST pending lead
+    const firstPendingIndex = leads.findIndex(l => l.dialerStatus === 'pending');
+    
+    if (firstPendingIndex === -1) {
+      onError('All leads on this page have been dialed.');
+      return;
+    }
+
+    setIsDialing(true);
+    setAutoDialState({ active: true, currentIndex: firstPendingIndex, timeLeft: 60, status: 'calling' });
+    triggerZoomCall(leads[firstPendingIndex]);
+  };
+
+  const handleStopAutoDialer = () => {
+    setIsDialing(false);
+    setAutoDialState({ active: false, currentIndex: 0, timeLeft: 60, status: 'idle' });
+    onSuccess('Agent auto dialer stopped');
+  };
+
+  const handlePauseResumeAutoDialer = () => {
+    setAutoDialState(prev => ({
+      ...prev,
+      status: prev.status === 'paused' ? 'calling' : 'paused'
+    }));
+  };
+
+  const handleNextCall = () => {
+    setAutoDialState(prev => advanceNextCall(prev));
   };
 
   return (
     <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
       <h2 className="text-xl font-bold mb-4 text-cyan-400">
-        {isAgentMode ? 'Agent Auto Dialer Controls' : 'Power Dialer Controls'}
+        {isAgentMode ? 'Agent Auto Dialer' : 'Power Dialer Controls'}
       </h2>
 
-      <div className="flex gap-4 mb-4">
-        <button
-          onClick={handleStartDialer}
-          disabled={isDialing || !campaignId || totalLeads === 0 || isLoading}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
-            isDialing || !campaignId || totalLeads === 0 || isLoading
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-              : 'bg-linear-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg hover:shadow-emerald-500/50'
-          }`}
-        >
-          <Play className="w-5 h-5" />
-          {isAgentMode ? 'Start Agent Auto Dialer' : 'Start Power Dialer'}
-        </button>
+      {!isAgentMode ? (
+        // Power Dialer UI
+        <div>
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={handleStartPowerDialer}
+              disabled={isDialing || !campaignId || totalLeads === 0 || isLoading}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
+                isDialing || !campaignId || totalLeads === 0 || isLoading
+                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  : 'bg-linear-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg hover:shadow-emerald-500/50'
+              }`}
+            >
+              <Play className="w-5 h-5" />
+              Start Power Dialer
+            </button>
+            <button
+              onClick={handleStopPowerDialer}
+              disabled={!isDialing || isLoading}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
+                !isDialing || isLoading
+                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  : 'bg-linear-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 shadow-lg hover:shadow-rose-500/50'
+              }`}
+            >
+              <Square className="w-5 h-5" />
+              Stop Power Dialer
+            </button>
+          </div>
+          {isDialing && (
+            <div className="p-4 bg-blue-500/20 border border-blue-500/50 rounded flex items-center gap-3">
+              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
+              <span className="text-blue-400 font-semibold">
+                Power dialer is running via Twilio...
+              </span>
+            </div>
+          )}
+        </div>
+      ) : (
+        // Agent Auto Dialer UI (Zoom Integration)
+        <div>
+          <div className="flex flex-wrap gap-3 mb-4">
+            {!autoDialState.active ? (
+              <button
+                onClick={handleStartAutoDialer}
+                disabled={!campaignId || leads.length === 0 || isLoading}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
+                  !campaignId || leads.length === 0 || isLoading
+                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    : 'bg-linear-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg hover:shadow-indigo-500/50'
+                }`}
+              >
+                <Play className="w-5 h-5" />
+                Start Auto Dialer
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleStopAutoDialer}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition bg-rose-600 hover:bg-rose-700 text-white"
+                >
+                  <Square className="w-5 h-5" />
+                  Stop Sequence
+                </button>
+                <button
+                  onClick={handlePauseResumeAutoDialer}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  {autoDialState.status === 'paused' ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+                  {autoDialState.status === 'paused' ? 'Resume Timer' : 'Pause Timer'}
+                </button>
+                <button
+                  onClick={handleNextCall}
+                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <SkipForward className="w-5 h-5" />
+                  Next Call
+                </button>
+              </>
+            )}
+          </div>
 
-        <button
-          onClick={handleStopDialer}
-          disabled={!isDialing || isLoading}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
-            !isDialing || isLoading
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-              : 'bg-linear-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 shadow-lg hover:shadow-rose-500/50'
-          }`}
-        >
-          <Square className="w-5 h-5" />
-          {isAgentMode ? 'Stop Agent Auto Dialer' : 'Stop Power Dialer'}
-        </button>
-      </div>
-
-      {isDialing && (
-        <div className="p-4 bg-blue-500/20 border border-blue-500/50 rounded flex items-center gap-3">
-          <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
-          <span className="text-blue-400 font-semibold">
-            {isAgentMode ? 'Agent auto dialer is running...' : 'Power dialer is running...'}
-          </span>
+          {autoDialState.active && (
+            <div className="p-4 bg-slate-800 border border-slate-600 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${autoDialState.status === 'calling' ? 'bg-indigo-400 animate-pulse' : 'bg-amber-400'}`}></div>
+                <div>
+                  <p className="text-slate-300 font-medium">
+                    {autoDialState.status === 'paused' ? 'Sequence Paused' : 'Auto Dialing in Progress'}
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    Lead {autoDialState.currentIndex + 1} of {leads.length}: <span className="text-emerald-400 font-mono">{currentLead?.phoneNumber}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-slate-400 mb-1">Time to next call</span>
+                <span className={`text-2xl font-mono font-bold ${autoDialState.timeLeft <= 10 ? 'text-rose-400' : 'text-cyan-400'}`}>
+                  00:{autoDialState.timeLeft.toString().padStart(2, '0')}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

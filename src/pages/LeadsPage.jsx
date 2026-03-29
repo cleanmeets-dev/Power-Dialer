@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { isManager as checkIsManager } from '../utils/roleUtils';
 import { LeadsProvider } from '../context/LeadsContext';
 import CampaignSelector from '../components/CampaignSelector';
 import LeadsTable from '../components/LeadsTable';
@@ -14,7 +15,7 @@ import { getLeads } from '../services/api';
 export default function LeadsPage() {
   const { showNotification } = useOutletContext();
   const { user } = useAuth();
-  const isManager = user?.role === 'manager';
+  const isManager = checkIsManager(user?.role);
   
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [totalLeads, setTotalLeads] = useState(0);

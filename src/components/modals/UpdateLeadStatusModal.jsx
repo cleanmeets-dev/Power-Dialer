@@ -4,12 +4,14 @@ import FormSelect from '../common/FormSelect.jsx';
 import { updateLeadStatus } from '../../services/api.js';
 import { Loader } from 'lucide-react';
 
-const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'dialing', label: 'Dialing' },
-  { value: 'connected', label: 'Connected' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'completed', label: 'Completed' },
+const LEAD_STATUS_OPTIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'contacted', label: 'Contacted' },
+  { value: 'interested', label: 'Interested' },
+  { value: 'not_interested', label: 'Not Interested' },
+  { value: 'callback', label: 'Callback' },
+  { value: 'converted', label: 'Converted' },
+  { value: 'closed', label: 'Closed' },
 ];
 
 export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess, onError }) {
@@ -18,7 +20,7 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
 
   useEffect(() => {
     if (lead) {
-      setStatus(lead.status || 'pending');
+      setStatus(lead.leadStatus || 'new');
     }
   }, [lead, isOpen]);
 
@@ -47,9 +49,9 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
         </div>
 
         <FormSelect
-          label="New Status"
-          name="status"
-          options={STATUS_OPTIONS}
+          label="New Lead Status"
+          name="leadStatus"
+          options={LEAD_STATUS_OPTIONS}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           required
@@ -65,7 +67,7 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
           </button>
           <button
             type="submit"
-            disabled={isLoading || status === lead?.status}
+            disabled={isLoading || status === lead?.leadStatus}
             className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader className="w-4 h-4 animate-spin" />}

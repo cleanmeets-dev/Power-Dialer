@@ -1,5 +1,6 @@
 import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { isAgent } from '../utils/roleUtils';
 import { useNotification } from '../hooks/useNotification';
 import { useTwilioDevice } from '../hooks/useTwilioDevice';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -24,7 +25,7 @@ export default function DashboardLayout() {
     callDirection,
     placeOutgoingCall,
     hangupActiveCall,
-  } = useTwilioDevice(user?.role === 'agent');
+  } = useTwilioDevice(isAgent(user?.role));
 
   // Keep websocket connected globally across dashboard pages.
   useWebSocket();
@@ -46,7 +47,7 @@ export default function DashboardLayout() {
   }, [activeCall, callStatus, autoLeadId]);
 
   // Surface Twilio device issues to the user (non-blocking)
-  if (user?.role === 'agent' && twilioError) {
+  if (isAgent(user?.role) && twilioError) {
     // Avoid spamming notifications every render by relying on NotificationSystem state
     // eslint-disable-next-line no-console
     console.error('Twilio Device init error:', twilioError);
@@ -73,7 +74,7 @@ export default function DashboardLayout() {
           <Sidebar user={user} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
           <main className="flex-1 min-w-0">
-            {user?.role === 'agent' && (
+            {isAgent(user?.role) && (
               <div className="mb-4">
                 <div className="text-sm text-slate-300">
                   Twilio Device:{' '}
@@ -102,7 +103,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Render ActiveCallPanel globally for agents */}
-      {user?.role === 'agent' && (
+      {isAgent(user?.role) && (
         <>
           <ActiveCallPanel activeCall={activeCall} callStatus={callStatus} callDirection={callDirection} />
           <LeadDetailModal

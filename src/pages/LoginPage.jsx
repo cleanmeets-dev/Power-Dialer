@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getRoleHomeRoute } from '../utils/roleUtils';
 import Login from '../components/Login';
 
 export default function LoginPage() {
@@ -8,7 +9,7 @@ export default function LoginPage() {
 
   const handleLoginSuccess = (user) => {
     login(user);
-    const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+    const roleHome = getRoleHomeRoute(user?.role);
     navigate(roleHome);
   };
 

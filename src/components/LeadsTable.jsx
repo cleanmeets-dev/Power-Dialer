@@ -21,7 +21,10 @@ import CompleteCallModal from "./modals/CompleteCallModal.jsx";
 import ScheduleCallbackModal from "./modals/ScheduleCallbackModal.jsx";
 import ConfirmModal from "./common/ConfirmModal.jsx";
 
-const STATUSES = ["pending", "dialing", "connected", "completed", "failed"];
+const DIALER_STATUSES = ["pending", "dialing", "connected", "failed", "completed"];
+const LEAD_STATUSES = ["new", "contacted", "interested", "not_interested", "callback", "converted", "closed"];
+// For filtering leads by technical state (dialerStatus)
+const STATUSES = DIALER_STATUSES;
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 const api = axios.create({ baseURL: API_BASE_URL });
@@ -201,7 +204,8 @@ export default function LeadsTable({ showNotification }) {
       "Email",
       "City",
       "State",
-      "Status",
+      "Dialer Status",
+      "Lead Status",
       "Created At",
     ];
     const rows = leads.map((lead) => [
@@ -210,7 +214,8 @@ export default function LeadsTable({ showNotification }) {
       lead.email || "",
       lead.city || "",
       lead.state || "",
-      lead.status || "",
+      lead.dialerStatus || "",
+      lead.leadStatus || "",
       new Date(lead.createdAt).toLocaleDateString(),
     ]);
 
@@ -245,7 +250,7 @@ export default function LeadsTable({ showNotification }) {
   const startLead = (currentPage - 1) * pageSize + 1;
   const endLead = Math.min(currentPage * pageSize, totalLeads);
 
-  const nextPendingLeadId = leads.find((l) => l.status === "pending")?._id;
+  const nextPendingLeadId = leads.find((l) => l.dialerStatus === "pending")?._id;
 
   return (
     <>
@@ -372,6 +377,9 @@ export default function LeadsTable({ showNotification }) {
                 <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
                   Status
                 </th>
+                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
+                  Assigned Agent
+                </th>
                 <th className="text-center py-3 px-3 text-cyan-400 font-semibold">
                   Actions
                 </th>
@@ -422,23 +430,26 @@ export default function LeadsTable({ showNotification }) {
                   <td className="py-3 px-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block cursor-pointer transition hover:opacity-80 ${
-                        lead.status === "pending"
+                        lead.dialerStatus === "pending"
                           ? "bg-slate-700 text-cyan-400"
-                          : lead.status === "dialing"
+                          : lead.dialerStatus === "dialing"
                             ? "bg-yellow-900/50 text-yellow-400"
-                            : lead.status === "connected"
+                            : lead.dialerStatus === "connected"
                               ? "bg-emerald-900/50 text-emerald-400"
-                              : lead.status === "failed"
+                              : lead.dialerStatus === "failed"
                                 ? "bg-rose-900/50 text-rose-400"
-                                : lead.status === "completed"
+                                : lead.dialerStatus === "completed"
                                   ? "bg-blue-900/50 text-blue-400"
                                   : "bg-slate-700 text-slate-400"
                       }`}
                       onClick={() => handleUpdateStatus(lead._id)}
-                      title="Click to update status"
+                      title="Click to update lead disposition"
                     >
-                      {lead.status}
+                      {lead.dialerStatus}
                     </span>
+                  </td>
+                  <td className="py-3 px-3 text-slate-300 text-xs truncate max-w-xs">
+                    {lead.assignedCallerName || lead.assignedCloserName || lead.assignedCaller || lead.assignedCloser || '—'}
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex gap-2 justify-center">
@@ -449,6 +460,19 @@ export default function LeadsTable({ showNotification }) {
                         title="View details"
                       >
                         <Eye className="w-4 h-4" />
+                      </button>
+                      {/* Zoom Phone Integration */}
+                      <button
+                        onClick={() => {
+                          const cleanNumber = String(lead.phoneNumber).replace(/[^\d+]/g, '');
+                          window.open(`zoomphonecall://${cleanNumber}`, '_self');
+                          showNotification(`Calling ${lead.phoneNumber} via Zoom`, 'success');
+                        }}
+                        disabled={isLoading || !lead.phoneNumber}
+                        className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        title="Direct Call (Zoom)"
+                      >
+                        <Phone className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleEditLead(lead)}
@@ -462,9 +486,9 @@ export default function LeadsTable({ showNotification }) {
                         onClick={() => handleCompleteCall(lead)}
                         disabled={isLoading}
                         className="text-green-400 hover:text-green-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
-                        title="Complete call"
+                        title="Log Call Outcome"
                       >
-                        <Phone className="w-4 h-4" />
+                        <CheckCircle className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleScheduleCallback(lead)}
@@ -474,14 +498,7 @@ export default function LeadsTable({ showNotification }) {
                       >
                         <Calendar className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleUpdateStatus(lead._id)}
-                        disabled={isLoading}
-                        className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
-                        title="Update call status"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
+
                       <button
                         onClick={() => handleDeleteClick(lead)}
                         disabled={isLoading}

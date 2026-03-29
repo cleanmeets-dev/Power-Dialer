@@ -5,6 +5,7 @@ import AgentAvailabilityPanel from "./AgentAvailabilityPanel";
 import LeadsTable from "./LeadsTable";
 import LoadingSpinner from "./LoadingSpinner";
 import DashboardStats from "./DashboardStats";
+import { useState } from "react";
 import { useLeads } from "../hooks/useLeads";
 import { useDialer } from "../hooks/useDialer";
 import { useNotification } from "../hooks/useNotification";
@@ -84,8 +85,13 @@ export default function DashboardContent({ selectedCampaignId }) {
     <>
       {/* Dashboard Stats */}
       <DashboardStats
+<<<<<<< HEAD
         totalLeads={pagination.total}
         dialedCount={dialedCount}
+=======
+            totalLeads={pagination.total}
+            dialedCount={dialedCount}
+>>>>>>> zoom-integration
             successCount={successCount}
             callsInProgress={callsInProgress}
           />

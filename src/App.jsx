@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LeadsProvider } from './context/LeadsContext';
 import { useAuth } from './hooks/useAuth';
+import { getRoleHomeRoute, AGENT_ROLES } from './utils/roleUtils';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
 import OverviewPage from './pages/OverviewPage';
@@ -26,7 +27,7 @@ function RoleHomeRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+  const roleHome = getRoleHomeRoute(user?.role);
   return <Navigate to={roleHome} replace />;
 }
 
@@ -57,7 +58,7 @@ function App() {
         <Route
           path="/agent"
           element={
-            <ProtectedRoute allowedRoles={['agent']}>
+            <ProtectedRoute allowedRoles={AGENT_ROLES}>
               <LeadsProvider campaignId="">
                 <DashboardLayout />
               </LeadsProvider>

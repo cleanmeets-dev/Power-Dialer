@@ -1,3 +1,13 @@
+/**
+ * Assign all unassigned leads in a campaign to an agent
+ * @param {string} campaignId - Campaign ID
+ * @param {string} agentId - Agent ID
+ * @returns {Promise} Assignment result
+ */
+export const assignAllUnassignedLeads = async (campaignId, agentId) => {
+  const response = await api.post('/leads/assign-all', { campaignId, agentId });
+  return response.data;
+};
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -173,11 +183,11 @@ export const deleteCampaign = async (id) => {
 
 // ==================== Leads ====================
 
-export const uploadLeads = async (file, campaignId) => {
+export const uploadLeads = async (file, campaignId, agentId) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('campaignId', campaignId);
-
+  if (agentId) formData.append('agentId', agentId);
   const response = await api.post('/leads/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });

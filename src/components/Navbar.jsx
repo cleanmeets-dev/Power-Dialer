@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LogOut, Users, UserPlus, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isManager as checkIsManager } from '../utils/roleUtils';
 import AdminCreateUserModal from './AdminCreateUserModal';
 import AgentListModal from './modals/AgentListModal.jsx';
 import api from '../services/api.js';
@@ -9,7 +10,7 @@ export default function Navbar({ user, onLogout, onShowNotification, onToggleSid
   const navigate = useNavigate();
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showAgentListModal, setShowAgentListModal] = useState(false);
-  const isManager = user?.role === 'manager';
+  const isManager = checkIsManager(user?.role);
 
   const handleLogout = () => {
     onLogout();

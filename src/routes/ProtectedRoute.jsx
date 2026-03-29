@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { getRoleHomeRoute } from '../utils/roleUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 /**
@@ -22,7 +23,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
-    const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+    const roleHome = getRoleHomeRoute(user?.role);
     return <Navigate to={roleHome} replace />;
   }
 

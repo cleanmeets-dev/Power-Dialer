@@ -1,6 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Users, Check, X } from 'lucide-react';
-import { getLeads, assignLead, getAllAgents } from '../services/api';
+import { getLeads, assignLead, getAllAgents, assignAllUnassignedLeads } from '../services/api';
+  // Bulk assign all unassigned leads in campaign
+  const handleBulkAssignAll = async () => {
+    if (!selectedAgent) {
+      showNotification('Please select an agent', 'error');
+      return;
+    }
+    if (!window.confirm('Are you sure you want to assign ALL unassigned leads in this campaign to the selected agent?')) return;
+    try {
+      setIsLoading(true);
+      const result = await assignAllUnassignedLeads(campaignId, selectedAgent);
+      showNotification(result.message || 'All leads assigned successfully', 'success');
+      setSelectedLeads(new Set());
+      setSelectedAgent('');
+      loadUnassignedLeads();
+      if (onAssignmentComplete) onAssignmentComplete();
+    } catch (error) {
+      console.error('Error bulk assigning leads:', error);
+      showNotification('Failed to assign all leads', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, showNotification }) {
   const [unassignedLeads, setUnassignedLeads] = useState([]);
@@ -21,8 +43,8 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
       setIsLoading(true);
       const response = await getLeads(campaignId, { limit: 100 });
       const leads = response.leads || [];
-      // Filter for leads without assignedAgent
-      const unassigned = leads.filter(lead => !lead.assignedAgent);
+      // Filter for leads without assignedCaller or assignedCloser
+      const unassigned = leads.filter(lead => !lead.assignedCaller && !lead.assignedCloser);
       setUnassignedLeads(unassigned);
     } catch (error) {
       console.error('Error loading unassigned leads:', error);
@@ -109,6 +131,17 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
         </span>
       </div>
 
+      {/* Bulk Assign All Button */}
+      <div className="mb-4 flex gap-2">
+        <button
+          onClick={handleBulkAssignAll}
+          disabled={isLoading || !selectedAgent}
+          className="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+        >
+          Assign ALL Unassigned Leads to Agent
+        </button>
+      </div>
+
       <div className="space-y-4">
         {/* Agent Select */}
         <div>
@@ -122,7 +155,7 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
             <option value="">Choose an agent...</option>
             {agents.map(agent => (
               <option key={agent._id} value={agent._id}>
-                {agent.name} ({agent.email})
+                {agent.name} - {agent.role === 'caller-agent' ? 'Caller' : agent.role === 'closer-agent' ? 'Closer' : 'Agent'} ({agent.email})
               </option>
             ))}
           </select>

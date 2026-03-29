@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Plus, Edit2, Trash2, TrendingUp } from "lucide-react";
 import api, { getCampaigns } from "../services/api";
+import { isManager as checkIsManager, getRoleHomeRoute } from "../utils/roleUtils";
 import CreateCampaignModal from "../components/modals/CreateCampaignModal";
 import EditCampaignModal from "../components/modals/EditCampaignModal";
 import { useAuth } from "../hooks/useAuth";
@@ -24,12 +25,12 @@ export default function CampaignsPage() {
   }, []);
 
   useEffect(() => {
-    if (user && user.role !== "manager") {
+    if (user && !checkIsManager(user?.role)) {
       showNotification(
         "You do not have permission to access this page",
         "error",
       );
-      const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+      const roleHome = getRoleHomeRoute(user?.role);
       navigate(roleHome);
     }
   }, [user, navigate, showNotification]);

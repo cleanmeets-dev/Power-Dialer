@@ -14,8 +14,8 @@ const DISPOSITIONS = [
 
 export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    notes: '',
-    lastDialedNotes: '',
+    generalNotes: '',
+    callNotes: '',
     disposition: '',
     followUpDate: '',
   });
@@ -25,8 +25,8 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
   useEffect(() => {
     if (lead) {
       setFormData({
-        notes: lead.notes || '',
-        lastDialedNotes: lead.lastDialedNotes || '',
+        generalNotes: lead.generalNotes || '',
+        callNotes: lead.callNotes || '',
         disposition: lead.disposition || '',
         followUpDate: lead.followUpDate ? lead.followUpDate.split('T')[0] : '',
       });
@@ -45,8 +45,8 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
     try {
       setIsLoading(true);
       const updated = await updateLead(lead._id, {
-        notes: formData.notes,
-        lastDialedNotes: formData.lastDialedNotes,
+        generalNotes: formData.generalNotes,
+        callNotes: formData.callNotes,
         disposition: formData.disposition || undefined,
         followUpDate: formData.followUpDate ? new Date(formData.followUpDate) : null,
       });
@@ -93,27 +93,27 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
         {/* Initial Notes */}
         <div>
           <label className="block text-slate-300 text-sm font-semibold mb-2">
-            Notes (Before Call)
+            General Notes (Before Call)
           </label>
           <textarea
-            name="notes"
-            value={formData.notes}
+            name="generalNotes"
+            value={formData.generalNotes}
             onChange={handleChange}
-            placeholder="Add any notes about this lead..."
+            placeholder="Add any general notes about this lead..."
             disabled={isLoading}
             rows="3"
             className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition disabled:opacity-50 resize-none"
           />
         </div>
 
-        {/* Last Dialed Notes */}
+        {/* Call Notes */}
         <div>
           <label className="block text-slate-300 text-sm font-semibold mb-2">
             Call Notes (After Dialing)
           </label>
           <textarea
-            name="lastDialedNotes"
-            value={formData.lastDialedNotes}
+            name="callNotes"
+            value={formData.callNotes}
             onChange={handleChange}
             placeholder="Notes from the last call..."
             disabled={isLoading}

@@ -21,8 +21,8 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
       setIsLoading(true);
       const response = await getLeads(campaignId, { limit: 100 });
       const leads = response.leads || [];
-      // Filter for leads without assignedAgent
-      const unassigned = leads.filter(lead => !lead.assignedAgent);
+      // Filter for leads without assignedCaller or assignedCloser
+      const unassigned = leads.filter(lead => !lead.assignedCaller && !lead.assignedCloser);
       setUnassignedLeads(unassigned);
     } catch (error) {
       console.error('Error loading unassigned leads:', error);
@@ -122,7 +122,7 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
             <option value="">Choose an agent...</option>
             {agents.map(agent => (
               <option key={agent._id} value={agent._id}>
-                {agent.name} ({agent.email})
+                {agent.name} - {agent.role === 'caller-agent' ? 'Caller' : agent.role === 'closer-agent' ? 'Closer' : 'Agent'} ({agent.email})
               </option>
             ))}
           </select>

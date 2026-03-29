@@ -5,7 +5,6 @@ import AgentAvailabilityPanel from "./AgentAvailabilityPanel";
 import LeadsTable from "./LeadsTable";
 import LoadingSpinner from "./LoadingSpinner";
 import DashboardStats from "./DashboardStats";
-import TestDashboard from "./TestDashboard";
 import { useState } from "react";
 import { useLeads } from "../hooks/useLeads";
 import { useDialer } from "../hooks/useDialer";
@@ -14,7 +13,6 @@ import { useWebSocket } from "../hooks/useWebSocket";
 import useAgentStats from "../hooks/useAgentStats";
 
 export default function DashboardContent({ selectedCampaignId }) {
-  const [showTestDashboard, setShowTestDashboard] = useState(false);
   const { leads, pagination, isLoading, loadLeads } = useLeads();
   const { showNotification } = useNotification();
   const { agents, loadAgents: refreshAgents } = useAgentStats();
@@ -85,37 +83,8 @@ export default function DashboardContent({ selectedCampaignId }) {
 
   return (
     <>
-      {/* Tab Toggle for Testing */}
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={() => setShowTestDashboard(false)}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            !showTestDashboard
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-        >
-          Normal Dashboard
-        </button>
-        <button
-          onClick={() => setShowTestDashboard(true)}
-          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-            showTestDashboard
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          }`}
-        >
-          🧪 Testing Dashboard
-        </button>
-      </div>
-
-      {/* Test Dashboard */}
-      {showTestDashboard ? (
-        <TestDashboard />
-      ) : (
-        <>
-          {/* Dashboard Stats */}
-          <DashboardStats
+      {/* Dashboard Stats */}
+      <DashboardStats
             totalLeads={pagination.total}
             dialedCount={dialedCount}
             successCount={successCount}

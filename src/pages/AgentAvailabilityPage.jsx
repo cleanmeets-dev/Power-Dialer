@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { User, Clock, Phone, CheckCircle, XCircle, RefreshCw, Users, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { isManager as checkIsManager, getRoleHomeRoute } from '../utils/roleUtils';
 import {
   getAgentStats,
   managerCheckInAgent,
@@ -24,9 +25,9 @@ export default function AgentAvailabilityPage() {
 
   // Check if user is manager
   useEffect(() => {
-    if (user && user.role !== 'manager') {
+    if (user && !checkIsManager(user?.role)) {
       showNotification('You do not have permission to access this page', 'error');
-      const roleHome = user?.role === 'manager' ? '/manager' : '/agent';
+      const roleHome = getRoleHomeRoute(user?.role);
       navigate(roleHome);
     }
   }, [user, navigate, showNotification]);

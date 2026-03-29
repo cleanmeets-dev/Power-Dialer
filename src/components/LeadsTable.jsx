@@ -21,7 +21,10 @@ import CompleteCallModal from "./modals/CompleteCallModal.jsx";
 import ScheduleCallbackModal from "./modals/ScheduleCallbackModal.jsx";
 import ConfirmModal from "./common/ConfirmModal.jsx";
 
-const STATUSES = ["pending", "dialing", "connected", "completed", "failed"];
+const DIALER_STATUSES = ["pending", "dialing", "connected", "failed", "completed"];
+const LEAD_STATUSES = ["new", "contacted", "interested", "not_interested", "callback", "converted", "closed"];
+// For filtering leads by technical state (dialerStatus)
+const STATUSES = DIALER_STATUSES;
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 const api = axios.create({ baseURL: API_BASE_URL });
@@ -201,7 +204,8 @@ export default function LeadsTable({ showNotification }) {
       "Email",
       "City",
       "State",
-      "Status",
+      "Dialer Status",
+      "Lead Status",
       "Created At",
     ];
     const rows = leads.map((lead) => [
@@ -210,7 +214,8 @@ export default function LeadsTable({ showNotification }) {
       lead.email || "",
       lead.city || "",
       lead.state || "",
-      lead.status || "",
+      lead.dialerStatus || "",
+      lead.leadStatus || "",
       new Date(lead.createdAt).toLocaleDateString(),
     ]);
 
@@ -422,22 +427,22 @@ export default function LeadsTable({ showNotification }) {
                   <td className="py-3 px-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block cursor-pointer transition hover:opacity-80 ${
-                        lead.status === "pending"
+                        lead.dialerStatus === "pending"
                           ? "bg-slate-700 text-cyan-400"
-                          : lead.status === "dialing"
+                          : lead.dialerStatus === "dialing"
                             ? "bg-yellow-900/50 text-yellow-400"
-                            : lead.status === "connected"
+                            : lead.dialerStatus === "connected"
                               ? "bg-emerald-900/50 text-emerald-400"
-                              : lead.status === "failed"
+                              : lead.dialerStatus === "failed"
                                 ? "bg-rose-900/50 text-rose-400"
-                                : lead.status === "completed"
+                                : lead.dialerStatus === "completed"
                                   ? "bg-blue-900/50 text-blue-400"
                                   : "bg-slate-700 text-slate-400"
                       }`}
                       onClick={() => handleUpdateStatus(lead._id)}
-                      title="Click to update status"
+                      title="Click to update lead disposition"
                     >
-                      {lead.status}
+                      {lead.dialerStatus}
                     </span>
                   </td>
                   <td className="py-3 px-3">

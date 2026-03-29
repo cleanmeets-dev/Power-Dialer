@@ -67,14 +67,14 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
       {/* Status & Disposition Badges */}
       <div className="mb-6 grid grid-cols-2 gap-3">
         <div className="flex items-center gap-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[lead.status] || 'bg-slate-600 text-slate-300'}`}>
-            Status: {lead.status}
+          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600 text-slate-300'}`}>
+            Dialer Status: {lead.dialerStatus}
           </span>
         </div>
-        {lead.disposition && (
+        {lead.leadStatus && (
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${DISPOSITION_COLORS[lead.disposition] || 'bg-slate-600 text-slate-300'}`}>
-              Disposition: {lead.disposition}
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[lead.leadStatus] || 'bg-slate-600 text-slate-300'}`}>
+              Lead Status: {lead.leadStatus}
             </span>
           </div>
         )}
@@ -148,22 +148,22 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
         )}
 
         {/* Notes Section */}
-        {(lead.notes || lead.lastDialedNotes) && (
+        {(lead.generalNotes || lead.callNotes) && (
           <div>
             <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
               <FileText className="w-4 h-4" /> Notes
             </h4>
             <div className="space-y-2 pl-6">
-              {lead.notes && (
+              {lead.generalNotes && (
                 <div className="text-white">
-                  <p className="text-xs text-slate-500">Initial Notes</p>
-                  <p className="font-medium text-slate-300 bg-slate-800/50 p-2 rounded text-sm">{lead.notes}</p>
+                  <p className="text-xs text-slate-500">General Notes</p>
+                  <p className="font-medium text-slate-300 bg-slate-800/50 p-2 rounded text-sm">{lead.generalNotes}</p>
                 </div>
               )}
-              {lead.lastDialedNotes && (
+              {lead.callNotes && (
                 <div className="text-white">
-                  <p className="text-xs text-slate-500">Last Call Notes</p>
-                  <p className="font-medium text-slate-300 bg-slate-800/50 p-2 rounded text-sm">{lead.lastDialedNotes}</p>
+                  <p className="text-xs text-slate-500">Call Notes</p>
+                  <p className="font-medium text-slate-300 bg-slate-800/50 p-2 rounded text-sm">{lead.callNotes}</p>
                 </div>
               )}
             </div>

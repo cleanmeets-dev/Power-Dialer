@@ -32,12 +32,8 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
     try {
       setIsLoading(true);
       const response = await signup(email, password, name);
-      
-      // Store token
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      onSignupSuccess(response.user);
+
+      onSignupSuccess(response);
     } catch (err) {
       setError(err.response?.data?.error || 'Signup failed. Please try again.');
       console.error(err);

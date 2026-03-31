@@ -11,6 +11,18 @@ export const assignAllUnassignedLeads = async (campaignId, agentId) => {
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+export const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized';
+
+export const clearAuthStorage = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('user');
+};
+
+const notifyUnauthorized = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+  }
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -33,10 +45,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear auth data
-      // ProtectedRoute and React Router will handle the redirect
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+      clearAuthStorage();
+      notifyUnauthorized();
     }
     return Promise.reject(error);
   }
@@ -136,8 +146,8 @@ export const getUsers = async () => {
  * Logout (client-side only)
  */
 export const logout = () => {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('user');
+  clearAuthStorage();
+  notifyUnauthorized();
 };
 
 /**

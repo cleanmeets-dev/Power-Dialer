@@ -7,9 +7,9 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLoginSuccess = (user) => {
-    login(user);
-    const roleHome = getRoleHomeRoute(user?.role);
+  const handleLoginSuccess = (authData) => {
+    login(authData);
+    const roleHome = getRoleHomeRoute(authData?.user?.role);
     navigate(roleHome);
   };
 

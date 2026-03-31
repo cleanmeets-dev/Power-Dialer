@@ -20,12 +20,8 @@ export default function Login({ onLoginSuccess }) {
     try {
       setIsLoading(true);
       const response = await login(email, password);
-      
-      // Store token
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      onLoginSuccess(response.user);
+
+      onLoginSuccess(response);
     } catch (err) {
       // Extract error details from various possible response structures
       let errorMsg = 'Login failed. Please try again.';

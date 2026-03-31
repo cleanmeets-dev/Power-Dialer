@@ -3,11 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { getRoleHomeRoute } from '../utils/roleUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-/**
- * ProtectedRoute - Wrapper for routes that require authentication
- * Shows loading spinner while checking auth, redirects to login if not authenticated
- */
-export default function ProtectedRoute({ children, allowedRoles }) {
+export default function RoleHomeRedirect() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -22,10 +18,11 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
-    const roleHome = getRoleHomeRoute(user?.role);
-    return <Navigate to={roleHome} replace />;
+  const roleHome = getRoleHomeRoute(user.role);
+
+  if (!roleHome || typeof roleHome !== 'string') {
+    return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <Navigate to={roleHome} replace />;
 }

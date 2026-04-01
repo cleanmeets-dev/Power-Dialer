@@ -10,6 +10,7 @@ import {
   Calendar,
   User,
   FileText,
+  X,
 } from 'lucide-react';
 import axios from 'axios';
 import CampaignSelector from '../components/CampaignSelector';
@@ -53,11 +54,17 @@ export default function FollowupPage() {
   const [searchInput, setSearchInput] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedDisposition, setSelectedDisposition] = useState('');
+  const [selectedInterestLevel, setSelectedInterestLevel] = useState('');
+  const [daysSinceContact, setDaysSinceContact] = useState('');
+  const [followupUrgency, setFollowupUrgency] = useState('');
+  const [selectedAgent, setSelectedAgent] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [agents, setAgents] = useState([]);
 
   // Fetch followup leads
   useEffect(() => {
@@ -89,6 +96,22 @@ export default function FollowupPage() {
           params.disposition = selectedDisposition;
         }
 
+        if (selectedInterestLevel) {
+          params.interestLevel = selectedInterestLevel;
+        }
+
+        if (daysSinceContact) {
+          params.daysSinceContact = daysSinceContact;
+        }
+
+        if (followupUrgency) {
+          params.followupUrgency = followupUrgency;
+        }
+
+        if (selectedAgent) {
+          params.agentId = selectedAgent;
+        }
+
         const response = await api.get('/leads/followups', { params });
         console.log('Followup response:', response.data);
 
@@ -110,7 +133,40 @@ export default function FollowupPage() {
     };
 
     fetchFollowupLeads();
-  }, [selectedCampaignId, currentPage, pageSize, searchInput, selectedStatus, selectedDisposition]);
+  }, [selectedCampaignId, currentPage, pageSize, searchInput, selectedStatus, selectedDisposition, selectedInterestLevel, daysSinceContact, followupUrgency, selectedAgent]);
+
+  // Fetch available agents
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        // Extract unique agents from current leads
+        const uniqueAgents = new Map();
+        leads.forEach(lead => {
+          if (lead.assignedCaller && lead.assignedCaller._id) {
+            const agent = lead.assignedCaller;
+            uniqueAgents.set(agent._id, {
+              _id: agent._id,
+              name: agent.name || agent.email,
+              email: agent.email
+            });
+          }
+          if (lead.assignedCloser && lead.assignedCloser._id) {
+            const agent = lead.assignedCloser;
+            uniqueAgents.set(agent._id, {
+              _id: agent._id,
+              name: agent.name || agent.email,
+              email: agent.email
+            });
+          }
+        });
+        setAgents(Array.from(uniqueAgents.values()).sort((a, b) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        console.error('Error extracting agents:', error);
+      }
+    };
+
+    fetchAgents();
+  }, [leads]);
 
   const handleViewLead = (leadId) => {
     setSelectedLeadId(leadId);
@@ -119,6 +175,17 @@ export default function FollowupPage() {
 
   const handleSearch = (e) => {
     setSearchInput(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setSearchInput('');
+    setSelectedStatus('');
+    setSelectedDisposition('');
+    setSelectedInterestLevel('');
+    setDaysSinceContact('');
+    setFollowupUrgency('');
+    setSelectedAgent('');
     setCurrentPage(1);
   };
 
@@ -197,7 +264,7 @@ export default function FollowupPage() {
 
       {selectedCampaignId && (
         <>
-          {/* Filters */}
+          {/* Primary Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-800 p-4 rounded-lg border border-slate-700">
             {/* Search */}
             <div className="relative">
@@ -245,14 +312,100 @@ export default function FollowupPage() {
               ))}
             </select>
 
-            {/* Page Size */}
+            {/* Advanced Filters Toggle */}
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white transition"
+            >
+              <Filter className="w-4 h-4" />
+              {showAdvancedFilters ? 'Hide' : 'More'} Filters
+            </button>
+          </div>
+
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-800 p-4 rounded-lg border border-slate-700">
+              {/* Agent Filter */}
+              <select
+                value={selectedAgent}
+                onChange={(e) => {
+                  setSelectedAgent(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              >
+                <option value="">All Agents</option>
+                {agents.map((agent) => (
+                  <option key={agent._id} value={agent._id}>
+                    {agent.name || agent.email}
+                  </option>
+                ))}
+              </select>
+
+              {/* Interest Level Filter */}
+              <select
+                value={selectedInterestLevel}
+                onChange={(e) => {
+                  setSelectedInterestLevel(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              >
+                <option value="">All Interest Levels</option>
+                <option value="cold">Cold</option>
+                <option value="warm">Warm</option>
+                <option value="hot">Hot</option>
+              </select>
+
+              {/* Days Since Contact Filter */}
+              <input
+                type="number"
+                placeholder="Days since contact"
+                min="0"
+                value={daysSinceContact}
+                onChange={(e) => {
+                  setDaysSinceContact(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+              />
+
+              {/* Follow-up Urgency Filter */}
+              <select
+                value={followupUrgency}
+                onChange={(e) => {
+                  setFollowupUrgency(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              >
+                <option value="">All Follow-ups</option>
+                <option value="overdue">Overdue</option>
+                <option value="due-today">Due Today</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="no-followup">No Scheduled</option>
+              </select>
+
+              {/* Clear Filters Button */}
+              <button
+                onClick={clearAllFilters}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-600/50 rounded-lg text-rose-400 transition"
+              >
+                <X className="w-4 h-4" />
+                Clear All
+              </button>
+            </div>
+          )}
+
+          {/* Page Size */}
+          <div className="flex justify-end">
             <select
               value={pageSize}
               onChange={(e) => {
                 setPageSize(parseInt(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-primary-500"
             >
               <option value={10}>10 per page</option>
               <option value={20}>20 per page</option>

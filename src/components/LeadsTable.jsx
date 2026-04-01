@@ -9,7 +9,6 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  Download,
   Phone,
   Calendar,
 } from "lucide-react";
@@ -368,15 +367,6 @@ export default function LeadsTable({ showNotification }) {
                 <span className="sm:hidden">({selectedRows.size})</span>
               </button>
             )}
-            <button
-              onClick={handleExport}
-              disabled={isLoading || leads.length === 0}
-              className="px-3 md:px-4 py-2 bg-secondary-600 hover:bg-secondary-700 disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
-              title="Export as CSV"
-            >
-              <Download className="w-3 h-3 md:w-4 md:h-4" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import {
   User,
   FileText,
   X,
+  Download,
 } from 'lucide-react';
 import axios from 'axios';
 import CampaignSelector from '../components/CampaignSelector';
@@ -187,6 +188,50 @@ export default function FollowupPage() {
     setFollowupUrgency('');
     setSelectedAgent('');
     setCurrentPage(1);
+  };
+
+  const handleExport = () => {
+    if (leads.length === 0) {
+      showNotification('No leads to export', 'error');
+      return;
+    }
+
+    const headers = [
+      'Business Name',
+      'Phone',
+      'Email',
+      'Lead Status',
+      'Disposition',
+      'Interest Level',
+      'Agent Assigned',
+      'Last Contacted',
+      'Notes',
+    ];
+    const rows = leads.map((lead) => [
+      lead.businessName || '',
+      lead.phoneNumber || '',
+      lead.email || '',
+      lead.leadStatus || '',
+      lead.disposition || '',
+      lead.interestLevel || '',
+      getAssignedAgentLabel(lead) || '',
+      formatDate(lead.lastContacted) || '',
+      lead.notes || '',
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `followup-leads-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showNotification('Followup leads exported successfully', 'success');
   };
 
   const formatDate = (date) => {
@@ -412,6 +457,20 @@ export default function FollowupPage() {
               <option value={50}>50 per page</option>
             </select>
           </div>
+
+          {/* Export Button */}
+          {leads.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={handleExport}
+                className="px-4 py-2 bg-secondary-600 hover:bg-secondary-700 text-white rounded-lg transition font-semibold text-sm flex items-center gap-2 whitespace-nowrap"
+                title="Export as CSV"
+              >
+                <Download className="w-4 h-4" />
+                Export Leads
+              </button>
+            </div>
+          )}
 
           {/* Results Counter */}
           <div className="text-sm text-slate-400">

@@ -90,6 +90,7 @@ export default function FollowupPage() {
         }
 
         const response = await api.get('/leads/followups', { params });
+        console.log('Followup response:', response.data);
 
         if (response.data.success) {
           setLeads(response.data.data);
@@ -441,12 +442,11 @@ export default function FollowupPage() {
       )}
 
       {/* Lead Detail Modal */}
-      {showDetailModal && (
-        <LeadDetailModal
-          leadId={selectedLeadId}
-          onClose={() => setShowDetailModal(false)}
-        />
-      )}
+      <LeadDetailModal
+        isOpen={showDetailModal}
+        leadId={selectedLeadId}
+        onClose={() => setShowDetailModal(false)}
+      />
     </div>
   );
 }

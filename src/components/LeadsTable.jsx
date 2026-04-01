@@ -439,7 +439,7 @@ export default function LeadsTable({ showNotification }) {
 
         {/* Table */}
         <div className="overflow-x-auto mb-4">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm select-none">
             <thead>
               <tr className="border-b border-slate-700 bg-slate-700/50">
                 <th className="text-left py-3 px-3 text-cyan-400 font-semibold w-8">

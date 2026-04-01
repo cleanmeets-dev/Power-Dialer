@@ -113,7 +113,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
       )}
 
       {/* Selected Campaign Info */}
-      {selectedId && campaigns.length > 0 && (
+      {currentSelectedId && campaigns.length > 0 && (
         <div className="p-3 bg-primary-500/20 border border-primary-500/50 rounded">
           <p className="text-primary-500 text-sm">
             ✓ Campaign selected and ready for leads

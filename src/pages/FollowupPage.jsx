@@ -188,7 +188,10 @@ export default function FollowupPage() {
 
       {/* Campaign Selector */}
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-        <CampaignSelector onCampaignSelect={setSelectedCampaignId} />
+        <CampaignSelector
+          onCampaignSelect={setSelectedCampaignId}
+          selectedCampaignId={selectedCampaignId}
+        />
       </div>
 
       {selectedCampaignId && (

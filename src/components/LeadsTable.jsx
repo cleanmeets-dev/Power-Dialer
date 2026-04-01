@@ -46,6 +46,9 @@ export default function LeadsTable({ showNotification }) {
     changePageSize,
     setSearch,
     setStatus,
+    setDisposition,
+    setInterestLevel,
+    setAgentId,
     deleteSingleLead,
     deleteMultipleLeads,
     updateLead,
@@ -55,6 +58,7 @@ export default function LeadsTable({ showNotification }) {
   const tableColumns = getTableColumns(user?.role);
 
   const [searchInput, setSearchInput] = useState("");
+  const [agents, setAgents] = useState([]);
 
   // Local state for modals
   const [selectedLeadId, setSelectedLeadId] = useState(null);
@@ -246,6 +250,30 @@ export default function LeadsTable({ showNotification }) {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  // Extract unique agents from leads for manager filter
+  useEffect(() => {
+    const uniqueAgents = new Map();
+    leads.forEach(lead => {
+      if (lead.assignedCaller && lead.assignedCaller._id) {
+        const agent = lead.assignedCaller;
+        uniqueAgents.set(agent._id, {
+          _id: agent._id,
+          name: agent.name || agent.email,
+          email: agent.email
+        });
+      }
+      if (lead.assignedCloser && lead.assignedCloser._id) {
+        const agent = lead.assignedCloser;
+        uniqueAgents.set(agent._id, {
+          _id: agent._id,
+          name: agent.name || agent.email,
+          email: agent.email
+        });
+      }
+    });
+    setAgents(Array.from(uniqueAgents.values()).sort((a, b) => a.name.localeCompare(b.name)));
+  }, [leads]);
+
   // Pagination calculation
   const totalLeads = pagination.total || leads.length;
   const currentPage = pagination.page || 1;
@@ -371,8 +399,8 @@ export default function LeadsTable({ showNotification }) {
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          <div className="relative md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <div className="relative lg:col-span-2">
             <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
             <input
               type="text"
@@ -400,6 +428,55 @@ export default function LeadsTable({ showNotification }) {
               ))}
             </select>
           </div>
+
+          <div>
+            <select
+              value={filters.disposition || ""}
+              onChange={(e) => setDisposition(e.target.value)}
+              disabled={isLoading}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+            >
+              <option value="">All Dispositions</option>
+              <option value="interested">Interested</option>
+              <option value="not-interested">Not Interested</option>
+              <option value="callback">Callback</option>
+              <option value="wrong-number">Wrong Number</option>
+              <option value="no-answer">No Answer</option>
+              <option value="do-not-call">Do Not Call</option>
+            </select>
+          </div>
+
+          <div>
+            <select
+              value={filters.interestLevel || ""}
+              onChange={(e) => setInterestLevel(e.target.value)}
+              disabled={isLoading}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+            >
+              <option value="">All Interest Levels</option>
+              <option value="cold">Cold</option>
+              <option value="warm">Warm</option>
+              <option value="hot">Hot</option>
+            </select>
+          </div>
+
+          {user?.role === "manager" && (
+            <div>
+              <select
+                value={filters.agentId || ""}
+                onChange={(e) => setAgentId(e.target.value)}
+                disabled={isLoading}
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+              >
+                <option value="">All Agents</option>
+                {agents.map((agent) => (
+                  <option key={agent._id} value={agent._id}>
+                    {agent.name || agent.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Page Size */}

@@ -25,6 +25,9 @@ export function LeadsProvider({ children, campaignId }) {
   const [filters, setFilters] = useState({
     search: "",
     status: "",
+    disposition: "",
+    interestLevel: "",
+    agentId: "",
   });
 
   const loadLeads = useCallback(
@@ -43,6 +46,9 @@ export function LeadsProvider({ children, campaignId }) {
             limit: options.limit ?? pagination.limit,
             status: (options.status ?? filters.status) || null,
             search: (options.search ?? filters.search) || null,
+            disposition: (options.disposition ?? filters.disposition) || null,
+            interestLevel: (options.interestLevel ?? filters.interestLevel) || null,
+            agentId: (options.agentId ?? filters.agentId) || null,
           },
         });
         const leadsData = response.data;
@@ -70,6 +76,9 @@ export function LeadsProvider({ children, campaignId }) {
       pagination.limit,
       filters.status,
       filters.search,
+      filters.disposition,
+      filters.interestLevel,
+      filters.agentId,
     ],
   );
 
@@ -111,6 +120,33 @@ export function LeadsProvider({ children, campaignId }) {
     [loadLeads],
   );
 
+  const setDisposition = useCallback(
+    (disposition) => {
+      setFilters((prev) => ({ ...prev, disposition }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
+      loadLeads({ page: 1, disposition });
+    },
+    [loadLeads],
+  );
+
+  const setInterestLevel = useCallback(
+    (interestLevel) => {
+      setFilters((prev) => ({ ...prev, interestLevel }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
+      loadLeads({ page: 1, interestLevel });
+    },
+    [loadLeads],
+  );
+
+  const setAgentId = useCallback(
+    (agentId) => {
+      setFilters((prev) => ({ ...prev, agentId }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
+      loadLeads({ page: 1, agentId });
+    },
+    [loadLeads],
+  );
+
   // Lead operations
   const deleteSingleLead = useCallback((leadId) => {
     setLeads((prev) => prev.filter((l) => l._id !== leadId));
@@ -139,6 +175,9 @@ export function LeadsProvider({ children, campaignId }) {
     changePageSize,
     setSearch,
     setStatus,
+    setDisposition,
+    setInterestLevel,
+    setAgentId,
     deleteSingleLead,
     deleteMultipleLeads,
     updateLead,

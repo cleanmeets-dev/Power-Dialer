@@ -91,13 +91,6 @@ export default function ScheduleCallbackModal({
           </p>
         </div>
 
-        {/* Info */}
-        <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-          <p className="text-xs text-blue-300">
-            💡 The lead will be automatically re-dialed at the scheduled time if the callback scheduler is active.
-          </p>
-        </div>
-
         {/* Submit Buttons */}
         <div className="flex gap-3 justify-end mt-6">
           <button

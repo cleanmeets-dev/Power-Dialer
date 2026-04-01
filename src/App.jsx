@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
 import OverviewPage from './pages/OverviewPage';
 import LeadsPage from './pages/LeadsPage';
+import FollowupPage from './pages/FollowupPage';
 import CallLogsPage from './pages/CallLogsPage';
 import CampaignsPage from './pages/CampaignsPage';
 import AgentAvailabilityPage from './pages/AgentAvailabilityPage';
@@ -37,6 +38,7 @@ function App() {
           >
             <Route index element={<OverviewPage />} />
             <Route path="leads" element={<LeadsPage />} />
+            <Route path="followups" element={<FollowupPage />} />
             <Route path="call-logs" element={<CallLogsPage />} />
             <Route path="campaigns" element={<CampaignsPage />} />
             <Route path="agents" element={<AgentAvailabilityPage />} />

@@ -14,6 +14,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { useLeads } from "../hooks/useLeads";
+import { useAuth } from "../hooks/useAuth";
+import { getTableColumns } from "../utils/leadFieldConfig";
 import LeadDetailModal from "./modals/LeadDetailModal.jsx";
 import EditLeadModal from "./modals/EditLeadModal.jsx";
 import UpdateLeadStatusModal from "./modals/UpdateLeadStatusModal.jsx";
@@ -49,6 +51,9 @@ export default function LeadsTable({ showNotification }) {
     deleteMultipleLeads,
     updateLead,
   } = useLeads();
+  
+  const { user } = useAuth();
+  const tableColumns = getTableColumns(user?.role);
 
   const [searchInput, setSearchInput] = useState("");
 
@@ -251,6 +256,19 @@ export default function LeadsTable({ showNotification }) {
   const endLead = Math.min(currentPage * pageSize, totalLeads);
 
   const nextPendingLeadId = leads.find((l) => l.dialerStatus === "pending")?._id;
+  const getAssignedAgentLabel = (lead) => {
+    if (lead.assignedCallerName) return lead.assignedCallerName;
+    if (lead.assignedCloserName) return lead.assignedCloserName;
+    if (lead.assignedCaller && typeof lead.assignedCaller === "object") {
+      return lead.assignedCaller.name || lead.assignedCaller.email || "—";
+    }
+    if (lead.assignedCloser && typeof lead.assignedCloser === "object") {
+      return lead.assignedCloser.name || lead.assignedCloser.email || "—";
+    }
+    if (typeof lead.assignedCaller === "string") return lead.assignedCaller;
+    if (typeof lead.assignedCloser === "string") return lead.assignedCloser;
+    return "—";
+  };
 
   return (
     <>
@@ -449,7 +467,7 @@ export default function LeadsTable({ showNotification }) {
                     </span>
                   </td>
                   <td className="py-3 px-3 text-slate-300 text-xs truncate max-w-xs">
-                    {lead.assignedCallerName || lead.assignedCloserName || lead.assignedCaller || lead.assignedCloser || '—'}
+                    {getAssignedAgentLabel(lead)}
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex gap-2 justify-center">

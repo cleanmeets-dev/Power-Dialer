@@ -256,6 +256,79 @@ export default function LeadsTable({ showNotification }) {
   const endLead = Math.min(currentPage * pageSize, totalLeads);
 
   const nextPendingLeadId = leads.find((l) => l.dialerStatus === "pending")?._id;
+
+  // Helper function to render cell value based on column key
+  const renderCellValue = (lead, columnKey) => {
+    switch(columnKey) {
+      case 'businessName':
+        return (
+          <div className="flex items-center gap-2">
+            <span>{lead.businessName || "—"}</span>
+            {lead._id === nextPendingLeadId && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                Next up
+              </span>
+            )}
+          </div>
+        );
+      case 'phoneNumber':
+        return <span className="font-mono text-xs">{lead.phoneNumber || "—"}</span>;
+      case 'dialerStatus':
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block cursor-pointer transition hover:opacity-80 ${
+              lead.dialerStatus === "pending"
+                ? "bg-slate-700 text-cyan-400"
+                : lead.dialerStatus === "dialing"
+                  ? "bg-yellow-900/50 text-yellow-400"
+                  : lead.dialerStatus === "connected"
+                    ? "bg-emerald-900/50 text-emerald-400"
+                    : lead.dialerStatus === "failed"
+                      ? "bg-rose-900/50 text-rose-400"
+                      : lead.dialerStatus === "completed"
+                        ? "bg-blue-900/50 text-blue-400"
+                        : "bg-slate-700 text-slate-400"
+            }`}
+            onClick={() => handleUpdateStatus(lead._id)}
+            title="Click to update lead status"
+          >
+            {lead.dialerStatus || "—"}
+          </span>
+        );
+      case 'leadStatus':
+        const statusColors = {
+          new: 'bg-slate-700 text-slate-400',
+          contacted: 'bg-blue-900/50 text-blue-400',
+          interested: 'bg-green-900/50 text-green-400',
+          not_interested: 'bg-red-900/50 text-red-400',
+          callback: 'bg-yellow-900/50 text-yellow-400',
+          converted: 'bg-emerald-900/50 text-emerald-400',
+          closed: 'bg-gray-900/50 text-gray-400'
+        };
+        return (
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block ${statusColors[lead.leadStatus] || 'bg-slate-700 text-slate-400'}`}>
+            {lead.leadStatus?.replace('_', ' ') || "—"}
+          </span>
+        );
+      case 'assignedAgentName':
+        return <span className="text-xs">{lead.assignedCallerName || lead.assignedCloserName || "—"}</span>;
+      case 'interestLevel':
+        const levelColors = {
+          cold: 'text-slate-400',
+          warm: 'text-yellow-400',
+          hot: 'text-red-400'
+        };
+        return <span className={`text-xs font-semibold capitalize ${levelColors[lead.interestLevel] || 'text-slate-400'}`}>{lead.interestLevel || "—"}</span>;
+      case 'appointmentDate':
+        return <span className="text-xs">{lead.appointmentDate ? new Date(lead.appointmentDate).toLocaleDateString() : "—"}</span>;
+      case 'typeOfCleaning':
+        return <span className="text-xs">{lead.typeOfCleaning || "—"}</span>;
+      case 'onboardingStatus':
+        return <span className="text-xs">{lead.onboardingStatus || "—"}</span>;
+      default:
+        return <span className="text-xs">{lead[columnKey] || "—"}</span>;
+    }
+  };
   const getAssignedAgentLabel = (lead) => {
     if (lead.assignedCallerName) return lead.assignedCallerName;
     if (lead.assignedCloserName) return lead.assignedCloserName;
@@ -380,24 +453,11 @@ export default function LeadsTable({ showNotification }) {
                     className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-cyan-500 cursor-pointer"
                   />
                 </th>
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
-                  Business Name
-                </th>
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
-                  Phone
-                </th>
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
-                  Email
-                </th>
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
-                  Location
-                </th>
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
-                  Status
-                </th>
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold">
-                  Assigned Agent
-                </th>
+                {tableColumns.map((col) => (
+                  <th key={col.key} className="text-left py-3 px-3 text-cyan-400 font-semibold">
+                    {col.label}
+                  </th>
+                ))}
                 <th className="text-center py-3 px-3 text-cyan-400 font-semibold">
                   Actions
                 </th>
@@ -424,51 +484,11 @@ export default function LeadsTable({ showNotification }) {
                       className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-cyan-500 cursor-pointer"
                     />
                   </td>
-                  <td className="py-3 px-3 text-slate-200 max-w-xs truncate font-medium">
-                    <div className="flex items-center gap-2">
-                      <span>{lead.businessName || "—"}</span>
-                      {lead._id === nextPendingLeadId && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-                          Next up
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-slate-200 font-mono text-xs">
-                    {lead.phoneNumber}
-                  </td>
-                  <td className="py-3 px-3 text-slate-300 text-xs truncate max-w-xs">
-                    {lead.email || "—"}
-                  </td>
-                  <td className="py-3 px-3 text-slate-400 text-xs">
-                    {lead.city
-                      ? `${lead.city}${lead.state ? ", " + lead.state : ""}`
-                      : "—"}
-                  </td>
-                  <td className="py-3 px-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block cursor-pointer transition hover:opacity-80 ${
-                        lead.dialerStatus === "pending"
-                          ? "bg-slate-700 text-cyan-400"
-                          : lead.dialerStatus === "dialing"
-                            ? "bg-yellow-900/50 text-yellow-400"
-                            : lead.dialerStatus === "connected"
-                              ? "bg-emerald-900/50 text-emerald-400"
-                              : lead.dialerStatus === "failed"
-                                ? "bg-rose-900/50 text-rose-400"
-                                : lead.dialerStatus === "completed"
-                                  ? "bg-blue-900/50 text-blue-400"
-                                  : "bg-slate-700 text-slate-400"
-                      }`}
-                      onClick={() => handleUpdateStatus(lead._id)}
-                      title="Click to update lead disposition"
-                    >
-                      {lead.dialerStatus}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-slate-300 text-xs truncate max-w-xs">
-                    {getAssignedAgentLabel(lead)}
-                  </td>
+                  {tableColumns.map((col) => (
+                    <td key={`${lead._id}-${col.key}`} className="py-3 px-3 text-slate-200 max-w-xs truncate">
+                      {renderCellValue(lead, col.key)}
+                    </td>
+                  ))}
                   <td className="py-3 px-3">
                     <div className="flex gap-2 justify-center">
                       <button
@@ -516,7 +536,6 @@ export default function LeadsTable({ showNotification }) {
                       >
                         <Calendar className="w-4 h-4" />
                       </button>
-
                       <button
                         onClick={() => handleDeleteClick(lead)}
                         disabled={isLoading}

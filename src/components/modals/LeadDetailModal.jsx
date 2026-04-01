@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../hooks/useAuth.js';
+import { getVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
 import { getLead } from '../../services/api.js';
 import { Phone, Mail, MapPin, Calendar, Clock, CheckCircle, XCircle, FileText, AlertCircle, Briefcase, Edit3, ListChecks } from 'lucide-react';
@@ -9,6 +11,13 @@ const STATUS_COLORS = {
   connected: 'bg-emerald-500/20 text-emerald-400',
   failed: 'bg-rose-500/20 text-rose-400',
   completed: 'bg-blue-500/20 text-blue-400',
+  new: 'bg-slate-500/20 text-slate-300',
+  contacted: 'bg-blue-500/20 text-blue-400',
+  interested: 'bg-emerald-500/20 text-emerald-400',
+  not_interested: 'bg-rose-500/20 text-rose-400',
+  callback: 'bg-yellow-500/20 text-yellow-400',
+  converted: 'bg-emerald-600/20 text-emerald-300',
+  closed: 'bg-slate-600/20 text-slate-300',
 };
 
 const DISPOSITION_COLORS = {
@@ -21,6 +30,8 @@ const DISPOSITION_COLORS = {
 };
 
 export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdate, onEditLead }) {
+  const { user } = useAuth();
+  const visibleFields = getVisibleFields(user?.role);
   const [lead, setLead] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,124 +73,67 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
     return new Date(date).toLocaleDateString();
   };
 
+  // Group fields by category
+  const commonFields = visibleFields.filter(f => ['businessName', 'contactName', 'phoneNumber', 'email', 'businessAddress', 'city', 'state', 'country'].includes(f.key));
+  const roleSpecificFields = visibleFields.filter(f => !f.key.startsWith('dialerStatus') && !f.key.startsWith('leadStatus') && !f.key.startsWith('disposition') && !f.key.startsWith('callNotes') && !f.key.startsWith('generalNotes') && !f.key.startsWith('followUpDate') && !commonFields.some(cf => cf.key === f.key));
+  const statusFields = visibleFields.filter(f => ['dialerStatus', 'leadStatus', 'disposition', 'callNotes', 'generalNotes', 'followUpDate'].includes(f.key));
+
+  const renderFieldValue = (key, value) => {
+    if (!value) return '—';
+    if (key.includes('Date') || key.includes('date')) {
+      return typeof value === 'string' ? new Date(value).toLocaleDateString() : '—';
+    }
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    return String(value);
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={lead.businessName || 'Lead Details'} maxWidth="max-w-2xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={lead.businessName || 'Lead Details'} maxWidth="max-w-4xl">
       {/* Status & Disposition Badges */}
-      <div className="mb-6 grid grid-cols-2 gap-3">
-        <div className="flex items-center gap-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600 text-slate-300'}`}>
-            Dialer Status: {lead.dialerStatus}
+      <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600 text-slate-300'}`}>
+            {lead.dialerStatus}
           </span>
+          <p className="text-xs text-slate-500 mt-1">Dialer Status</p>
         </div>
         {lead.leadStatus && (
-          <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[lead.leadStatus] || 'bg-slate-600 text-slate-300'}`}>
-              Lead Status: {lead.leadStatus}
+          <div>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.leadStatus] || 'bg-slate-600 text-slate-300'}`}>
+              {lead.leadStatus}
             </span>
+            <p className="text-xs text-slate-500 mt-1">Lead Status</p>
+          </div>
+        )}
+        {lead.disposition && (
+          <div>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${DISPOSITION_COLORS[lead.disposition] || 'bg-slate-600 text-slate-300'}`}>
+              {lead.disposition}
+            </span>
+            <p className="text-xs text-slate-500 mt-1">Disposition</p>
           </div>
         )}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="space-y-5">
-        {/* Contact Information */}
-        <div>
-          <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
-            <Phone className="w-4 h-4" /> Contact Information
-          </h4>
-          <div className="space-y-2 pl-6">
-            {lead.phoneNumber && (
-              <div className="text-white">
-                <p className="text-xs text-slate-500">Phone Number</p>
-                <p className="font-medium text-cyan-400">{lead.phoneNumber}</p>
-              </div>
-            )}
-            {lead.email && (
-              <div className="text-white">
-                <p className="text-xs text-slate-500">Email Address</p>
-                <p className="font-medium text-cyan-400 break-all">{lead.email}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Business Information */}
-        <div>
-          <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
-            <Briefcase className="w-4 h-4" /> Business Information
-          </h4>
-          <div className="space-y-2 pl-6">
-            {lead.businessName && (
-              <div className="text-white">
-                <p className="text-xs text-slate-500">Business Name</p>
-                <p className="font-medium">{lead.businessName}</p>
-              </div>
-            )}
-            {lead.businessAddress && (
-              <div className="text-white">
-                <p className="text-xs text-slate-500">Street Address</p>
-                <p className="font-medium">{lead.businessAddress}</p>
-              </div>
-            )}
-            {(lead.city || lead.state || lead.country) && (
-              <div className="text-white">
-                <p className="text-xs text-slate-500">Location</p>
-                <p className="font-medium">
-                  {[lead.city, lead.state, lead.country].filter(Boolean).join(', ')}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Call History */}
-        {lead.lastDialedAt && (
-          <div>
-            <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Call History
-            </h4>
-            <div className="space-y-2 pl-6">
-              <div className="text-white">
-                <p className="text-xs text-slate-500">Last Dialed</p>
-                <p className="font-medium">{formatDate(lead.lastDialedAt)}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Notes Section */}
-        {(lead.generalNotes || lead.callNotes) && (
-          <div>
-            <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
-              <FileText className="w-4 h-4" /> Notes
-            </h4>
-            <div className="space-y-2 pl-6">
-              {lead.generalNotes && (
-                <div className="text-white">
-                  <p className="text-xs text-slate-500">General Notes</p>
-                  <p className="font-medium text-slate-300 bg-slate-800/50 p-2 rounded text-sm">{lead.generalNotes}</p>
-                </div>
-              )}
-              {lead.callNotes && (
-                <div className="text-white">
-                  <p className="text-xs text-slate-500">Call Notes</p>
-                  <p className="font-medium text-slate-300 bg-slate-800/50 p-2 rounded text-sm">{lead.callNotes}</p>
-                </div>
+      {/* Fields Grid - Role-based */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto pr-2">
+        {visibleFields.map((field) => {
+          const value = lead[field.key];
+          if (!value || (typeof value === 'string' && value.trim() === '')) return null;
+          
+          return (
+            <div key={field.key} className="space-y-1">
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">{field.label}</p>
+              {field.type === 'textarea' ? (
+                <p className="text-sm text-slate-300 bg-slate-800/50 p-3 rounded whitespace-pre-wrap">{renderFieldValue(field.key, value)}</p>
+              ) : (
+                <p className="text-sm font-medium text-white">{renderFieldValue(field.key, value)}</p>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Follow-up Schedule */}
-        {lead.followUpDate && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs text-yellow-400 font-semibold uppercase">Follow-up Scheduled</p>
-              <p className="text-sm text-yellow-300 font-medium">{formatDateOnly(lead.followUpDate)}</p>
-            </div>
-          </div>
-        )}
+          );
+        })}
       </div>
 
       {/* Action Buttons */}
@@ -196,16 +150,18 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
             className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-2"
           >
             <Edit3 className="w-4 h-4" />
-            Edit Disposition
+            Edit
           </button>
         )}
-        <button
-          onClick={() => onStatusUpdate?.(lead._id)}
-          className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition flex items-center gap-2"
-        >
-          <ListChecks className="w-4 h-4" />
-          Update Call Status
-        </button>
+        {onStatusUpdate && (
+          <button
+            onClick={() => onStatusUpdate?.(lead._id)}
+            className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition flex items-center gap-2"
+          >
+            <ListChecks className="w-4 h-4" />
+            Update Status
+          </button>
+        )}
       </div>
     </Modal>
   );

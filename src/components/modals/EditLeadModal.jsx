@@ -1,41 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../../hooks/useAuth.js';
+import { getVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
+import FormInput from '../common/FormInput.jsx';
+import FormSelect from '../common/FormSelect.jsx';
 import { updateLead } from '../../services/api.js';
 import { Save, X, AlertCircle } from 'lucide-react';
 
-const DISPOSITIONS = [
-  { value: 'interested', label: 'Interested' },
-  { value: 'not-interested', label: 'Not Interested' },
-  { value: 'callback', label: 'Callback' },
-  { value: 'wrong-number', label: 'Wrong Number' },
-  { value: 'no-answer', label: 'No Answer' },
-  { value: 'do-not-call', label: 'Do Not Call' },
-];
-
 export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
-  const [formData, setFormData] = useState({
-    generalNotes: '',
-    callNotes: '',
-    disposition: '',
-    followUpDate: '',
-  });
+  const { user } = useAuth();
+  const visibleFields = useMemo(() => getVisibleFields(user?.role), [user?.role]);
+  
+  const [formData, setFormData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (lead) {
-      setFormData({
-        generalNotes: lead.generalNotes || '',
-        callNotes: lead.callNotes || '',
-        disposition: lead.disposition || '',
-        followUpDate: lead.followUpDate ? lead.followUpDate.split('T')[0] : '',
+      const newFormData = {};
+      visibleFields.forEach(field => {
+        newFormData[field.key] = lead[field.key] || '';
       });
+      setFormData(newFormData);
     }
-  }, [lead, isOpen]);
+  }, [lead, isOpen, visibleFields]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -44,12 +39,15 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
 
     try {
       setIsLoading(true);
-      const updated = await updateLead(lead._id, {
-        generalNotes: formData.generalNotes,
-        callNotes: formData.callNotes,
-        disposition: formData.disposition || undefined,
-        followUpDate: formData.followUpDate ? new Date(formData.followUpDate) : null,
+      const updateData = {};
+      
+      visibleFields.forEach(field => {
+        if (field.key in formData && !field.readOnly) {
+          updateData[field.key] = formData[field.key] || null;
+        }
       });
+
+      const updated = await updateLead(lead._id, updateData);
       onSave(updated);
       onClose();
     } catch (err) {
@@ -61,9 +59,11 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
 
   if (!lead) return null;
 
+  const editableFields = visibleFields.filter(f => !f.readOnly);
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Lead Details" maxWidth="max-w-lg">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Edit Lead - ${lead.businessName || 'N/A'}`} maxWidth="max-w-2xl">
+      <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
         {error && (
           <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-3 flex items-start gap-3">
             <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
@@ -71,92 +71,70 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
           </div>
         )}
 
-        {/* Disposition */}
-        <div>
-          <label className="block text-slate-300 text-sm font-semibold mb-2">
-            Call Disposition
-          </label>
-          <select
-            name="disposition"
-            value={formData.disposition}
-            onChange={handleChange}
-            disabled={isLoading}
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition disabled:opacity-50"
-          >
-            <option value="">Select Disposition...</option>
-            {DISPOSITIONS.map(d => (
-              <option key={d.value} value={d.value}>{d.label}</option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {editableFields.map((field) => (
+            <div key={field.key}>
+              {field.type === 'select' ? (
+                <FormSelect
+                  label={field.label}
+                  name={field.key}
+                  value={formData[field.key] || ''}
+                  onChange={handleChange}
+                  options={field.options ? field.options.map(opt => ({ value: opt, label: opt })) : []}
+                />
+              ) : field.type === 'checkbox' ? (
+                <label className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    name={field.key}
+                    checked={formData[field.key] || false}
+                    onChange={handleChange}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-primary-500"
+                  />
+                  {field.label}
+                </label>
+              ) : field.type === 'textarea' ? (
+                <div>
+                  <label className="block text-slate-300 text-sm font-semibold mb-2">
+                    {field.label}
+                  </label>
+                  <textarea
+                    name={field.key}
+                    value={formData[field.key] || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                    placeholder={field.label}
+                  />
+                </div>
+              ) : (
+                <FormInput
+                  label={field.label}
+                  name={field.key}
+                  type={field.type}
+                  value={formData[field.key] || ''}
+                  onChange={handleChange}
+                  placeholder={field.label}
+                />
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Initial Notes */}
-        <div>
-          <label className="block text-slate-300 text-sm font-semibold mb-2">
-            General Notes (Before Call)
-          </label>
-          <textarea
-            name="generalNotes"
-            value={formData.generalNotes}
-            onChange={handleChange}
-            placeholder="Add any general notes about this lead..."
-            disabled={isLoading}
-            rows="3"
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition disabled:opacity-50 resize-none"
-          />
-        </div>
-
-        {/* Call Notes */}
-        <div>
-          <label className="block text-slate-300 text-sm font-semibold mb-2">
-            Call Notes (After Dialing)
-          </label>
-          <textarea
-            name="callNotes"
-            value={formData.callNotes}
-            onChange={handleChange}
-            placeholder="Notes from the last call..."
-            disabled={isLoading}
-            rows="3"
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition disabled:opacity-50 resize-none"
-          />
-        </div>
-
-        {/* Follow-up Date */}
-        <div>
-          <label className="block text-slate-300 text-sm font-semibold mb-2">
-            Schedule Follow-up (Optional)
-          </label>
-          <input
-            type="date"
-            name="followUpDate"
-            value={formData.followUpDate}
-            onChange={handleChange}
-            disabled={isLoading}
-            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition disabled:opacity-50"
-          />
-          {formData.followUpDate && (
-            <p className="text-xs text-slate-400 mt-1">
-              Follow-up scheduled for {new Date(formData.followUpDate).toLocaleDateString()}
-            </p>
-          )}
-        </div>
-
-        {/* Action Buttons */}
         <div className="flex gap-3 justify-end pt-4 border-t border-slate-700">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition disabled:opacity-50"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 inline mr-2" />
             Cancel
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition disabled:opacity-50 flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
             {isLoading ? 'Saving...' : 'Save Changes'}

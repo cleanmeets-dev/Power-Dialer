@@ -116,22 +116,15 @@ export default function CampaignsPage() {
             className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-xl p-6 border border-slate-700 hover:border-cyan-500/50 transition"
           >
             <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-primary-500">
-                  {campaign.name}
-                </h3>
-                <p className="text-slate-400 text-sm mt-1">
-                  {campaign.description}
-                </p>
-              </div>
-
+              <h3 className="text-lg font-bold text-primary-500">
+                {campaign.name}
+              </h3>
               <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
 
             <div className="space-y-2 mb-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">Status:</span>
-
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${
                     campaign.status === "active"
@@ -144,9 +137,9 @@ export default function CampaignsPage() {
               </div>
 
               <div className="flex justify-between">
-                <span className="text-slate-400">Leads:</span>
+                <span className="text-slate-400">Total Leads:</span>
                 <span className="text-primary-500 font-semibold">
-                  {campaign.leadsCount || 0}
+                  {campaign.totalLeads || 0}
                 </span>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogIn, AlertCircle, Mail, Lock } from 'lucide-react';
+import { LogIn, AlertCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { login } from '../services/api';
 
 export default function Login({ onLoginSuccess }) {
@@ -7,6 +7,7 @@ export default function Login({ onLoginSuccess }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,16 +96,26 @@ export default function Login({ onLoginSuccess }) {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-500" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition"
-                  disabled={isLoading}
-                />
-              </div>
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-500" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-10 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 focus:outline-none"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
             </div>
 
             {/* Error Message */}

@@ -18,7 +18,6 @@ export default function Navbar({ user, onLogout, onShowNotification, onToggleSid
   };
 
   const handleUserCreated = (message) => {
-    // Show notification via parent
     setShowCreateUserModal(false);
   };
 

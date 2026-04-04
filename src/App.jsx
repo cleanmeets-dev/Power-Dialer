@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { LeadsProvider } from "./context/LeadsContext";
 import { AuthProvider } from "./context/AuthContext";
-import { getRoleHomeRoute, AGENT_ROLES } from "./utils/roleUtils";
+import { getRoleHomeRoute, AGENT_ROLES, ROLES } from "./utils/roleUtils";
 import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./pages/DashboardLayout";
 import OverviewPage from "./pages/OverviewPage";
@@ -34,7 +34,7 @@ function App() {
           <Route
             path="/manager"
             element={
-              <ProtectedRoute allowedRoles={["manager"]}>
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}>
                 <LeadsProvider campaignId="">
                   <DashboardLayout />
                 </LeadsProvider>

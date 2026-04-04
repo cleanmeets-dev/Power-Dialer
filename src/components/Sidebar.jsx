@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 function getSidebarItems(role) {
-	if (role === 'manager') {
+	if (role === 'manager' || role === 'admin') {
 		return [
 			{ id: 'overview', label: 'Dashboard', icon: LayoutGrid, path: '/manager' },
 			{ id: 'campaigns', label: 'Campaigns', icon: Megaphone, path: '/manager/campaigns' },

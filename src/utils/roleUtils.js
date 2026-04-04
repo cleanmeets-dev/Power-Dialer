@@ -1,9 +1,10 @@
 /**
  * Role utility functions for RBAC authorization
- * New role system: 'manager', 'caller-agent', 'closer-agent'
+ * New role system: 'admin', 'manager', 'caller-agent', 'closer-agent'
  */
 
 export const ROLES = {
+  ADMIN: 'admin',
   MANAGER: 'manager',
   CALLER_AGENT: 'caller-agent',
   CLOSER_AGENT: 'closer-agent',
@@ -33,10 +34,10 @@ export const isCloserAgent = (role) => {
 };
 
 /**
- * Check if user is a manager
+ * Check if user is a manager or admin (same permissions)
  */
 export const isManager = (role) => {
-  return role === ROLES.MANAGER;
+  return role === ROLES.MANAGER || role === ROLES.ADMIN;
 };
 
 /**

@@ -7,7 +7,7 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('agent');
+  const [role, setRole] = useState('caller-agent');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -116,8 +116,10 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
                 className="w-full pl-10 pr-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition appearance-none"
                 disabled={isLoading}
               >
-                <option value="agent">Agent</option>
+                <option value="caller-agent">Caller Agent</option>
+                <option value="closer-agent">Closer Agent</option>
                 <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
           </div>

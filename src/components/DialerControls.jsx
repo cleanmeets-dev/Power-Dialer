@@ -42,10 +42,10 @@ export default function DialerControls({
 
     try {
       // Update backend status to track progress
-      await updateLeadStatus(lead._id, 'dialing');
+      await updateLeadStatus(lead._id, 'connected');
       // Update local context so Next Up label moves in UI
       if (leadsContext?.updateLead) {
-        leadsContext.updateLead({ ...lead, dialerStatus: 'dialing' });
+        leadsContext.updateLead({ ...lead, dialerStatus: 'connected' });
       }
     } catch (e) {
       console.error('Failed to update lead status', e);

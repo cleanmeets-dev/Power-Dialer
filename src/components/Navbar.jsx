@@ -68,11 +68,7 @@ export default function Navbar({
                   className="h-11 w-auto transform-gpu scale-200 origin-left"
                 />
               )}
-              {isManager && (
-                <span className="text-xs font-semibold px-2 py-1 bg-secondary-500/20 dark:bg-secondary-500/20 text-secondary-600 dark:text-secondary-400 rounded-full">
-                  Manager
-                </span>
-              )}
+         
             </div>
 
             {/* Manager Actions & User Menu */}

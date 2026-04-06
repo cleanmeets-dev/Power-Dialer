@@ -68,7 +68,7 @@ export default function Login({ onLoginSuccess }) {
                 <img 
                   src={logoSrc}
                   alt="CleanMeets Logo" 
-                  className="h-14 w-auto"
+                  className="h-24 dark:h-20 w-auto"
                 />
               </div>
               <p className="text-slate-600 dark:text-slate-400 text-sm font-medium">Agent Portal</p>

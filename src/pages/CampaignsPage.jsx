@@ -91,11 +91,11 @@ export default function CampaignsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-primary-500">Campaigns</h1>
-            <p className="text-slate-400 mt-2">Manage your calling campaigns</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">Campaigns</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">Manage your calling campaigns</p>
           </div>
 
           <button
@@ -113,10 +113,10 @@ export default function CampaignsPage() {
         {campaigns.map((campaign) => (
           <div
             key={campaign._id}
-            className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-xl p-6 border border-slate-700 hover:border-cyan-500/50 transition"
+            className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition"
           >
             <div className="flex items-start justify-between mb-4">
-              <h3 className="text-lg font-bold text-primary-500">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-primary-400">
                 {campaign.name}
               </h3>
               <TrendingUp className="w-5 h-5 text-emerald-400" />
@@ -124,12 +124,12 @@ export default function CampaignsPage() {
 
             <div className="space-y-2 mb-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-400">Status:</span>
+                <span className="text-slate-600 dark:text-slate-400">Status:</span>
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${
                     campaign.status === "active"
                       ? "bg-emerald-900/50 text-emerald-400"
-                      : "bg-slate-700 text-slate-400"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   {campaign.status}
@@ -137,8 +137,8 @@ export default function CampaignsPage() {
               </div>
 
               <div className="flex justify-between">
-                <span className="text-slate-400">Total Leads:</span>
-                <span className="text-primary-500 font-semibold">
+                <span className="text-slate-600 dark:text-slate-400">Total Leads:</span>
+                <span className="text-slate-900 dark:text-primary-400 font-semibold">
                   {campaign.totalLeads || 0}
                 </span>
               </div>
@@ -167,8 +167,8 @@ export default function CampaignsPage() {
       </div>
 
       {campaigns.length === 0 && !isLoading && (
-        <div className="text-center py-12 bg-linear-to-br from-slate-800 to-slate-700 rounded-lg border border-slate-700">
-          <p className="text-slate-400 mb-4">No campaigns yet</p>
+        <div className="text-center py-12 bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-slate-200 dark:border-slate-700">
+          <p className="text-slate-600 dark:text-slate-400 mb-4">No campaigns yet</p>
 
           <button
             onClick={() => setShowCreateModal(true)}

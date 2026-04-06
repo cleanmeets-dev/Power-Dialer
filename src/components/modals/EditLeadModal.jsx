@@ -66,8 +66,8 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
       <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
         {error && (
           <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-3 flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-rose-300">{error}</p>
+            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" />
+            <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>
           </div>
         )}
 
@@ -83,19 +83,19 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
                   options={field.options ? field.options.map(opt => ({ value: opt, label: opt })) : []}
                 />
               ) : field.type === 'checkbox' ? (
-                <label className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+                <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-sm font-semibold">
                   <input
                     type="checkbox"
                     name={field.key}
                     checked={formData[field.key] || false}
                     onChange={handleChange}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-primary-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-primary-500"
                   />
                   {field.label}
                 </label>
               ) : field.type === 'textarea' ? (
                 <div>
-                  <label className="block text-slate-300 text-sm font-semibold mb-2">
+                  <label className="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-2">
                     {field.label}
                   </label>
                   <textarea
@@ -103,7 +103,7 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
                     value={formData[field.key] || ''}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
                     placeholder={field.label}
                   />
                 </div>
@@ -121,12 +121,12 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
           ))}
         </div>
 
-        <div className="flex gap-3 justify-end pt-4 border-t border-slate-700">
+        <div className="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition disabled:opacity-50"
           >
             <X className="w-4 h-4 inline mr-2" />
             Cancel

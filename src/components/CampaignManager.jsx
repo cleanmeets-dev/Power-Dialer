@@ -77,24 +77,24 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white flex items-center justify-between hover:border-cyan-400 transition"
+          className="w-full px-4 py-3 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white flex items-center justify-between hover:border-cyan-400 dark:hover:border-cyan-400 transition"
         >
           <div className="text-left">
-            <p className="text-xs text-slate-400">Current Campaign</p>
-            <p className="font-semibold">{currentCampaign?.name || 'Select a campaign'}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Current Campaign</p>
+            <p className="font-semibold text-slate-900 dark:text-white">{currentCampaign?.name || 'Select a campaign'}</p>
           </div>
           <ChevronDown className={`w-5 h-5 transition ${isDropdownOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Dropdown */}
         {isDropdownOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-40">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg dark:shadow-slate-900/50 z-40">
             {/* Campaign List */}
             <div className="max-h-64 overflow-y-auto">
               {campaigns.map((campaign) => (
                 <div
                   key={campaign._id}
-                  className={`px-4 py-3 border-b border-slate-700 last:border-0 cursor-pointer flex items-center justify-between group hover:bg-slate-700 transition ${
+                  className={`px-4 py-3 border-b border-slate-200 dark:border-slate-700 last:border-0 cursor-pointer flex items-center justify-between group hover:bg-slate-100 dark:hover:bg-slate-700 transition ${
                     selectedCampaignId === campaign._id ? 'bg-primary-500/10 border-l-2 border-l-primary-500' : ''
                   }`}
                   onClick={() => {
@@ -103,8 +103,8 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
                   }}
                 >
                   <div>
-                    <p className="text-white font-medium">{campaign.name}</p>
-                    <p className="text-xs text-slate-400">{campaign.leadsCount || 0} leads</p>
+                    <p className="text-slate-900 dark:text-white font-medium">{campaign.name}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{campaign.leadsCount || 0} leads</p>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
                     <button
@@ -139,7 +139,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
                 setShowCreateModal(true);
                 setIsDropdownOpen(false);
               }}
-              className="w-full px-4 py-3 border-t border-slate-700 text-primary-500 hover:bg-slate-700 transition flex items-center gap-2 font-medium cursor-pointer"
+              className="w-full px-4 py-3 border-t border-slate-200 dark:border-slate-700 text-primary-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-2 font-medium cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               New Campaign
@@ -151,7 +151,7 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
         {!isDropdownOpen && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="absolute right-0 top-0 bottom-0 px-3 text-slate-400 hover:text-primary-500 transition cursor-pointer"
+            className="absolute right-0 top-0 bottom-0 px-3 text-slate-600 dark:text-slate-400 hover:text-primary-500 dark:hover:text-primary-500 transition cursor-pointer"
             title="Create new campaign"
           >
             <Plus className="w-5 h-5" />

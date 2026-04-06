@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary-50: oklch(0.97 0.05 224);
   --color-primary-100: oklch(0.93 0.10 224);
@@ -27,4 +29,41 @@
 /* Global button cursor style */
 button {
   cursor: pointer;
+}
+
+/* Theme foundation */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Smooth transition for theme switching */
+html {
+  min-height: 100%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Light mode backgrounds */
+:root[data-theme="light"] body,
+:root[data-theme="light"] #root {
+  @apply bg-slate-50 text-slate-900;
+}
+
+/* Dark mode backgrounds */
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] #root {
+  @apply bg-slate-900 text-slate-50;
 }

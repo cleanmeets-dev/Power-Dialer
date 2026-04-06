@@ -62,7 +62,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
   };
 
   return (
-    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700 mb-6">
+    <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 mb-6">
       <h2 className="text-xl font-bold mb-4 text-primary-500">Select Campaign</h2>
 
       <div className="flex gap-4 mb-4">
@@ -71,7 +71,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
           value={currentSelectedId || ''}
           onChange={(e) => handleSelect(e.target.value)}
           disabled={isLoading || campaigns.length === 0}
-          className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none disabled:bg-slate-800 disabled:text-slate-500"
+          className="flex-1 px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500"
         >
           <option value="">Select a campaign...</option>
           {campaigns.map((campaign) => (
@@ -93,14 +93,14 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
 
       {/* Create Campaign Form */}
       {showCreateForm && (
-        <div className="mb-4 p-4 bg-slate-900/50 rounded-lg border border-slate-600">
+        <div className="mb-4 p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-300 dark:border-slate-600">
           <input
             type="text"
             placeholder="Campaign name (e.g., Q1 Sales Outreach)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleCreateCampaign()}
-            className="w-full px-3 py-2 bg-slate-800 text-white rounded border border-slate-600 mb-2 focus:border-cyan-500 outline-none"
+            className="w-full px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded border border-slate-300 dark:border-slate-600 mb-2 focus:border-cyan-500 outline-none"
           />
           <button
             onClick={handleCreateCampaign}

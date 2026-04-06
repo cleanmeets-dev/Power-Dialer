@@ -6,27 +6,27 @@ import { getLead } from '../../services/api.js';
 import { Phone, Mail, MapPin, Calendar, Clock, CheckCircle, XCircle, FileText, AlertCircle, Briefcase, Edit3, ListChecks } from 'lucide-react';
 
 const STATUS_COLORS = {
-  pending: 'bg-cyan-500/20 text-cyan-400',
-  dialing: 'bg-yellow-500/20 text-yellow-400',
-  connected: 'bg-emerald-500/20 text-emerald-400',
-  failed: 'bg-rose-500/20 text-rose-400',
-  completed: 'bg-blue-500/20 text-blue-400',
-  new: 'bg-slate-500/20 text-slate-300',
-  contacted: 'bg-blue-500/20 text-blue-400',
-  interested: 'bg-emerald-500/20 text-emerald-400',
-  not_interested: 'bg-rose-500/20 text-rose-400',
-  callback: 'bg-yellow-500/20 text-yellow-400',
-  converted: 'bg-emerald-600/20 text-emerald-300',
-  closed: 'bg-slate-600/20 text-slate-300',
+  pending: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400',
+  dialing: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+  connected: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
+  failed: 'bg-rose-500/20 text-rose-700 dark:text-rose-400',
+  completed: 'bg-blue-500/20 text-blue-700 dark:text-blue-400',
+  new: 'bg-slate-500/20 text-slate-700 dark:text-slate-300',
+  contacted: 'bg-blue-500/20 text-blue-700 dark:text-blue-400',
+  interested: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
+  not_interested: 'bg-rose-500/20 text-rose-700 dark:text-rose-400',
+  callback: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+  converted: 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300',
+  closed: 'bg-slate-600/20 text-slate-700 dark:text-slate-300',
 };
 
 const DISPOSITION_COLORS = {
-  'interested': 'bg-emerald-500/20 text-emerald-400',
-  'not-interested': 'bg-rose-500/20 text-rose-400',
-  'callback': 'bg-yellow-500/20 text-yellow-400',
-  'wrong-number': 'bg-orange-500/20 text-orange-400',
-  'no-answer': 'bg-slate-500/20 text-slate-400',
-  'do-not-call': 'bg-red-500/20 text-red-400',
+  'interested': 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
+  'not-interested': 'bg-rose-500/20 text-rose-700 dark:text-rose-400',
+  'callback': 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+  'wrong-number': 'bg-orange-500/20 text-orange-700 dark:text-orange-400',
+  'no-answer': 'bg-slate-500/20 text-slate-700 dark:text-slate-400',
+  'do-not-call': 'bg-red-500/20 text-red-700 dark:text-red-400',
 };
 
 export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdate, onEditLead }) {
@@ -94,14 +94,14 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
       {/* Status & Disposition Badges */}
       <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
         <div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600 text-slate-300'}`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
             {lead.dialerStatus}
           </span>
           <p className="text-xs text-slate-500 mt-1">Dialer Status</p>
         </div>
         {lead.leadStatus && (
           <div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.leadStatus] || 'bg-slate-600 text-slate-300'}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.leadStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
               {lead.leadStatus}
             </span>
             <p className="text-xs text-slate-500 mt-1">Lead Status</p>
@@ -109,7 +109,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
         )}
         {lead.disposition && (
           <div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${DISPOSITION_COLORS[lead.disposition] || 'bg-slate-600 text-slate-300'}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${DISPOSITION_COLORS[lead.disposition] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
               {lead.disposition}
             </span>
             <p className="text-xs text-slate-500 mt-1">Disposition</p>
@@ -127,9 +127,9 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
             <div key={field.key} className="space-y-1">
               <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">{field.label}</p>
               {field.type === 'textarea' ? (
-                <p className="text-sm text-slate-300 bg-slate-800/50 p-3 rounded whitespace-pre-wrap">{renderFieldValue(field.key, value)}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/50 p-3 rounded whitespace-pre-wrap">{renderFieldValue(field.key, value)}</p>
               ) : (
-                <p className="text-sm font-medium text-white">{renderFieldValue(field.key, value)}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{renderFieldValue(field.key, value)}</p>
               )}
             </div>
           );
@@ -137,10 +137,10 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-700 flex-wrap">
+      <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex-wrap">
         <button
           onClick={onClose}
-          className="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition flex items-center gap-2"
+          className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition flex items-center gap-2"
         >
           Close
         </button>

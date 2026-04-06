@@ -113,20 +113,20 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
 
   if (unassignedLeads.length === 0) {
     return (
-      <div className="text-center py-8 bg-linear-to-br from-slate-800 to-slate-700 rounded-lg border border-slate-700">
+      <div className="text-center py-8 bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-slate-200 dark:border-slate-700">
         <Check className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-        <p className="text-slate-300 font-medium">All leads assigned!</p>
-        <p className="text-slate-400 text-sm mt-1">There are no unassigned leads in this campaign.</p>
+        <p className="text-slate-700 dark:text-slate-300 font-medium">All leads assigned!</p>
+        <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">There are no unassigned leads in this campaign.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4">
+    <div className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-lg p-4">
       <div className="flex items-center gap-2 mb-4">
         <Users className="w-5 h-5 text-cyan-400" />
-        <h3 className="font-semibold text-slate-200">Assign Leads to Agents</h3>
-        <span className="ml-auto text-sm text-slate-400">
+        <h3 className="font-semibold text-slate-900 dark:text-slate-200">Assign Leads to Agents</h3>
+        <span className="ml-auto text-sm text-slate-600 dark:text-slate-400">
           {selectedLeads.size} of {unassignedLeads.length} selected
         </span>
       </div>
@@ -145,12 +145,12 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
       <div className="space-y-4">
         {/* Agent Select */}
         <div>
-          <label className="block text-sm text-slate-300 mb-2">Select Agent</label>
+          <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">Select Agent</label>
           <select
             value={selectedAgent}
             onChange={(e) => setSelectedAgent(e.target.value)}
             disabled={isLoading}
-            className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white outline-none focus:border-cyan-500"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
           >
             <option value="">Choose an agent...</option>
             {agents.map(agent => (
@@ -162,15 +162,15 @@ export default function LeadAssignmentPanel({ campaignId, onAssignmentComplete, 
         </div>
 
         {/* Leads List */}
-        <div className="border border-slate-600 rounded-lg bg-slate-700/30 max-h-64 overflow-y-auto">
-          <div className="sticky top-0 bg-slate-700 border-b border-slate-600 p-3 flex items-center gap-2">
+        <div className="border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/30 max-h-64 overflow-y-auto">
+          <div className="sticky top-0 bg-slate-100 dark:bg-slate-700 border-b border-slate-300 dark:border-slate-600 p-3 flex items-center gap-2">
             <input
               type="checkbox"
               checked={selectedLeads.size === unassignedLeads.length && unassignedLeads.length > 0}
               onChange={handleSelectAll}
               className="w-4 h-4 rounded border-slate-500 cursor-pointer"
             />
-            <span className="text-sm text-slate-300 font-medium">Select All</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">Select All</span>
           </div>
 
           {unassignedLeads.map(lead => (

@@ -80,36 +80,36 @@ export default function AttendanceModal({ isOpen, onClose, onAttendanceChanged }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Attendance" maxWidth="max-w-2xl">
       {error && (
-        <div className="mb-4 rounded-lg border border-rose-500/50 bg-rose-900/30 px-3 py-2 text-sm text-rose-200 flex items-center gap-2">
+        <div className="mb-4 rounded-lg border border-rose-500/50 bg-rose-500/10 dark:bg-rose-900/30 px-3 py-2 text-sm text-rose-700 dark:text-rose-200 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
           <span>{error}</span>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-slate-300">Loading attendance...</div>
+        <div className="text-slate-700 dark:text-slate-300">Loading attendance...</div>
       ) : (
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="rounded-lg border border-slate-600 bg-slate-700/40 p-3">
-              <p className="text-xs text-slate-400">Current Status</p>
-              <p className="text-lg font-semibold text-cyan-300">{currentStatus}</p>
+            <div className="rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/40 p-3">
+              <p className="text-xs text-slate-600 dark:text-slate-400">Current Status</p>
+              <p className="text-lg font-semibold text-cyan-700 dark:text-cyan-300">{currentStatus}</p>
             </div>
-            <div className="rounded-lg border border-slate-600 bg-slate-700/40 p-3">
-              <p className="text-xs text-slate-400">Breaks Taken</p>
-              <p className="text-lg font-semibold text-white">{attendance.breaksTaken || 0}</p>
+            <div className="rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/40 p-3">
+              <p className="text-xs text-slate-600 dark:text-slate-400">Breaks Taken</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">{attendance.breaksTaken || 0}</p>
             </div>
-            <div className="rounded-lg border border-slate-600 bg-slate-700/40 p-3">
-              <p className="text-xs text-slate-400">Checked In At</p>
-              <p className="text-sm font-medium text-slate-200">{formatDateTime(attendance.checkedInAt)}</p>
+            <div className="rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/40 p-3">
+              <p className="text-xs text-slate-600 dark:text-slate-400">Checked In At</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{formatDateTime(attendance.checkedInAt)}</p>
             </div>
-            <div className="rounded-lg border border-slate-600 bg-slate-700/40 p-3">
-              <p className="text-xs text-slate-400">Checked Out At</p>
-              <p className="text-sm font-medium text-slate-200">{formatDateTime(attendance.checkedOutAt)}</p>
+            <div className="rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/40 p-3">
+              <p className="text-xs text-slate-600 dark:text-slate-400">Checked Out At</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{formatDateTime(attendance.checkedOutAt)}</p>
             </div>
-            <div className="rounded-lg border border-slate-600 bg-slate-700/40 p-3 md:col-span-2">
-              <p className="text-xs text-slate-400">Total Break Minutes</p>
-              <p className="text-lg font-semibold text-white">
+            <div className="rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/40 p-3 md:col-span-2">
+              <p className="text-xs text-slate-600 dark:text-slate-400">Total Break Minutes</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">
                 {formatBreakMinutes(attendance.totalBreakMs, attendance.breakStartedAt, onBreakNow)} min
               </p>
             </div>
@@ -153,7 +153,7 @@ export default function AttendanceModal({ isOpen, onClose, onAttendanceChanged }
             </button>
           </div>
 
-          <div className="rounded-lg border border-slate-600 bg-slate-800/40 p-3 text-xs text-slate-300 flex items-center gap-2">
+          <div className="rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800/40 p-3 text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2">
             <Phone className="w-4 h-4" />
             Calls are assigned only when checked in, not on break, and not currently on a call.
           </div>

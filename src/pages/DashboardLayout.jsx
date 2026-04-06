@@ -12,7 +12,7 @@ import LeadDetailModal from '../components/modals/LeadDetailModal';
 import { useState, useEffect } from 'react';
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, theme } = useAuth();
   const navigate = useNavigate();
   const { successMessage, errorMessage, showNotification } = useNotification();
 
@@ -59,7 +59,7 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-linear-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-linear-to-br from-slate-50 via-slate-100 to-slate-50'}`}>
       <Navbar 
         user={user} 
         onLogout={handleLogout} 
@@ -76,7 +76,7 @@ export default function DashboardLayout() {
           <main className="flex-1 min-w-0">
             {isAgent(user?.role) && (
               <div className="mb-4">
-                <div className="text-sm text-slate-300">
+                <div className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                   Twilio Device:{' '}
                   <span className={isTwilioReady ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}>
                     {isTwilioReady ? 'Ready' : 'Initializing...'}

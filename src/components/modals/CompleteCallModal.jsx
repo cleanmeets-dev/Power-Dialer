@@ -138,14 +138,14 @@ export default function CompleteCallModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Lead Info */}
-        <div className="grid grid-cols-2 gap-4 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+        <div className="grid grid-cols-2 gap-4 p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg border border-slate-300 dark:border-slate-600">
           <div>
-            <p className="text-xs text-slate-400 uppercase">Phone</p>
-            <p className="text-white font-medium text-sm">{lead?.phoneNumber}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 uppercase">Phone</p>
+            <p className="text-slate-900 dark:text-white font-medium text-sm">{lead?.phoneNumber}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400 uppercase">Business</p>
-            <p className="text-white font-medium text-sm">{lead?.businessName}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 uppercase">Business</p>
+            <p className="text-slate-900 dark:text-white font-medium text-sm">{lead?.businessName}</p>
           </div>
         </div>
 
@@ -173,13 +173,13 @@ export default function CompleteCallModal({
 
         {/* Agent Notes */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             Call Notes
           </label>
           <textarea
             value={agentNotes}
             onChange={(e) => setAgentNotes(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500"
+            className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500"
             placeholder="Add notes about the call..."
             rows={3}
           />
@@ -206,43 +206,43 @@ export default function CompleteCallModal({
         {/* Follow-up Date (if callback) */}
         {disposition === 'callback' && (
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Follow-up Date & Time *
             </label>
             <input
               type="datetime-local"
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
               required={disposition === 'callback'}
             />
           </div>
         )}
 
         {/* Recording Fields */}
-        <div className="space-y-3 p-3 bg-slate-700/30 rounded-lg border border-slate-600">
-          <p className="text-xs font-medium text-slate-400 uppercase">Recording (Optional)</p>
+        <div className="space-y-3 p-3 bg-slate-100 dark:bg-slate-700/30 rounded-lg border border-slate-300 dark:border-slate-600">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Recording (Optional)</p>
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               Recording SID
             </label>
             <input
               type="text"
               value={recordingSid}
               onChange={(e) => setRecordingSid(e.target.value)}
-              className="w-full px-3 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm placeholder-slate-400 focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:border-cyan-500"
               placeholder="Twilio recording ID..."
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               Recording URL
             </label>
             <input
               type="url"
               value={recordingUrl}
               onChange={(e) => setRecordingUrl(e.target.value)}
-              className="w-full px-3 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm placeholder-slate-400 focus:outline-none focus:border-cyan-500"
+              className="w-full px-3 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:border-cyan-500"
               placeholder="https://..."
             />
           </div>
@@ -253,7 +253,7 @@ export default function CompleteCallModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition"
+            className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition"
           >
             Cancel
           </button>

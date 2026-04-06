@@ -43,10 +43,10 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-8 border border-slate-700">
+        <div className="bg-linear-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-8 border border-slate-200 dark:border-slate-700">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
@@ -57,14 +57,14 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
             <h1 className="text-3xl font-bold bg-linear-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
               Power Dialer
             </h1>
-            <p className="text-slate-400">Create your account</p>
+            <p className="text-slate-600 dark:text-slate-400">Create your account</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
+              <label className="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">
                 Full Name
               </label>
               <div className="relative">
@@ -74,7 +74,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none transition"
                   disabled={isLoading}
                 />
               </div>
@@ -82,7 +82,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
 
             {/* Email */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
+              <label className="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -92,7 +92,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none transition"
                   disabled={isLoading}
                 />
               </div>
@@ -100,7 +100,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
 
             {/* Password */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
+              <label className="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">
                 Password
               </label>
               <div className="relative">
@@ -110,7 +110,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none transition"
                   disabled={isLoading}
                 />
               </div>
@@ -118,7 +118,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">
+              <label className="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">
                 Confirm Password
               </label>
               <div className="relative">
@@ -128,7 +128,7 @@ export default function Signup({ onSignupSuccess, onSwitchToLogin }) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none transition"
                   disabled={isLoading}
                 />
               </div>

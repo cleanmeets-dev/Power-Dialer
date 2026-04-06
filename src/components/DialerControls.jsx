@@ -133,7 +133,7 @@ export default function DialerControls({
   };
 
   return (
-    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
+    <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
       <h2 className="text-xl font-bold mb-4 text-cyan-400">
         {isAgentMode ? 'Agent Auto Dialer' : 'Power Dialer Controls'}
       </h2>
@@ -147,7 +147,7 @@ export default function DialerControls({
               disabled={isDialing || !campaignId || totalLeads === 0 || isLoading}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
                 isDialing || !campaignId || totalLeads === 0 || isLoading
-                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
                   : 'bg-linear-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg hover:shadow-emerald-500/50'
               }`}
             >
@@ -159,7 +159,7 @@ export default function DialerControls({
               disabled={!isDialing || isLoading}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
                 !isDialing || isLoading
-                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
                   : 'bg-linear-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 shadow-lg hover:shadow-rose-500/50'
               }`}
             >
@@ -186,7 +186,7 @@ export default function DialerControls({
                 disabled={!campaignId || leads.length === 0 || isLoading}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
                   !campaignId || leads.length === 0 || isLoading
-                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
                     : 'bg-linear-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 shadow-lg hover:shadow-indigo-500/50'
                 }`}
               >
@@ -214,14 +214,14 @@ export default function DialerControls({
           </div>
 
           {autoDialState.active && (
-            <div className="p-4 bg-slate-800 border border-slate-600 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="p-4 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${autoDialState.status === 'calling' ? 'bg-indigo-400 animate-pulse' : 'bg-amber-400'}`}></div>
                 <div>
-                  <p className="text-slate-300 font-medium">
+                  <p className="text-slate-700 dark:text-slate-300 font-medium">
                     Auto Dialing in Progress
                   </p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Lead {autoDialState.currentIndex + 1} of {leads.length}: <span className="text-emerald-400 font-mono">{currentLead?.phoneNumber}</span>
                   </p>
                 </div>

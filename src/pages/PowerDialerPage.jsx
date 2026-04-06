@@ -18,14 +18,14 @@ export default function PowerDialerPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
           <div className="bg-linear-to-r from-cyan-500 to-blue-500 rounded p-2">
             <Zap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-primary-500">Power Dialer</h1>
-            <p className="text-slate-400 mt-2">Rapid sequential dialing with callbacks for maximum efficiency</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">Power Dialer</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">Rapid sequential dialing with callbacks for maximum efficiency</p>
           </div>
         </div>
       </div>
@@ -54,16 +54,16 @@ export default function PowerDialerPage() {
 
       {/* Active Calls */}
       {selectedCampaignId && activeCalls && activeCalls.length > 0 && (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4">
-          <h3 className="font-semibold text-slate-200 mb-3">Active Calls: {activeCalls.length}</h3>
+        <div className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-lg p-4">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-3">Active Calls: {activeCalls.length}</h3>
           {/* Implement ActiveCalls component or display here */}
         </div>
       )}
 
       {/* Leads Display */}
       {selectedCampaignId && (
-        <div className="pt-4 border-t border-slate-700/50">
-          <h2 className="text-xl font-semibold text-slate-200 mb-4 px-1">Assigned Leads</h2>
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-700/50">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-200 mb-4 px-1">Assigned Leads</h2>
           <LeadsProvider campaignId={selectedCampaignId}>
             <LeadsTable showNotification={showNotification} />
           </LeadsProvider>
@@ -71,8 +71,8 @@ export default function PowerDialerPage() {
       )}
 
       {!selectedCampaignId && (
-        <div className="text-center py-12 bg-linear-to-br from-slate-800 to-slate-700 rounded-lg border border-slate-700">
-          <p className="text-slate-400">Select a campaign to start dialing</p>
+        <div className="text-center py-12 bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-slate-200 dark:border-slate-700">
+          <p className="text-slate-600 dark:text-slate-400">Select a campaign to start dialing</p>
         </div>
       )}
     </div>

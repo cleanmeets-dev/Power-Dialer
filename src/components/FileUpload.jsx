@@ -148,35 +148,35 @@ export default function FileUpload({
   };
 
   return (
-    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
+    <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
       <h2 className="text-xl font-bold mb-4 text-primary-500">Upload Leads</h2>
 
       {/* CSV Format Help */}
-      <div className="mb-4 p-3 bg-slate-900/50 border border-slate-600 rounded text-xs text-slate-300">
-        <p className="font-semibold text-slate-200 mb-2">
+      <div className="mb-4 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-600 rounded text-xs text-slate-700 dark:text-slate-300">
+        <p className="font-semibold text-slate-900 dark:text-slate-200 mb-2">
           CSV Format Required:
         </p>
-        <p className="font-mono text-slate-400 overflow-x-auto">
+        <p className="font-mono text-slate-600 dark:text-slate-400 overflow-x-auto">
           phoneNumber,businessName,businessAddress,city,state,country,email
         </p>
-        <p className="text-slate-400 mt-2">Max file size: 5MB</p>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Max file size: 5MB</p>
       </div>
 
       {/* File Error Alert */}
       {fileError && (
         <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
           <p className="text-red-400 text-sm">{fileError}</p>
         </div>
       )}
 
       {/* Agent Select */}
       <div className="mb-4">
-        <label className="block text-sm text-slate-300 mb-2">Select Agent to Assign</label>
+        <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">Select Agent to Assign</label>
         <select
           value={selectedAgent}
           onChange={e => setSelectedAgent(e.target.value)}
-          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white outline-none focus:border-cyan-500"
+          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
           disabled={isLoading || uploadProgress > 0}
         >
           <option value="">Choose an agent...</option>
@@ -188,7 +188,7 @@ export default function FileUpload({
         </select>
       </div>
 
-      <div className="border-2 border-dashed border-primary-500 rounded-lg p-8 text-center bg-slate-900/50 hover:bg-slate-900 transition cursor-pointer relative group">
+      <div className="border-2 border-dashed border-primary-500 rounded-lg p-8 text-center bg-slate-100 dark:bg-slate-900/50 hover:bg-slate-200 dark:hover:bg-slate-900 transition cursor-pointer relative group">
         <input
           type="file"
           accept=".csv"
@@ -197,22 +197,22 @@ export default function FileUpload({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         <Upload className="w-12 h-12 text-primary-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-        <p className="text-slate-100 font-semibold">
+        <p className="text-slate-900 dark:text-slate-100 font-semibold">
           Drag and drop your CSV file
         </p>
-        <p className="text-slate-400 text-sm">or click to select</p>
+        <p className="text-slate-600 dark:text-slate-400 text-sm">or click to select</p>
         {isLoading || uploadProgress > 0 ? (
           <div className="mt-4 space-y-2">
             <p className="text-primary-500 text-xs font-semibold">
               {uploadProgress >= 100 ? "Upload Complete!" : "Uploading..."}
             </p>
-            <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-slate-300 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-primary-500 to-primary-400 h-full transition-all duration-300"
+                className="bg-linear-to-r from-primary-500 to-primary-400 h-full transition-all duration-300"
                 style={{ width: `${Math.min(uploadProgress, 100)}%` }}
               />
             </div>
-            <p className="text-slate-400 text-xs">
+            <p className="text-slate-600 dark:text-slate-400 text-xs">
               {Math.round(uploadProgress)}%
             </p>
           </div>
@@ -221,7 +221,7 @@ export default function FileUpload({
 
       {(!campaignId || !selectedAgent) && (
         <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
           <p className="text-yellow-400 text-sm">
             {!campaignId
               ? "Select a campaign first"

@@ -18,17 +18,17 @@ export default function CampaignMetricsDisplay({ campaign }) {
   };
 
   return (
-    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-6">
+    <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 p-6">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
-          <h3 className="text-2xl font-bold text-white mb-2">{campaign.name}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{campaign.name}</h3>
           <div className="flex items-center gap-3">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border ${STATUS_COLORS[campaign.status] || 'bg-slate-600 text-slate-300 border-slate-600'}`}>
               {campaign.status}
             </span>
             {campaign.totalLeads > 0 && (
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 {campaign.dialedLeads} / {campaign.totalLeads} leads dialed
               </span>
             )}
@@ -42,12 +42,12 @@ export default function CampaignMetricsDisplay({ campaign }) {
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {/* Total Leads */}
-        <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50 hover:border-slate-600 transition">
-          <div className="text-slate-400 text-xs uppercase font-semibold mb-2 tracking-wide">
+        <div className="bg-slate-100 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-300 dark:border-slate-600/50 hover:border-slate-400 dark:hover:border-slate-600 transition">
+          <div className="text-slate-600 dark:text-slate-400 text-xs uppercase font-semibold mb-2 tracking-wide">
             Total Leads
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white">{campaign.totalLeads}</span>
+            <span className="text-2xl font-bold text-slate-900 dark:text-white">{campaign.totalLeads}</span>
             <span className="text-xs text-slate-500">leads</span>
           </div>
         </div>

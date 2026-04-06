@@ -44,8 +44,8 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
     <Modal isOpen={isOpen} onClose={onClose} title={`Update Lead Status - ${lead?.businessName || 'N/A'}`} maxWidth="max-w-sm">
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <p className="text-sm text-slate-400 mb-2">Phone Number</p>
-          <p className="text-white font-medium">{lead?.phoneNumber}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Phone Number</p>
+          <p className="text-slate-900 dark:text-white font-medium">{lead?.phoneNumber}</p>
         </div>
 
         <FormSelect
@@ -61,7 +61,7 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition"
+            className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition"
           >
             Cancel
           </button>

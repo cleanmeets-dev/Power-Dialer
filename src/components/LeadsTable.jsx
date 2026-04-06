@@ -305,7 +305,7 @@ export default function LeadsTable({ showNotification }) {
           <span
             className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block cursor-pointer transition hover:opacity-80 ${
               lead.dialerStatus === "pending"
-                ? "bg-slate-700 text-cyan-400"
+                ? "bg-slate-200 dark:bg-slate-700 text-cyan-700 dark:text-cyan-400"
                 : lead.dialerStatus === "dialing"
                   ? "bg-yellow-900/50 text-yellow-400"
                   : lead.dialerStatus === "connected"
@@ -314,7 +314,7 @@ export default function LeadsTable({ showNotification }) {
                       ? "bg-rose-900/50 text-rose-400"
                       : lead.dialerStatus === "completed"
                         ? "bg-blue-900/50 text-blue-400"
-                        : "bg-slate-700 text-slate-400"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400"
             }`}
             onClick={() => handleUpdateStatus(lead._id)}
             title="Click to update lead status"
@@ -324,7 +324,7 @@ export default function LeadsTable({ showNotification }) {
         );
       case 'leadStatus':
         const statusColors = {
-          new: 'bg-slate-700 text-slate-400',
+          new: 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400',
           contacted: 'bg-blue-900/50 text-blue-400',
           interested: 'bg-green-900/50 text-green-400',
           not_interested: 'bg-red-900/50 text-red-400',
@@ -341,7 +341,7 @@ export default function LeadsTable({ showNotification }) {
         return <span className="text-xs">{lead.assignedCallerName || lead.assignedCloserName || "—"}</span>;
       case 'interestLevel':
         const levelColors = {
-          cold: 'text-slate-400',
+          cold: 'text-slate-700 dark:text-slate-400',
           warm: 'text-yellow-400',
           hot: 'text-red-400'
         };
@@ -372,12 +372,12 @@ export default function LeadsTable({ showNotification }) {
 
   return (
     <>
-      <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 mt-6 border border-slate-700">
+      <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 mt-6 border border-slate-200 dark:border-slate-700">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <div className="min-w-0">
-            <h2 className="text-xl md:text-2xl font-bold text-primary-500">Leads</h2>
-            <p className="text-slate-400 text-xs md:text-sm mt-1 truncate">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-primary-400">Leads</h2>
+            <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm mt-1 truncate">
               {selectedRows.size > 0
                 ? `${selectedRows.size} selected of ${totalLeads} total`
                 : `Showing ${startLead}-${endLead} of ${totalLeads} leads`}
@@ -388,7 +388,7 @@ export default function LeadsTable({ showNotification }) {
               <button
                 onClick={handleBulkDelete}
                 disabled={isLoading}
-                className="px-3 md:px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
+                className="px-3 md:px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
               >
                 <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                 <span className="hidden sm:inline">Delete ({selectedRows.size})</span>
@@ -408,7 +408,7 @@ export default function LeadsTable({ showNotification }) {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 text-xs md:text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 text-xs md:text-sm"
             />
           </div>
 
@@ -418,7 +418,7 @@ export default function LeadsTable({ showNotification }) {
               value={filters.status}
               onChange={(e) => setStatus(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
             >
               <option value="">All Status</option>
               {STATUSES.map((status) => (
@@ -434,7 +434,7 @@ export default function LeadsTable({ showNotification }) {
               value={filters.disposition || ""}
               onChange={(e) => setDisposition(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
             >
               <option value="">All Dispositions</option>
               <option value="interested">Interested</option>
@@ -451,7 +451,7 @@ export default function LeadsTable({ showNotification }) {
               value={filters.interestLevel || ""}
               onChange={(e) => setInterestLevel(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
             >
               <option value="">All Interest Levels</option>
               <option value="cold">Cold</option>
@@ -466,7 +466,7 @@ export default function LeadsTable({ showNotification }) {
                 value={filters.agentId || ""}
                 onChange={(e) => setAgentId(e.target.value)}
                 disabled={isLoading}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
               >
                 <option value="">All Agents</option>
                 {agents.map((agent) => (
@@ -482,7 +482,7 @@ export default function LeadsTable({ showNotification }) {
         {/* Page Size */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <label htmlFor="pageSize" className="text-slate-400 text-sm">
+            <label htmlFor="pageSize" className="text-slate-600 dark:text-slate-400 text-sm">
               Show
             </label>
             <select
@@ -490,16 +490,16 @@ export default function LeadsTable({ showNotification }) {
               value={pageSize}
               onChange={(e) => changePageSize(parseInt(e.target.value))}
               disabled={isLoading}
-              className="px-3 py-1 bg-slate-700 border border-slate-600 rounded text-slate-100 text-sm focus:outline-none focus:border-cyan-500 disabled:bg-slate-700/50"
+              className="px-3 py-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:border-cyan-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50"
             >
               <option value="10">10</option>
               <option value="20">20</option>
               <option value="50">50</option>
               <option value="100">100</option>
             </select>
-            <span className="text-slate-400 text-sm">per page</span>
+            <span className="text-slate-600 dark:text-slate-400 text-sm">per page</span>
           </div>
-          <div className="text-slate-400 text-sm">
+          <div className="text-slate-600 dark:text-slate-400 text-sm">
             Page {currentPage} of {totalPages}
           </div>
         </div>
@@ -508,8 +508,8 @@ export default function LeadsTable({ showNotification }) {
         <div className="overflow-x-auto mb-4">
           <table className="w-full text-sm select-none">
             <thead>
-              <tr className="border-b border-slate-700 bg-slate-700/50">
-                <th className="text-left py-3 px-3 text-cyan-400 font-semibold w-8">
+              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700/50 ">
+                <th className="text-left py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold w-8">
                   <input
                     type="checkbox"
                     checked={
@@ -517,15 +517,15 @@ export default function LeadsTable({ showNotification }) {
                     }
                     onChange={handleSelectAll}
                     disabled={isLoading}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-cyan-500 cursor-pointer"
+                    className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-600 text-cyan-600 dark:text-cyan-500 cursor-pointer"
                   />
                 </th>
                 {tableColumns.map((col) => (
-                  <th key={col.key} className="text-left py-3 px-3 text-cyan-400 font-semibold">
+                  <th key={col.key} className="text-left py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold">
                     {col.label}
                   </th>
                 ))}
-                <th className="text-center py-3 px-3 text-cyan-400 font-semibold">
+                <th className="text-center py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold">
                   Actions
                 </th>
               </tr>
@@ -536,10 +536,10 @@ export default function LeadsTable({ showNotification }) {
                   key={lead._id}
                   className={`border-b transition ${
                     selectedRows.has(lead._id)
-                      ? "bg-cyan-900/30 border-slate-700/50"
+                      ? "bg-cyan-100 dark:bg-cyan-900/30 border-slate-200 dark:border-slate-700/50"
                       : lead._id === nextPendingLeadId
-                      ? "bg-emerald-900/20 border-l-off border-emerald-500/50 shadow-[inset_4px_0_0_0_rgba(16,185,129,0.5)]"
-                      : "hover:bg-slate-700/30 border-slate-700/50"
+                      ? "bg-emerald-100 dark:bg-emerald-900/20 border-l-off border-emerald-400/60 dark:border-emerald-500/50 shadow-[inset_4px_0_0_0_rgba(16,185,129,0.5)]"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-700/30 border-slate-200 dark:border-slate-700/50"
                   }`}
                 >
                   <td className="py-3 px-3">
@@ -548,11 +548,11 @@ export default function LeadsTable({ showNotification }) {
                       checked={selectedRows.has(lead._id)}
                       onChange={() => handleSelectRow(lead._id)}
                       disabled={isLoading}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-600 text-cyan-500 cursor-pointer"
+                      className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-600 text-cyan-600 dark:text-cyan-500 cursor-pointer"
                     />
                   </td>
                   {tableColumns.map((col) => (
-                    <td key={`${lead._id}-${col.key}`} className="py-3 px-3 text-slate-200 max-w-xs truncate">
+                    <td key={`${lead._id}-${col.key}`} className="py-3 px-3 text-slate-900 dark:text-slate-200 max-w-xs truncate">
                       {renderCellValue(lead, col.key)}
                     </td>
                   ))}
@@ -561,7 +561,7 @@ export default function LeadsTable({ showNotification }) {
                       <button
                         onClick={() => handleViewLead(lead._id)}
                         disabled={isLoading}
-                        className="text-cyan-400 hover:text-cyan-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        className="text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
                         title="View details"
                       >
                         <Eye className="w-4 h-4" />
@@ -574,7 +574,7 @@ export default function LeadsTable({ showNotification }) {
                           showNotification(`Calling ${lead.phoneNumber} via Zoom`, 'success');
                         }}
                         disabled={isLoading || !lead.phoneNumber}
-                        className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        className="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
                         title="Direct Call (Zoom)"
                       >
                         <Phone className="w-4 h-4" />
@@ -582,7 +582,7 @@ export default function LeadsTable({ showNotification }) {
                       <button
                         onClick={() => handleEditLead(lead)}
                         disabled={isLoading}
-                        className="text-blue-400 hover:text-blue-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        className="text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
                         title="Edit notes & disposition"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -590,7 +590,7 @@ export default function LeadsTable({ showNotification }) {
                       <button
                         onClick={() => handleCompleteCall(lead)}
                         disabled={isLoading}
-                        className="text-green-400 hover:text-green-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
                         title="Log Call Outcome"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -598,7 +598,7 @@ export default function LeadsTable({ showNotification }) {
                       <button
                         onClick={() => handleScheduleCallback(lead)}
                         disabled={isLoading}
-                        className="text-purple-400 hover:text-purple-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        className="text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
                         title="Schedule callback"
                       >
                         <Calendar className="w-4 h-4" />
@@ -606,7 +606,7 @@ export default function LeadsTable({ showNotification }) {
                       <button
                         onClick={() => handleDeleteClick(lead)}
                         disabled={isLoading}
-                        className="text-rose-400 hover:text-rose-300 disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-600/30 rounded"
+                        className="text-rose-700 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
                         title="Delete lead"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -620,18 +620,18 @@ export default function LeadsTable({ showNotification }) {
 
           {leads.length === 0 && !isLoading && (
             <div className="text-center py-12">
-              <p className="text-slate-400 text-base">No leads found</p>
+              <p className="text-slate-600 dark:text-slate-400 text-base">No leads found</p>
             </div>
           )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
               onClick={() => changePage(currentPage - 1)}
               disabled={isLoading || currentPage === 1}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700/50 disabled:text-slate-600 text-slate-100 rounded-lg transition"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 disabled:text-slate-400 dark:disabled:text-slate-600 text-slate-900 dark:text-slate-100 rounded-lg transition"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -654,7 +654,7 @@ export default function LeadsTable({ showNotification }) {
                       className={`px-3 py-1 rounded transition ${
                         page === currentPage
                           ? "bg-cyan-600 text-white font-semibold"
-                          : "bg-slate-700 text-slate-100 hover:bg-slate-600"
+                          : "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600"
                       }`}
                     >
                       {page}
@@ -666,7 +666,7 @@ export default function LeadsTable({ showNotification }) {
             <button
               onClick={() => changePage(currentPage + 1)}
               disabled={isLoading || currentPage === totalPages}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700/50 disabled:text-slate-600 text-slate-100 rounded-lg transition"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 disabled:text-slate-400 dark:disabled:text-slate-600 text-slate-900 dark:text-slate-100 rounded-lg transition"
             >
               Next
               <ChevronRight className="w-4 h-4" />

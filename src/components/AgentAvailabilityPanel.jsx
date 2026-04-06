@@ -103,14 +103,14 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
   };
 
   return (
-    <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-6 w-full">
+    <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 p-6 w-full">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-linear-to-r from-blue-500 to-cyan-500 p-3 rounded-lg">
           <User className="w-6 h-6 text-white" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-cyan-400">Agent Availability</h2>
-          <p className="text-xs text-slate-400 mt-1">Toggle agent status in real-time</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Toggle agent status in real-time</p>
         </div>
       </div>
 
@@ -133,19 +133,19 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
           agentsState.map(agent => (
             <div
               key={agent._id}
-              className="bg-slate-700/50 border border-slate-700/50 rounded-lg p-4 hover:border-cyan-500/30 transition"
+              className="bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700/50 rounded-lg p-4 hover:border-slate-300 dark:hover:border-cyan-500/30 transition"
             >
               {/* Agent Info */}
               <div className="mb-4">
-                <p className="font-semibold text-white text-base mb-1">{agent.name}</p>
-                <p className="text-xs text-slate-400 truncate">{agent.email}</p>
+                <p className="font-semibold text-slate-900 dark:text-white text-base mb-1">{agent.name}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{agent.email}</p>
               </div>
 
               {/* Status Grid */}
               <div className="space-y-2.5 text-sm">
                 {/* Agent Status with automatic activity detection */}
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Status:</span>
+                  <span className="text-slate-600 dark:text-slate-400">Status:</span>
                   <div className="flex items-center gap-2">
                     {!agent.attendance || !agent.attendance.isCheckedIn ? (
                       <>
@@ -178,19 +178,19 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
 
                 {/* Role */}
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Role:</span>
-                  <span className="px-2 py-1 rounded bg-slate-800 text-primary-500 font-medium capitalize">
+                  <span className="text-slate-600 dark:text-slate-400">Role:</span>
+                  <span className="px-2 py-1 rounded bg-slate-200 dark:bg-slate-800 text-primary-500 font-medium capitalize">
                     {agent.role}
                   </span>
                 </div>
 
                 {/* Calls Handled */}
                 {agent.callsHandled !== undefined && (
-                  <div className="flex items-center justify-between border-t border-slate-600/50 pt-2 mt-2">
-                    <span className="text-slate-400">Calls Handled:</span>
+                  <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-600/50 pt-2 mt-2">
+                    <span className="text-slate-600 dark:text-slate-400">Calls Handled:</span>
                     <div className="flex items-center gap-1">
-                      <Phone className="w-3 h-3 text-slate-400" />
-                      <span className="text-slate-300 font-semibold">{agent.callsHandled}</span>
+                      <Phone className="w-3 h-3 text-slate-600 dark:text-slate-400" />
+                      <span className="text-slate-900 dark:text-slate-300 font-semibold">{agent.callsHandled}</span>
                     </div>
                   </div>
                 )}
@@ -199,16 +199,16 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-4 pt-4 border-t border-slate-600/50">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-600/50">
                 {agent.activeLead ? (
                   // Agent is on a call - show disabled state
-                  <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-600 text-slate-300 border border-slate-500 cursor-not-allowed">
+                  <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 border border-slate-400 dark:border-slate-500 cursor-not-allowed">
                     <Circle className="w-3 h-3 fill-current animate-pulse" />
                     In Call
                   </div>
                 ) : !agent.attendance || !agent.attendance.isCheckedIn ? (
                   // Agent has not checked in - show disabled state
-                  <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-600 text-slate-300 border border-slate-500 cursor-not-allowed">
+                  <div className="w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 border border-slate-400 dark:border-slate-500 cursor-not-allowed">
                     <Circle className="w-3 h-3 fill-current" />
                     Checked Out
                   </div>
@@ -242,8 +242,8 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
           ))
         ) : (
           <div className="col-span-full text-center py-8">
-            <User className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">No agents found</p>
+            <User className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-600 dark:text-slate-400">No agents found</p>
           </div>
         )}
       </div>

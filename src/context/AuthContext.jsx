@@ -9,10 +9,27 @@ import {
 
 export const AuthContext = createContext(null);
 
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const newTheme = prev === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', newTheme);
+      applyTheme(newTheme);
+      return newTheme;
+    });
+  }, []);
 
   const clearAuthState = useCallback(() => {
     clearAuthStorage();
@@ -49,6 +66,11 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     hydrateAuth();
   }, [hydrateAuth]);
+
+  useEffect(() => {
+    // Apply theme whenever it changes
+    applyTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -102,8 +124,10 @@ export function AuthProvider({ children }) {
       signup,
       logout,
       hydrateAuth,
+      theme,
+      toggleTheme,
     }),
-    [user, isAuthenticated, isLoading, login, signup, logout, hydrateAuth]
+    [user, isAuthenticated, isLoading, login, signup, logout, hydrateAuth, theme, toggleTheme]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

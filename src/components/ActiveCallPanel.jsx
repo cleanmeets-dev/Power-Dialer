@@ -63,7 +63,7 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
   const isIncoming = callDirection !== 'outgoing';
 
   return (
-    <div className="fixed bottom-6 right-6 w-80 bg-slate-800 rounded-xl shadow-2xl border border-cyan-500/30 overflow-hidden z-50">
+    <div className="fixed bottom-6 right-6 w-80 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-2xl dark:shadow-slate-900/40 border border-cyan-500/30 overflow-hidden z-50">
       <div className="bg-cyan-600/20 px-4 py-3 border-b border-cyan-500/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {callStatus === 'ringing' && isIncoming ? (
@@ -71,7 +71,7 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
           ) : (
             <Phone className="w-5 h-5 text-emerald-400 animate-pulse" />
           )}
-          <span className="font-semibold text-white">
+          <span className="font-semibold text-slate-900 dark:text-white">
             {callStatus === 'ringing' && isIncoming ? 'Incoming Call...' : callStatus === 'ringing' ? 'Calling...' : 'Active Call'}
           </span>
         </div>
@@ -85,14 +85,14 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
 
       <div className="p-5">
         <div className="flex items-start gap-4 mb-6">
-          <div className="bg-slate-700 p-3 rounded-full">
-            <User className="w-6 h-6 text-slate-300" />
+          <div className="bg-slate-200 dark:bg-slate-700 p-3 rounded-full">
+            <User className="w-6 h-6 text-slate-700 dark:text-slate-300" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white mb-1">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
               {displayPhoneNumber}
             </h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               {displayBusinessName}
             </p>
           </div>
@@ -113,7 +113,7 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
                 onClick={handleMuteToggle}
                 className={`flex-1 py-2.5 rounded-lg flex justify-center items-center gap-2 transition-colors font-medium border ${isMuted
                     ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 hover:bg-amber-500/30'
-                    : 'bg-slate-700 text-white border-slate-600 hover:bg-slate-600'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-400 dark:border-slate-600 hover:bg-slate-400 dark:hover:bg-slate-600'
                   }`}
               >
                 {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

@@ -23,14 +23,14 @@ export default function AutoDialerPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
           <div className="bg-linear-to-r from-cyan-500 to-blue-500 rounded p-2">
             <PhoneCall className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-primary-500">Auto Dialer</h1>
-            <p className="text-slate-400 mt-2">Agent-specific sequential automatic dialing</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">Auto Dialer</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">Agent-specific sequential automatic dialing</p>
           </div>
         </div>
       </div>
@@ -59,8 +59,8 @@ export default function AutoDialerPage() {
               />
             </div>
 
-            <div className="pt-4 border-t border-slate-700/50">
-              <h2 className="text-xl font-semibold text-slate-200 mb-4 px-1">Campaign Queue</h2>
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-700/50">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-200 mb-4 px-1">Campaign Queue</h2>
               <LeadsTable showNotification={showNotification} />
             </div>
           </LeadsProvider>

@@ -42,9 +42,9 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
-        <h1 className="text-3xl font-bold text-cyan-400">Dashboard Overview</h1>
-        <p className="text-slate-400 mt-2">Call center performance summary</p>
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Call center performance summary</p>
       </div>
 
       {/* Stats Grid */}
@@ -76,9 +76,9 @@ export default function OverviewPage() {
       {/* Info Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Navigation Info */}
-        <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-xl p-6 border border-slate-700">
-          <h2 className="text-xl font-bold text-cyan-400 mb-4">Navigation</h2>
-          <div className="space-y-2 text-slate-300 text-sm">
+        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Navigation</h2>
+          <div className="space-y-2 text-slate-700 dark:text-slate-300 text-sm">
             <p>📋 <strong>Campaigns</strong> - Create and manage dialing campaigns</p>
             <p>👥 <strong>Leads</strong> - Upload and manage contact lists</p>
             <p>📞 <strong>Power Dialer</strong> - Auto-dial with agent involvement</p>

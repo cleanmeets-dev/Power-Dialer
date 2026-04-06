@@ -84,9 +84,9 @@ export default function MyAvailabilityPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-slate-800 to-slate-700 rounded-lg shadow-2xl p-6 border border-slate-700">
-        <h1 className="text-3xl font-bold text-primary-500">My Availability</h1>
-        <p className="text-slate-400 mt-2">Manage your availability status</p>
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">My Availability</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Manage your availability status</p>
       </div>
 
       {/* Refresh Button */}
@@ -96,7 +96,7 @@ export default function MyAvailabilityPage() {
           disabled={isLoading}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
             isLoading
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+              ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500 cursor-not-allowed'
               : 'bg-linear-to-r from-cyan-500 to-cyan-600 text-white hover:from-cyan-600 hover:to-cyan-700 shadow-lg'
           }`}
         >
@@ -119,49 +119,49 @@ export default function MyAvailabilityPage() {
 
       {/* Loading State */}
       {isLoading && !agent && (
-        <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl p-8 border border-slate-700 text-center">
+        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-8 border border-slate-200 dark:border-slate-700 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-8 h-8 border-4 border-slate-600 border-t-cyan-400 rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-slate-300 dark:border-slate-600 border-t-cyan-400 rounded-full animate-spin"></div>
           </div>
-          <p className="text-slate-400">Loading your information...</p>
+          <p className="text-slate-600 dark:text-slate-400">Loading your information...</p>
         </div>
       )}
 
       {/* Agent Status Card */}
       {agent && (
-        <div className="bg-linear-to-br from-slate-800 to-slate-700 rounded-lg shadow-2xl border border-slate-700 p-8 max-w-2xl mx-auto w-full">
+        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 p-8 max-w-2xl mx-auto w-full">
           {/* Agent Info */}
           <div className="flex items-center gap-4 mb-8">
             <div className="bg-linear-to-r from-cyan-500 to-blue-500 rounded-full p-4 shrink-0">
               <User className="w-8 h-8 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-lg text-slate-200">{agent.name}</p>
-              <p className="text-sm text-slate-400">{agent.email}</p>
+              <p className="font-semibold text-lg text-slate-900 dark:text-slate-200">{agent.name}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{agent.email}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Current Status</p>
+            <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg border border-slate-300 dark:border-slate-600">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wide">Current Status</p>
               <p className="text-xl font-semibold text-cyan-300 mt-1">{attendanceStatus}</p>
             </div>
 
-            <div className="p-4 bg-slate-700/50 rounded-lg border border-slate-600">
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Breaks Taken</p>
-              <p className="text-xl font-semibold text-slate-200 mt-1">{agent.attendance && agent.attendance.breaksTaken || 0}</p>
+            <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg border border-slate-300 dark:border-slate-600">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wide">Breaks Taken</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-200 mt-1">{agent.attendance && agent.attendance.breaksTaken || 0}</p>
             </div>
           </div>
 
           {/* Stats */}
           {agent.callsHandled !== undefined && (
-            <div className="mb-8 p-4 bg-slate-700/50 rounded-lg">
+            <div className="mb-8 p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400 flex items-center gap-2">
+                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
                   <Phone className="w-4 h-4" />
                   Calls Handled Today
                 </span>
-                <span className="text-slate-200 font-semibold text-lg">
+                <span className="text-slate-900 dark:text-slate-200 font-semibold text-lg">
                   {agent.callsHandled || 0}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export default function MyAvailabilityPage() {
           </button>
 
           {/* Live Status Indicator */}
-          <div className="mt-6 pt-6 border-t border-slate-600">
+          <div className="mt-6 pt-6 border-t border-slate-300 dark:border-slate-600">
             <div className="flex items-center justify-center gap-2 text-blue-400 text-xs">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
               <span>Real-time updates enabled</span>

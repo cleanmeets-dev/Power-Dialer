@@ -34,7 +34,7 @@ export function LeadsProvider({ children, campaignId }) {
     async (options = {}) => {
       if (!campaignId) {
         setLeads([]);
-        return;
+        return { leads: [], pagination: null };
       }
 
       try {
@@ -57,15 +57,23 @@ export function LeadsProvider({ children, campaignId }) {
 
         if (Array.isArray(leadsData)) {
           setLeads(leadsData);
-        } else if (leadsData.data) {
+          return { leads: leadsData, pagination: null };
+        }
+
+        if (leadsData.data) {
           setLeads(leadsData.data);
           if (leadsData.pagination) {
             setPagination(leadsData.pagination);
           }
+          return { leads: leadsData.data, pagination: leadsData.pagination || null };
         }
+
+        setLeads([]);
+        return { leads: [], pagination: null };
       } catch (error) {
         console.error("Error loading leads:", error);
         setLeads([]);
+        return { leads: [], pagination: null };
       } finally {
         setIsLoading(false);
       }
@@ -89,9 +97,9 @@ export function LeadsProvider({ children, campaignId }) {
 
   // Pagination
   const changePage = useCallback(
-    (page) => {
+    async (page) => {
       setPagination((prev) => ({ ...prev, page }));
-      loadLeads({ page });
+      return await loadLeads({ page });
     },
     [loadLeads],
   );

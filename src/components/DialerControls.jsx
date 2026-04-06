@@ -17,6 +17,8 @@ export default function DialerControls({
   const isAgentMode = mode === 'agent';
   const leadsContext = useContext(LeadsContext);
   const leads = leadsContext ? leadsContext.leads : [];
+  const pagination = leadsContext ? leadsContext.pagination : null;
+  const changePage = leadsContext ? leadsContext.changePage : null;
 
   // Frontend Auto Dialer State (Zoom Integration)
   const [autoDialState, setAutoDialState] = useState({
@@ -54,12 +56,46 @@ export default function DialerControls({
     // Find the NEXT pending lead
     const nextPendingIndex = leads.findIndex((l, index) => index > prevState.currentIndex && l.dialerStatus === 'pending');
     if (nextPendingIndex === -1) {
-      setIsDialing(false);
-      onSuccess("Auto Dialer completed all pending leads on this page.");
-      return { active: false, currentIndex: 0, status: 'idle' };
+      return null;
     }
     triggerZoomCall(leads[nextPendingIndex]);
     return { ...prevState, currentIndex: nextPendingIndex };
+  };
+
+  const findFirstPendingLead = (pageLeads) => {
+    if (!Array.isArray(pageLeads)) return -1;
+    return pageLeads.findIndex((lead) => lead.dialerStatus === 'pending');
+  };
+
+  const advanceToNextPageAndCall = async () => {
+    if (!pagination || typeof changePage !== 'function') {
+      setIsDialing(false);
+      setAutoDialState({ active: false, currentIndex: 0, status: 'idle' });
+      onSuccess('Auto Dialer completed all pending leads.');
+      return;
+    }
+
+    const totalPages = pagination.totalPages || 1;
+    let nextPage = (pagination.page || 1) + 1;
+
+    while (nextPage <= totalPages) {
+      const result = await changePage(nextPage);
+      const nextPageLeads = result?.leads || [];
+      const firstPendingIndex = findFirstPendingLead(nextPageLeads);
+
+      if (firstPendingIndex !== -1) {
+        setAutoDialState({ active: true, currentIndex: firstPendingIndex, status: 'calling' });
+        triggerZoomCall(nextPageLeads[firstPendingIndex]);
+        onSuccess(`Moved to page ${nextPage} and continued dialing.`);
+        return;
+      }
+
+      nextPage += 1;
+    }
+
+    setIsDialing(false);
+    setAutoDialState({ active: false, currentIndex: 0, status: 'idle' });
+    onSuccess('Auto Dialer completed all pending leads across all pages.');
   };
 
   // Remove timer effect: user must click Next Call to advance
@@ -128,8 +164,14 @@ export default function DialerControls({
     }));
   };
 
-  const handleNextCall = () => {
-    setAutoDialState(prev => advanceNextCall(prev));
+  const handleNextCall = async () => {
+    const nextState = advanceNextCall(autoDialState);
+    if (nextState) {
+      setAutoDialState(nextState);
+      return;
+    }
+
+    await advanceToNextPageAndCall();
   };
 
   return (

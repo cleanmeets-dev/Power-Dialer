@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { UserPlus, AlertCircle, X, Mail, Lock, User, Shield } from 'lucide-react';
+import { UserPlus, AlertCircle, X, Mail, Lock, User, Shield, CheckCircle2 } from 'lucide-react';
 import { createUser } from '../services/api';
+import Modal from './common/Modal';
 
-export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
+export default function AdminCreateUserModal({ isOpen, onClose, onSuccess, onUserCreated }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,8 +11,25 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
   const [role, setRole] = useState('caller-agent');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   if (!isOpen) return null;
+
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('caller-agent');
+    setError('');
+    setIsLoading(false);
+    setSuccessMessage('');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,9 +52,13 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
 
     try {
       setIsLoading(true);
-      const user = await createUser(email, password, name, role);
-      onSuccess(`${role.charAt(0).toUpperCase() + role.slice(1)} ${user.name} created successfully`);
-      onClose();
+      const result = await createUser(email, password, name, role);
+      const createdUser = result?.user || result;
+      const successMessage = `${role.charAt(0).toUpperCase() + role.slice(1)} ${createdUser?.name || name} created successfully`;
+
+      onSuccess?.(successMessage);
+      onUserCreated?.(successMessage);
+      setSuccessMessage(successMessage);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create user. Please try again.');
       console.error(err);
@@ -188,6 +210,30 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess }) {
           </div>
         </form>
       </div>
+
+      <Modal
+        isOpen={Boolean(successMessage)}
+        title="User Created"
+        onClose={handleClose}
+        maxWidth="max-w-sm"
+      >
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 p-3">
+            <CheckCircle2 className="w-8 h-8 text-emerald-700 dark:text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">Success</p>
+            <p className="mt-2 text-slate-700 dark:text-slate-300">{successMessage}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition"
+          >
+            Done
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

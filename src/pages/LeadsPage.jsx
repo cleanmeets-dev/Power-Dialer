@@ -19,6 +19,7 @@ export default function LeadsPage() {
   
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [totalLeads, setTotalLeads] = useState(0);
+  const [campaignsRefreshKey, setCampaignsRefreshKey] = useState(0);
   const { isDialing, setIsDialing, activeCalls } = useDialer(selectedCampaignId, showNotification);
 
   // Fetch leads count when campaign changes
@@ -70,10 +71,14 @@ export default function LeadsPage() {
           count = response.pagination.total;
         }
         setTotalLeads(count);
+        setCampaignsRefreshKey((prev) => prev + 1);
+        return count;
       } catch (error) {
         console.error('Error refreshing leads count:', error);
       }
     }
+
+    return 0;
   };
 
   return (
@@ -89,6 +94,7 @@ export default function LeadsPage() {
         selectedCampaignId={selectedCampaignId}
         onCampaignSelect={setSelectedCampaignId}
         onShowNotification={showNotification}
+        refreshKey={campaignsRefreshKey}
       />
 
       {/* Dialer Controls (Agents Only) */}
@@ -115,7 +121,6 @@ export default function LeadsPage() {
       {/* Leads Table */}
       {selectedCampaignId && (
         <LeadsProvider campaignId={selectedCampaignId}>
-          {/* File Upload (Managers Only) */}
           {isManager && (
             <FileUpload 
               campaignId={selectedCampaignId} 
@@ -126,8 +131,7 @@ export default function LeadsPage() {
             />
           )}
 
-          {/* Lead Assignment Panel (Managers Only) */}
-          {isManager && (
+          {/* {isManager && (
             <LeadAssignmentPanel
               campaignId={selectedCampaignId}
               onAssignmentComplete={() => {
@@ -135,7 +139,7 @@ export default function LeadsPage() {
               }}
               showNotification={showNotification}
             />
-          )}
+          )} */}
 
           <LeadsTable showNotification={showNotification} />
         </LeadsProvider>

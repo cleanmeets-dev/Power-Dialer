@@ -114,21 +114,15 @@ export default function FileUpload({
 
       onSuccess(`${file.name} uploaded successfully`);
 
-      // Try to get leads count from response
-      if (onLeadsChange) {
-        if (response?.leadsCount) {
-          onLeadsChange(response.leadsCount);
-        } else if (response?.count) {
-          onLeadsChange(response.count);
-        }
+      // Refresh the parent count and the table data after a successful upload
+      const refreshedCount = await onUploadComplete?.();
+
+      if (typeof refreshedCount === 'number' && onLeadsChange) {
+        onLeadsChange(refreshedCount);
       }
 
-      // Notify parent to refresh leads count
-      onUploadComplete?.();
-
-      // Reload Context leads for LeadsTable rendering
       if (leadsCtx?.loadLeads) {
-        leadsCtx.loadLeads();
+        await leadsCtx.loadLeads();
       }
 
       // Reset after 1.5 seconds

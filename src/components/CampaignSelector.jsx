@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, AlertCircle } from 'lucide-react';
 import { createCampaign, getCampaigns } from '../services/api';
 
-export default function CampaignSelector({ onCampaignSelect, onSelect, selectedCampaignId, selectedId, isLoading, onShowNotification }) {
+export default function CampaignSelector({ onCampaignSelect, onSelect, selectedCampaignId, selectedId, isLoading, onShowNotification, refreshKey = 0 }) {
   const [campaigns, setCampaigns] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newName, setNewName] = useState('');
@@ -16,7 +16,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
   // Fetch campaigns on mount
   useEffect(() => {
     loadCampaigns();
-  }, []);
+  }, [refreshKey]);
 
   const loadCampaigns = async () => {
     try {
@@ -76,7 +76,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
           <option value="">Select a campaign...</option>
           {campaigns.map((campaign) => (
             <option key={campaign._id} value={campaign._id}>
-              {campaign.name} ({campaign.totalLeads || 0} leads)
+              {campaign.name}
             </option>
           ))}
         </select>

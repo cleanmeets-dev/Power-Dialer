@@ -25,6 +25,7 @@ export default function Navbar({
   };
 
   const handleUserCreated = (message) => {
+    onShowNotification?.(message, "success");
     setShowCreateUserModal(false);
   };
 

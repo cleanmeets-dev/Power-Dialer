@@ -45,7 +45,7 @@ export default function AgentListModal({ isOpen, onClose, onDeleteAgent, onShowN
           <p className="text-slate-600 dark:text-slate-400">No agents found</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-3">
           {agents.map((agent) => (
             <div key={agent._id} className="border border-slate-300 dark:border-slate-700 rounded-lg p-4 flex items-center justify-between hover:border-slate-400 dark:hover:border-slate-600 transition">
               <div className="flex-1">

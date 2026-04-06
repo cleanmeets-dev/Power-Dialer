@@ -136,12 +136,12 @@ export default function CampaignsPage() {
                 </span>
               </div>
 
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Total Leads:</span>
                 <span className="text-slate-900 dark:text-primary-400 font-semibold">
                   {campaign.totalLeads || 0}
                 </span>
-              </div>
+              </div> */}
             </div>
 
             <div className="flex gap-2">

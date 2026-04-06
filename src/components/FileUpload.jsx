@@ -144,18 +144,6 @@ export default function FileUpload({
   return (
     <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
       <h2 className="text-xl font-bold mb-4 text-primary-500">Upload Leads</h2>
-
-      {/* CSV Format Help */}
-      <div className="mb-4 p-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-600 rounded text-xs text-slate-700 dark:text-slate-300">
-        <p className="font-semibold text-slate-900 dark:text-slate-200 mb-2">
-          CSV Format Required:
-        </p>
-        <p className="font-mono text-slate-600 dark:text-slate-400 overflow-x-auto">
-          phoneNumber,businessName,businessAddress,city,state,country,email
-        </p>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">Max file size: 5MB</p>
-      </div>
-
       {/* File Error Alert */}
       {fileError && (
         <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded flex items-start gap-2">

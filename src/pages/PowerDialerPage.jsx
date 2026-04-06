@@ -24,7 +24,7 @@ export default function PowerDialerPage() {
             <Zap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">Power Dialer</h1>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Power Dialer</h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">Rapid sequential dialing with callbacks for maximum efficiency</p>
           </div>
         </div>

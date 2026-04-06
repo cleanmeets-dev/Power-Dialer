@@ -295,7 +295,7 @@ export default function FollowupPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">Lead Followups</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Lead Followups</h1>
         <p className="text-slate-400">Track engaged leads for follow-up</p>
       </div>
 

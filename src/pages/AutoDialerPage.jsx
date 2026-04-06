@@ -29,7 +29,7 @@ export default function AutoDialerPage() {
             <PhoneCall className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400">Auto Dialer</h1>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Auto Dialer</h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">Agent-specific sequential automatic dialing</p>
           </div>
         </div>

@@ -376,7 +376,7 @@ export default function LeadsTable({ showNotification }) {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <div className="min-w-0">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-primary-400">Leads</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Leads</h2>
             <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm mt-1 truncate">
               {selectedRows.size > 0
                 ? `${selectedRows.size} selected of ${totalLeads} total`

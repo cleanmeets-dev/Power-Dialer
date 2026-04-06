@@ -134,7 +134,7 @@ export default function AttendanceHistoryPage() {
       <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-primary-400 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
               <CalendarIcon className="w-8 h-8 text-cyan-700 dark:text-cyan-400" />
               Timesheets & Logs
             </h1>

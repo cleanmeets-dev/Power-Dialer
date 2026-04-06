@@ -23,6 +23,7 @@ import PowerDialerPage from "./pages/PowerDialerPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import React from "react";
+import AgentLeadsPage from "./pages/AgentLeadsPage";
 
 function App() {
   return (
@@ -61,10 +62,11 @@ function App() {
             }
           >
             <Route index element={<OverviewPage />} />
-            <Route path="leads" element={<PowerDialerPage />} />
-            {/* <Route path="call-logs" element={<CallLogsPage />} /> */}
+            <Route path="leads" element={<AgentLeadsPage />} />
+            <Route path="power-dialer" element={<PowerDialerPage />} />
             <Route path="auto-dialer" element={<AutoDialerPage />} />
             <Route path="direct-dialer" element={<DirectDialerPage />} />
+            {/* <Route path="call-logs" element={<CallLogsPage />} /> */}
           </Route>
 
           <Route path="/dashboard" element={<RoleHomeRedirect />} />

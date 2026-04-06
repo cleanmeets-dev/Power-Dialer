@@ -27,9 +27,10 @@ function getSidebarItems(role) {
 
 	return [
 		{ id: 'overview', label: 'Dashboard', icon: LayoutGrid, path: '/agent' },
+		{ id: 'leads', label: 'View Leads', icon: FileText, path: '/agent/leads' },
+		{ id: 'power-dialer', label: 'Power Dialer', icon: PhoneCall, path: '/agent/power-dialer' },
 		{ id: 'auto-dialer', label: 'Auto Dialer', icon: PhoneCall, path: '/agent/auto-dialer' },
 		{ id: 'direct-dialer', label: 'Direct Dialer', icon: Phone, path: '/agent/direct-dialer' },
-		{ id: 'power-dialer', label: 'Power Dialer', icon: PhoneCall, path: '/agent/leads' },
 		// { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/agent/call-logs' },
 	];
 }

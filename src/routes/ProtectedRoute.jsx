@@ -12,7 +12,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );

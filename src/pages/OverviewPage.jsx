@@ -6,39 +6,6 @@ import CampaignSelector from '../components/CampaignSelector';
 import { getCampaigns } from '../services/api';
 
 export default function OverviewPage() {
-  const { showNotification } = useOutletContext();
-  const [selectedCampaignId, setSelectedCampaignId] = useState('');
-  const [stats, setStats] = useState({
-    totalCampaigns: 0,
-    activeCampaigns: 0,
-    totalCalls: 0,
-    successfulCalls: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
-    try {
-      setIsLoading(true);
-      const campaigns = await getCampaigns();
-      const campaignList = Array.isArray(campaigns) ? campaigns : [];
-      
-      setStats({
-        totalCampaigns: campaignList.length,
-        activeCampaigns: campaignList.filter(c => c.status === 'active').length,
-        totalCalls: campaignList.reduce((sum, c) => sum + (c.dialedCount || 0), 0),
-        successfulCalls: campaignList.reduce((sum, c) => sum + (c.successCount || 0), 0),
-      });
-    } catch (error) {
-      showNotification('Failed to load overview stats', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -46,32 +13,6 @@ export default function OverviewPage() {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
         <p className="text-slate-600 dark:text-slate-400 mt-2">Call center performance summary</p>
       </div>
-
-      {/* Stats Grid */}
-      {/* {!isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            label="Total Campaigns"
-            value={stats.totalCampaigns}
-            icon={<TrendingUp className="w-6 h-6" />}
-          />
-          <StatsCard
-            label="Active Campaigns"
-            value={stats.activeCampaigns}
-            icon={<Clock className="w-6 h-6" />}
-          />
-          <StatsCard
-            label="Total Calls"
-            value={stats.totalCalls}
-            icon={<PhoneOff className="w-6 h-6" />}
-          />
-          <StatsCard
-            label="Successful Calls"
-            value={stats.successfulCalls}
-            icon={<CheckCircle className="w-6 h-6" />}
-          />
-        </div>
-      )} */}
 
       {/* Info Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

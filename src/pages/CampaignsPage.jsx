@@ -123,7 +123,7 @@ export default function CampaignsPage() {
             </div>
 
             <div className="space-y-2 mb-4 text-sm">
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Status:</span>
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -134,7 +134,7 @@ export default function CampaignsPage() {
                 >
                   {campaign.status}
                 </span>
-              </div>
+              </div> */}
 
               {/* <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Total Leads:</span>

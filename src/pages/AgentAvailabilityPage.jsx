@@ -256,14 +256,6 @@ export default function AgentAvailabilityPage() {
         </div>
       )}
 
-      {/* Live Status */}
-      {agents.length > 0 && (
-        <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg flex items-center gap-2">
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-          <span className="text-blue-400 text-xs font-semibold">Auto-refreshing every 30 seconds (WebSocket enabled)</span>
-        </div>
-      )}
-
       {/* Agents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {agents.map((agent) => (
@@ -305,7 +297,7 @@ export default function AgentAvailabilityPage() {
             </div>
 
             {/* Stats */}
-            <div className="space-y-2 mb-4 pb-4 border-b border-slate-200 dark:border-slate-600">
+            {/* <div className="space-y-2 mb-4 pb-4 border-b border-slate-200 dark:border-slate-600">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
                   <Phone className="w-4 h-4" />
@@ -322,10 +314,10 @@ export default function AgentAvailabilityPage() {
                   <span className="text-cyan-700 dark:text-cyan-400 font-semibold">Yes</span>
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Toggle Button */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <button
                 onClick={() => handleToggleAvailability(agent)}
                 disabled={loadingAgentId === agent._id || !agent.attendance || !agent.attendance.isCheckedIn || Boolean(agent.activeLead)}
@@ -377,7 +369,7 @@ export default function AgentAvailabilityPage() {
                   End Break
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         ))}
       </div>

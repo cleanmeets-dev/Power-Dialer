@@ -19,7 +19,7 @@ function getSidebarItems(role) {
 			{ id: 'campaigns', label: 'Campaigns', icon: Megaphone, path: '/manager/campaigns' },
 			{ id: 'leads', label: 'Leads', icon: FileText, path: '/manager/leads' },
 			{ id: 'followups', label: 'Lead Followups', icon: Repeat2, path: '/manager/followups' },
-			{ id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
+			// { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
 			{ id: 'agents', label: 'Agents (Live)', icon: Users, path: '/manager/agents' },
 			{ id: 'attendance', label: 'Attendance Logs', icon: CalendarDays, path: '/manager/attendance' },
 		];

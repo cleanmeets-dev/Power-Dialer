@@ -6,7 +6,6 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  Phone,
   Calendar,
   User,
   FileText,
@@ -47,7 +46,7 @@ api.interceptors.request.use((config) => {
 
 export default function FollowupPage() {
   const { showNotification } = useOutletContext();
-  const { user } = useAuth();
+  useAuth();
 
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [leads, setLeads] = useState([]);
@@ -294,13 +293,13 @@ export default function FollowupPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex justify-between items-center">
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Lead Followups</h1>
-        <p className="text-slate-400">Track engaged leads for follow-up</p>
+        <p className="text-slate-600 dark:text-slate-400">Track engaged leads for follow-up</p>
       </div>
 
       {/* Campaign Selector */}
-      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+      <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
         <CampaignSelector
           onCampaignSelect={setSelectedCampaignId}
           selectedCampaignId={selectedCampaignId}
@@ -310,16 +309,16 @@ export default function FollowupPage() {
       {selectedCampaignId && (
         <>
           {/* Primary Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-800 p-4 rounded-lg border border-slate-700">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-3 w-4 h-4 text-slate-500 dark:text-slate-400" />
               <input
                 type="text"
                 placeholder="Search by name, phone..."
                 value={searchInput}
                 onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500"
               />
             </div>
 
@@ -330,7 +329,7 @@ export default function FollowupPage() {
                 setSelectedStatus(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
             >
               <option value="">All Statuses</option>
               {LEAD_STATUSES.map((status) => (
@@ -347,7 +346,7 @@ export default function FollowupPage() {
                 setSelectedDisposition(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
             >
               <option value="">All Dispositions</option>
               {DISPOSITIONS.map((disposition) => (
@@ -360,7 +359,7 @@ export default function FollowupPage() {
             {/* Advanced Filters Toggle */}
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-white transition"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-100 transition"
             >
               <Filter className="w-4 h-4" />
               {showAdvancedFilters ? 'Hide' : 'More'} Filters
@@ -369,7 +368,7 @@ export default function FollowupPage() {
 
           {/* Advanced Filters */}
           {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
               {/* Agent Filter */}
               <select
                 value={selectedAgent}
@@ -377,7 +376,7 @@ export default function FollowupPage() {
                   setSelectedAgent(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
               >
                 <option value="">All Agents</option>
                 {agents.map((agent) => (
@@ -394,7 +393,7 @@ export default function FollowupPage() {
                   setSelectedInterestLevel(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
               >
                 <option value="">All Interest Levels</option>
                 <option value="cold">Cold</option>
@@ -412,7 +411,7 @@ export default function FollowupPage() {
                   setDaysSinceContact(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500"
               />
 
               {/* Follow-up Urgency Filter */}
@@ -422,7 +421,7 @@ export default function FollowupPage() {
                   setFollowupUrgency(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary-500"
+                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
               >
                 <option value="">All Follow-ups</option>
                 <option value="overdue">Overdue</option>
@@ -450,7 +449,7 @@ export default function FollowupPage() {
                 setPageSize(parseInt(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-primary-500"
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
             >
               <option value={10}>10 per page</option>
               <option value={20}>20 per page</option>
@@ -473,13 +472,13 @@ export default function FollowupPage() {
           )}
 
           {/* Results Counter */}
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
             Showing {leads.length > 0 ? startIndex : 0} to {endIndex} of {total} followup
             leads
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto bg-slate-800 border border-slate-700 rounded-lg">
+          <div className="overflow-x-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
             {isLoading ? (
               <div className="flex items-center justify-center p-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
@@ -487,29 +486,29 @@ export default function FollowupPage() {
             ) : leads.length > 0 ? (
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-700 bg-slate-700/50">
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                  <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700/50">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Lead
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Agent
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Disposition
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Last Dialed
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Follow-Up Date
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Notes
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Action
                     </th>
                   </tr>
@@ -518,20 +517,20 @@ export default function FollowupPage() {
                   {leads.map((lead) => (
                     <tr
                       key={lead._id}
-                      className="border-b border-slate-700 hover:bg-slate-700/30 transition"
+                      className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/30 transition"
                     >
                       <td className="px-4 py-3 text-sm">
                         <div className="flex flex-col">
-                          <span className="font-medium text-white">
+                          <span className="font-medium text-slate-900 dark:text-white">
                             {lead.businessName || 'N/A'}
                           </span>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
                             {lead.phoneNumber}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-2 text-slate-300">
+                        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                           <User className="w-4 h-4" />
                           {getAssignedAgentLabel(lead)}
                         </div>
@@ -557,12 +556,12 @@ export default function FollowupPage() {
                             '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                         <div className="flex flex-col">
                           <span className="font-medium">
                             {formatDate(lead.lastDialedAt)}
                           </span>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
                             {formatTime(lead.lastDialedAt)}
                           </span>
                         </div>
@@ -570,7 +569,7 @@ export default function FollowupPage() {
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-amber-400" />
-                          <span className="text-slate-300">
+                          <span className="text-slate-700 dark:text-slate-300">
                             {lead.followUpDate
                               ? formatDate(lead.followUpDate)
                               : '—'}
@@ -579,7 +578,7 @@ export default function FollowupPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="max-w-xs">
-                          <p className="text-slate-300 line-clamp-2">
+                          <p className="text-slate-700 dark:text-slate-300 line-clamp-2">
                             {lead.callNotes || lead.generalNotes || '—'}
                           </p>
                         </div>
@@ -598,8 +597,8 @@ export default function FollowupPage() {
               </table>
             ) : (
               <div className="flex flex-col items-center justify-center p-12">
-                <FileText className="w-12 h-12 text-slate-600 mb-3" />
-                <p className="text-slate-400">
+                <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mb-3" />
+                <p className="text-slate-600 dark:text-slate-400">
                   No followup leads found for this campaign.
                 </p>
               </div>
@@ -614,7 +613,7 @@ export default function FollowupPage() {
                   setCurrentPage(Math.max(1, currentPage - 1))
                 }
                 disabled={currentPage === 1}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800 dark:text-white rounded-lg transition"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Previous
@@ -629,7 +628,7 @@ export default function FollowupPage() {
                       className={`w-8 h-8 rounded ${
                         currentPage === page
                           ? 'bg-primary-600 text-white'
-                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                       } transition text-sm`}
                     >
                       {page}
@@ -643,7 +642,7 @@ export default function FollowupPage() {
                   setCurrentPage(Math.min(totalPages, currentPage + 1))
                 }
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-800 dark:text-white rounded-lg transition"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

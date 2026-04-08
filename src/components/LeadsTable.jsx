@@ -4,6 +4,7 @@ import {
   Trash2,
   Eye,
   Edit3,
+  Download,
   CheckCircle,
   Search,
   Filter,
@@ -38,6 +39,7 @@ api.interceptors.request.use((config) => {
 
 export default function LeadsTable({ showNotification }) {
   const {
+    campaignId,
     leads,
     isLoading,
     pagination,
@@ -200,46 +202,43 @@ export default function LeadsTable({ showNotification }) {
     }
   };
 
-  const handleExport = () => {
-    if (leads.length === 0) {
-      showNotification("No leads to export", "error");
-      return;
+  const handleExport = async () => {
+    try {
+      const params = {
+        campaignId: campaignId || undefined,
+        status: filters.status || undefined,
+        leadStatus: filters.leadStatus || undefined,
+        disposition: filters.disposition || undefined,
+        interestLevel: filters.interestLevel || undefined,
+        agentId: filters.agentId || undefined,
+        search: searchInput?.trim() || undefined,
+      };
+
+      const response = await api.get("/leads/export", {
+        params,
+        responseType: "blob",
+      });
+
+      const contentDisposition = response.headers["content-disposition"] || "";
+      const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+      const fileName = fileNameMatch?.[1] || `leads-export-${new Date().toISOString().split("T")[0]}.csv`;
+
+      const blob = new Blob([response.data], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showNotification("Leads exported successfully", "success");
+    } catch (error) {
+      showNotification(
+        error?.response?.data?.error || "Failed to export leads",
+        "error"
+      );
     }
-
-    const headers = [
-      "Business Name",
-      "Phone",
-      "Email",
-      "City",
-      "State",
-      "Dialer Status",
-      "Lead Status",
-      "Created At",
-    ];
-    const rows = leads.map((lead) => [
-      lead.businessName || "",
-      lead.phoneNumber || "",
-      lead.email || "",
-      lead.city || "",
-      lead.state || "",
-      lead.dialerStatus || "",
-      lead.leadStatus || "",
-      new Date(lead.createdAt).toLocaleDateString(),
-    ]);
-
-    const csv = [
-      headers.join(","),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `leads-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    showNotification("Leads exported successfully", "success");
   };
 
   useEffect(() => {
@@ -384,6 +383,14 @@ export default function LeadsTable({ showNotification }) {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={handleExport}
+              disabled={isLoading}
+              className="px-3 md:px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
+            >
+              <Download className="w-3 h-3 md:w-4 md:h-4" />
+              Export CSV
+            </button>
             {selectedRows.size > 0 && (
               <button
                 onClick={handleBulkDelete}

@@ -172,6 +172,7 @@ export function LeadsProvider({ children, campaignId }) {
 
   const value = {
     // State
+    campaignId,
     leads,
     isLoading,
     pagination,

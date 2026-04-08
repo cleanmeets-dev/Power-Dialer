@@ -143,6 +143,17 @@ export const getUsers = async () => {
 };
 
 /**
+ * Update a user's editable fields
+ * @param {string} userId - User ID
+ * @param {{name?: string, email?: string}} updates - User updates
+ * @returns {Promise} Updated user data
+ */
+export const updateUser = async (userId, updates) => {
+  const response = await api.put(`/auth/users/${userId}`, updates);
+  return response.data.data;
+};
+
+/**
  * Logout (client-side only)
  */
 export const logout = () => {

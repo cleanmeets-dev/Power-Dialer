@@ -74,7 +74,7 @@ export default function DashboardLayout() {
           <Sidebar user={user} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
           <main className="flex-1 min-w-0">
-            {isAgent(user?.role) && (
+            {/* {isAgent(user?.role) && (
               <div className="mb-4">
                 <div className={`text-sm ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                   Twilio Device:{' '}
@@ -83,7 +83,7 @@ export default function DashboardLayout() {
                   </span>
                 </div>
               </div>
-            )}
+            )} */}
 
             <Outlet
               context={{

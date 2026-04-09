@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Phone, PhoneOff, Keyboard } from "lucide-react";
+import { Phone, PhoneOff, Keyboard, Delete } from "lucide-react";
 
 const formatDisplayNumber = (value) =>
   String(value || "").replace(/[^\d+]/g, "");
@@ -19,6 +19,10 @@ export default function DirectDialerPage() {
   };
 
   const clearNumber = () => setPhoneNumber("");
+
+  const handleBackspace = () => {
+    setPhoneNumber((prev) => prev.slice(0, -1));
+  };
 
   const handleDial = async () => {
     if (!phoneNumber) return;
@@ -83,7 +87,7 @@ export default function DirectDialerPage() {
               <button
                 key={digit}
                 onClick={() => appendDigit(digit)}
-                className="rounded-lg bg-slate-200 dark:bg-slate-700/80 py-3 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+                className="rounded-lg border border-slate-300/80 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/80 py-3 text-slate-800 dark:text-slate-100 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-50 dark:hover:bg-slate-600 hover:text-cyan-700 dark:hover:text-cyan-200 hover:border-cyan-300 dark:hover:border-cyan-500"
                 type="button"
               >
                 {digit}
@@ -92,43 +96,55 @@ export default function DirectDialerPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
+          
           <button
             onClick={clearNumber}
             type="button"
-            className="rounded-lg bg-slate-300 dark:bg-slate-600/60 py-2 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-400 dark:hover:bg-slate-600"
+            className="rounded-lg bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 py-2 text-sm font-semibold text-amber-800 dark:text-amber-200 shadow-sm transition hover:-translate-y-0.5 hover:bg-amber-500/25 dark:hover:bg-amber-500/30 hover:border-amber-400"
           >
-            Clear
+            Clear All
           </button>
           <button
             onClick={handleDial}
             disabled={!phoneNumber || isDialing}
             type="button"
-            className="rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400"
+            className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:from-emerald-600 hover:to-teal-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:shadow-none"
           >
             <span className="inline-flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              {isDialing ? "Calling..." : "Call (Zoom)"}
+              {isDialing ? "Calling..." : "Call"}
+            </span>
+          </button>
+          <button
+            onClick={handleBackspace}
+            disabled={!phoneNumber}
+            type="button"
+            className="rounded-lg bg-rose-500/15 dark:bg-rose-500/20 border border-rose-500/30 py-2 text-sm font-semibold text-rose-800 dark:text-rose-200 shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-500/25 dark:hover:bg-rose-500/30 hover:border-rose-400 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:border-slate-300 dark:disabled:border-slate-600 disabled:shadow-none"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Delete className="w-4 h-4" />
+              Backspace
             </span>
           </button>
         </div>
 
-        <button
+        {/* <button
           onClick={handleHangup}
-          disabled={true} // Zoom doesn't support remote hangup from browser
+          disabled={true} 
           type="button"
-          className="mt-3 w-full rounded-lg bg-rose-600 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400"
+          className="mt-3 w-full rounded-lg bg-slate-400/20 dark:bg-slate-600/40 border border-slate-300 dark:border-slate-600 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-70"
         >
           <span className="inline-flex items-center gap-2">
             <PhoneOff className="w-4 h-4" />
             Hang Up
           </span>
-        </button>
+        </button> */}
 
-        <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
+        {/* <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
           <Keyboard className="w-4 h-4" />
           Browser mic permission is required for audio.
-        </div>
+        </div> */}
       </div>
     </div>
   );

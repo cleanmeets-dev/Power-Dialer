@@ -252,8 +252,10 @@ export const deleteLead = async (id) => {
 
 // ==================== Dialer ====================
 
-export const startDialing = async (campaignId) => {
-  const response = await api.post('/dialer/start', { campaignId });
+export const startDialing = async (campaignId, agentId = null) => {
+  const payload = { campaignId };
+  if (agentId) payload.agentId = agentId;
+  const response = await api.post('/dialer/start', payload);
   return response.data;
 };
 
@@ -262,8 +264,10 @@ export const startAgentAutoDialing = async (campaignId, agentId) => {
   return response.data;
 };
 
-export const stopDialing = async (campaignId) => {
-  const response = await api.post('/dialer/stop', { campaignId });
+export const stopDialing = async (campaignId, agentId = null) => {
+  const payload = { campaignId };
+  if (agentId) payload.agentId = agentId;
+  const response = await api.post('/dialer/stop', payload);
   return response.data;
 };
 
@@ -284,6 +288,26 @@ export const getAgentAutoDialerStatus = async (campaignId, agentId) => {
 
 export const getCallLogs = async (campaignId) => {
   const response = await api.get(`/dialer/calls?campaignId=${campaignId}`);
+  return response.data.data;
+};
+
+export const logAgentCallAttempt = async (campaignId, leadId, outcome = 'no-answer') => {
+  const response = await api.post('/dialer/calls/agent-attempt', {
+    campaignId,
+    leadId,
+    outcome,
+  });
+
+  return response.data.data;
+};
+
+export const getDailyAgentCallCounts = async (hours = 12) => {
+  const sanitizedHours = Number.isFinite(Number(hours))
+    ? Math.max(1, Math.min(72, Math.floor(Number(hours))))
+    : 12;
+
+  const response = await api.get(`/dialer/calls/daily-agent-counts?hours=${sanitizedHours}`);
+  
   return response.data.data;
 };
 

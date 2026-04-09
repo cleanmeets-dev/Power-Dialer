@@ -99,7 +99,7 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
     total: agentsState.length,
     available: agentsState.filter((a) => a.attendance && a.attendance.isCheckedIn && !a.attendance.onBreak && !a.activeLead && a.isAvailable).length,
     busy: agentsState.filter((a) => a.attendance && a.attendance.isCheckedIn && (a.attendance.onBreak || a.activeLead || !a.isAvailable)).length,
-    totalCalls: agentsState.reduce((sum, a) => sum + (a.callsHandled || 0), 0),
+    totalCalls: agentsState.reduce((sum, a) => sum + (a.callsToday || 0), 0),
   };
 
   return (
@@ -184,13 +184,13 @@ export default function AgentAvailabilityPanel({ agents: initialAgents, onStatus
                   </span>
                 </div>
 
-                {/* Calls Handled */}
-                {agent.callsHandled !== undefined && (
+                {/* Calls Today */}
+                {(agent.callsToday !== undefined || agent.callsHandled !== undefined) && (
                   <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-600/50 pt-2 mt-2">
-                    <span className="text-slate-600 dark:text-slate-400">Calls Handled:</span>
+                    <span className="text-slate-600 dark:text-slate-400">Calls Today:</span>
                     <div className="flex items-center gap-1">
                       <Phone className="w-3 h-3 text-slate-600 dark:text-slate-400" />
-                      <span className="text-slate-900 dark:text-slate-300 font-semibold">{agent.callsHandled}</span>
+                      <span className="text-slate-900 dark:text-slate-300 font-semibold">{agent.callsToday ?? agent.callsHandled ?? 0}</span>
                     </div>
                   </div>
                 )}

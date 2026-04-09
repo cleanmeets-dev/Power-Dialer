@@ -174,7 +174,7 @@ export default function AgentAvailabilityPage() {
     total: agents.length,
     available: agents.filter((a) => a.attendance && a.attendance.isCheckedIn && !a.attendance.onBreak && !a.activeLead && a.isAvailable).length,
     busy: agents.filter((a) => a.attendance && a.attendance.isCheckedIn && (a.attendance.onBreak || a.activeLead || !a.isAvailable)).length,
-    totalCalls: agents.reduce((sum, a) => sum + (a.callsHandled || 0), 0),
+    totalCallsToday: agents.reduce((sum, a) => sum + (a.callsToday || 0), 0),
   };
 
   return (
@@ -230,9 +230,9 @@ export default function AgentAvailabilityPage() {
         <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-3">
             <Phone className="w-5 h-5 text-blue-400" />
-            <span className="text-slate-600 dark:text-slate-400 text-sm">Total Calls</span>
+            <span className="text-slate-600 dark:text-slate-400 text-sm">Calls Today</span>
           </div>
-          <p className="text-3xl font-bold text-blue-400">{stats.totalCalls}</p>
+          <p className="text-3xl font-bold text-blue-400">{stats.totalCallsToday}</p>
         </div>
       </div>
 
@@ -294,6 +294,16 @@ export default function AgentAvailabilityPage() {
                         ? 'Available'
                         : 'Busy'}
               </span>
+            </div>
+
+            <div className="mb-4 border-t border-slate-200 dark:border-slate-600 pt-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Calls Today
+                </span>
+                <span className="text-slate-900 dark:text-slate-200 font-semibold">{agent.callsToday || 0}</span>
+              </div>
             </div>
 
             {/* Stats */}

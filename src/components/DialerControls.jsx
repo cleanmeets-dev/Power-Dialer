@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import { Play, Square, Pause, SkipForward, Phone } from 'lucide-react';
-import { startDialing, stopDialing, updateLeadStatus } from '../services/api';
+import { logAgentCallAttempt, startDialing, stopDialing, updateLeadStatus } from '../services/api';
 import { LeadsContext } from '../context/LeadsContext';
 
 export default function DialerControls({
@@ -43,6 +43,12 @@ export default function DialerControls({
     try {
       // Update backend status to track progress
       await updateLeadStatus(lead._id, 'connected');
+
+      // Persist agent-attributed call attempts for dashboard daily call counts.
+      if (isAgentMode && campaignId) {
+        await logAgentCallAttempt(campaignId, lead._id, 'no-answer');
+      }
+
       // Update local context so Next Up label moves in UI
       if (leadsContext?.updateLead) {
         leadsContext.updateLead({ ...lead, dialerStatus: 'connected' });
@@ -112,7 +118,7 @@ export default function DialerControls({
     }
     try {
       // Twilio - Power Dial Only
-      await startDialing(campaignId);
+      await startDialing(campaignId, agentId || null);
       setIsDialing(true);
       onSuccess('Power dialing started');
     } catch (error) {
@@ -122,7 +128,7 @@ export default function DialerControls({
 
   const handleStopPowerDialer = async () => {
     try {
-      await stopDialing(campaignId);
+      await stopDialing(campaignId, agentId || null);
       setIsDialing(false);
       onSuccess('Power dialing stopped');
     } catch (error) {

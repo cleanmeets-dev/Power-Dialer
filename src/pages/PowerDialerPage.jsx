@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useDialer } from '../hooks/useDialer';
@@ -6,6 +6,7 @@ import CampaignSelector from '../components/CampaignSelector';
 import DialerControls from '../components/DialerControls';
 import { LeadsProvider } from '../context/LeadsContext';
 import LeadsTable from '../components/LeadsTable';
+import { getLeads } from '../services/api';
 import { Zap } from 'lucide-react';
 
 export default function PowerDialerPage() {
@@ -14,6 +15,24 @@ export default function PowerDialerPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [totalLeads, setTotalLeads] = useState(0);
   const { isDialing, setIsDialing, activeCalls } = useDialer(selectedCampaignId, showNotification);
+
+  useEffect(() => {
+    if (!selectedCampaignId) {
+      setTotalLeads(0);
+      return;
+    }
+
+    const loadLeadCount = async () => {
+      try {
+        const response = await getLeads(selectedCampaignId, { page: 1, limit: 1 });
+        setTotalLeads(response?.pagination?.total || 0);
+      } catch (error) {
+        setTotalLeads(0);
+      }
+    };
+
+    loadLeadCount();
+  }, [selectedCampaignId]);
 
   return (
     <div className="space-y-6">

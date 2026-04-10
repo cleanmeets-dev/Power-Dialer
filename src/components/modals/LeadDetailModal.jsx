@@ -18,15 +18,19 @@ const STATUS_COLORS = {
   callback: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
   converted: 'bg-emerald-600/20 text-emerald-700 dark:text-emerald-300',
   closed: 'bg-slate-600/20 text-slate-700 dark:text-slate-300',
+  qualified: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
+  disqualified: 'bg-rose-500/20 text-rose-700 dark:text-rose-400',
+  'in-process': 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400',
+  reschedule: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+  onhold: 'bg-slate-500/20 text-slate-700 dark:text-slate-300',
 };
 
 const DISPOSITION_COLORS = {
-  'interested': 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
+  'voicemail': 'bg-slate-500/20 text-slate-700 dark:text-slate-400',
+  'followup': 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
   'not-interested': 'bg-rose-500/20 text-rose-700 dark:text-rose-400',
-  'callback': 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+  'appointment': 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
   'wrong-number': 'bg-orange-500/20 text-orange-700 dark:text-orange-400',
-  'no-answer': 'bg-slate-500/20 text-slate-700 dark:text-slate-400',
-  'do-not-call': 'bg-red-500/20 text-red-700 dark:text-red-400',
 };
 
 export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdate, onEditLead }) {
@@ -75,8 +79,8 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
 
   // Group fields by category
   const commonFields = visibleFields.filter(f => ['businessName', 'contactName', 'phoneNumber', 'email', 'businessAddress', 'city', 'state', 'country'].includes(f.key));
-  const roleSpecificFields = visibleFields.filter(f => !f.key.startsWith('dialerStatus') && !f.key.startsWith('leadStatus') && !f.key.startsWith('disposition') && !f.key.startsWith('callNotes') && !f.key.startsWith('generalNotes') && !f.key.startsWith('followUpDate') && !commonFields.some(cf => cf.key === f.key));
-  const statusFields = visibleFields.filter(f => ['dialerStatus', 'leadStatus', 'disposition', 'callNotes', 'generalNotes', 'followUpDate'].includes(f.key));
+  const roleSpecificFields = visibleFields.filter(f => !f.key.startsWith('dialerStatus') && !f.key.startsWith('appointmentStatus') && !f.key.startsWith('disposition') && !f.key.startsWith('agentNotes') && !f.key.startsWith('followUpDate') && !commonFields.some(cf => cf.key === f.key));
+  const statusFields = visibleFields.filter(f => ['dialerStatus', 'appointmentStatus', 'disposition', 'agentNotes', 'followUpDate'].includes(f.key));
 
   const renderFieldValue = (key, value) => {
     if (!value) return '—';
@@ -99,12 +103,12 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
           </span>
           <p className="text-xs text-slate-500 mt-1">Dialer Status</p>
         </div>
-        {lead.leadStatus && (
+        {lead.appointmentStatus && (
           <div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.leadStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
-              {lead.leadStatus}
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.appointmentStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
+              {lead.appointmentStatus}
             </span>
-            <p className="text-xs text-slate-500 mt-1">Lead Status</p>
+            <p className="text-xs text-slate-500 mt-1">Appointment Status</p>
           </div>
         )}
         {lead.disposition && (
@@ -159,7 +163,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
             className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition flex items-center gap-2"
           >
             <ListChecks className="w-4 h-4" />
-            Update Status
+            Update Qualification
           </button>
         )}
       </div>

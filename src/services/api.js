@@ -1,13 +1,3 @@
-/**
- * Assign all unassigned leads in a campaign to an agent
- * @param {string} campaignId - Campaign ID
- * @param {string} agentId - Agent ID
- * @returns {Promise} Assignment result
- */
-export const assignAllUnassignedLeads = async (campaignId, agentId) => {
-  const response = await api.post('/leads/assign-all', { campaignId, agentId });
-  return response.data;
-};
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -178,8 +168,19 @@ export const logoutFromBackend = async () => {
 
 // ==================== Campaigns ====================
 
-export const createCampaign = async (name) => {
-  const response = await api.post('/campaigns', { name });
+export const createCampaign = async (name, options = {}) => {
+  const payload = typeof name === 'object' && name !== null
+    ? name
+    : {
+        name,
+        pipelineType: options.pipelineType || 'caller',
+        ...(options.parentCampaign ? { parentCampaign: options.parentCampaign } : {}),
+        ...(options.dialerType ? { dialerType: options.dialerType } : {}),
+        ...(options.assignedAgent ? { assignedAgent: options.assignedAgent } : {}),
+        ...(Array.isArray(options.assignedAgents) ? { assignedAgents: options.assignedAgents } : {}),
+      };
+
+  const response = await api.post('/campaigns', payload);
   return response.data.data;
 };
 
@@ -209,19 +210,22 @@ export const uploadLeads = async (file, campaignId, agentId) => {
   formData.append('file', file);
   formData.append('campaignId', campaignId);
   if (agentId) formData.append('agentId', agentId);
-  const response = await api.post('/leads/upload', formData, {
+  const response = await api.post('/caller-leads/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return response.data;
 };
 
 export const getLeads = async (campaignId, options = {}) => {
-  const { status = null, page = 1, limit = 20, search = null } = options;
+  const { status = null, page = 1, limit = 20, search = null, disposition = null, appointmentStatus = null, agentId = null } = options;
   
-  let url = `/leads?page=${page}&limit=${limit}`;
-  if (campaignId) url = `/leads?campaignId=${campaignId}&page=${page}&limit=${limit}`;
-  if (status) url += `&status=${status}`;
+  let url = `/caller-leads?page=${page}&limit=${limit}`;
+  if (campaignId) url = `/caller-leads?campaignId=${campaignId}&page=${page}&limit=${limit}`;
+  if (status) url += `&dialerStatus=${encodeURIComponent(status)}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (disposition) url += `&disposition=${encodeURIComponent(disposition)}`;
+  if (appointmentStatus) url += `&appointmentStatus=${encodeURIComponent(appointmentStatus)}`;
+  if (agentId) url += `&agentId=${encodeURIComponent(agentId)}`;
   
   const response = await api.get(url);
   return {
@@ -231,23 +235,33 @@ export const getLeads = async (campaignId, options = {}) => {
 };
 
 export const getLead = async (id) => {
-  const response = await api.get(`/leads/${id}`);
+  const response = await api.get(`/caller-leads/${id}`);
   return response.data.data;
 };
 
-export const updateLeadStatus = async (id, status) => {
-  const response = await api.put(`/leads/${id}/status`, { status });
+export const updateQualificationStatus = async (id, status) => {
+  const response = await api.patch(`/caller-leads/${id}/qualification`, { appointmentStatus: status });
   return response.data.data;
 };
 
 export const updateLead = async (id, updates) => {
-  const response = await api.put(`/leads/${id}`, updates);
+  const response = await api.put(`/caller-leads/${id}`, updates);
   return response.data.data;
 };
 
 export const deleteLead = async (id) => {
-  const response = await api.delete(`/leads/${id}`);
+  const response = await api.delete(`/caller-leads/${id}`);
   return response.data;
+};
+
+export const updateDisposition = async (id, updates) => {
+  const response = await api.patch(`/caller-leads/${id}/disposition`, updates);
+  return response.data.data;
+};
+
+export const updateQualification = async (id, updates) => {
+  const response = await api.patch(`/caller-leads/${id}/qualification`, updates);
+  return response.data.data;
 };
 
 // ==================== Dialer ====================
@@ -320,7 +334,26 @@ export const getDailyAgentCallCounts = async (hours = 12) => {
  * @returns {Promise} Updated lead, callLog, and agent
  */
 export const completeCall = async (leadId, data) => {
-  const response = await api.post(`/leads/${leadId}/complete-call`, data);
+  const response = await api.patch(`/caller-leads/${leadId}/disposition`, {
+    disposition: data.disposition,
+    agentNotes: data.agentNotes,
+    followUpDate: data.followUpDate,
+    contactName: data.contactName,
+    businessAddress: data.businessAddress,
+    city: data.city,
+    state: data.state,
+    country: data.country,
+    email: data.email,
+    appointmentDate: data.appointmentDate,
+    appointmentTime: data.appointmentTime,
+    leadFor: data.leadFor,
+    date: data.date,
+    currentSetup: data.currentSetup,
+    servicesGetting: data.servicesGetting,
+    frequency: data.frequency,
+    currentChallenges: data.currentChallenges,
+    interestLevel: data.interestLevel,
+  });
   return response.data.data;
 };
 
@@ -331,7 +364,7 @@ export const completeCall = async (leadId, data) => {
  * @returns {Promise} Updated lead with followUpDate
  */
 export const scheduleCallback = async (leadId, followUpDate) => {
-  const response = await api.post(`/leads/${leadId}/schedule-callback`, { followUpDate });
+  const response = await api.patch(`/caller-leads/${leadId}/disposition`, { followUpDate });
   return response.data.data;
 };
 
@@ -341,7 +374,7 @@ export const scheduleCallback = async (leadId, followUpDate) => {
  * @returns {Promise} Updated lead
  */
 export const cancelCallback = async (leadId) => {
-  const response = await api.post(`/leads/${leadId}/cancel-callback`);
+  const response = await api.patch(`/caller-leads/${leadId}/disposition`, { followUpDate: null, disposition: 'followup' });
   return response.data.data;
 };
 
@@ -446,7 +479,7 @@ export const getAgentStats = async () => {
  * @returns {Promise} Updated lead
  */
 export const assignLead = async (leadId, agentId) => {
-  const response = await api.put(`/leads/${leadId}/assign`, { agentId });
+  const response = await api.put(`/caller-leads/${leadId}`, { assignedCaller: agentId });
   return response.data.data;
 };
 
@@ -457,8 +490,12 @@ export const assignLead = async (leadId, agentId) => {
  * @returns {Promise} Assignment result
  */
 export const assignLeadsToAgent = async (leadIds, agentId) => {
-  const response = await api.post('/leads/assign-batch', { leadIds, agentId });
-  return response.data.data;
+  const results = [];
+  for (const leadId of leadIds) {
+    const response = await api.put(`/caller-leads/${leadId}`, { assignedCaller: agentId });
+    results.push(response.data.data);
+  }
+  return results;
 };
 
 export default api;

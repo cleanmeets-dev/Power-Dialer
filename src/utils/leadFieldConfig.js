@@ -20,15 +20,13 @@ export const LEAD_FIELD_CONFIG = {
   'caller-agent': [
     { key: 'leadFor', label: 'Lead For', type: 'text', readOnly: false },
     { key: 'currentSetup', label: 'Current Setup', type: 'textarea', readOnly: false },
-    { key: 'servicesNeeded', label: 'Services Needed', type: 'textarea', readOnly: false },
+    { key: 'servicesGetting', label: 'Services Getting', type: 'textarea', readOnly: false },
     { key: 'frequency', label: 'Frequency', type: 'text', readOnly: false },
     { key: 'currentChallenges', label: 'Current Challenges', type: 'textarea', readOnly: false },
     { key: 'interestLevel', label: 'Interest Level', type: 'select', options: ['cold', 'warm', 'hot'], readOnly: false },
-    { key: 'specificNotes', label: 'Notes', type: 'textarea', readOnly: false },
+    { key: 'agentNotes', label: 'Notes', type: 'textarea', readOnly: false },
     { key: 'appointmentDate', label: 'Appointment Date', type: 'date', readOnly: false },
     { key: 'appointmentTime', label: 'Appointment Time', type: 'time', readOnly: false },
-    { key: 'clientComment', label: 'Client Comment', type: 'textarea', readOnly: false },
-    { key: 'generalNotes', label: 'General Notes', type: 'textarea', readOnly: false },
   ],
 
   // Closer-Agent specific fields (for follow-ups and closures)
@@ -52,11 +50,11 @@ export const LEAD_FIELD_CONFIG = {
   manager: 'all', // Special flag indicating managers see all fields
 };
 
-export const LEAD_STATUS_FIELDS = [
+export const LEAD_WORKFLOW_FIELDS = [
   { key: 'dialerStatus', label: 'Dialer Status', type: 'select', options: ['pending', 'dialing', 'connected', 'failed', 'completed'], readOnly: true },
-  { key: 'leadStatus', label: 'Lead Status', type: 'select', options: ['new', 'contacted', 'interested', 'not_interested', 'callback', 'converted', 'closed'], readOnly: false },
-  { key: 'disposition', label: 'Disposition', type: 'select', options: ['interested', 'not-interested', 'callback', 'wrong-number', 'no-answer', 'do-not-call'], readOnly: false },
-  { key: 'callNotes', label: 'Call Notes', type: 'textarea', readOnly: false },
+  { key: 'appointmentStatus', label: 'Appointment Status', type: 'select', options: ['qualified', 'disqualified', 'in-process', 'reschedule', 'onhold'], readOnly: false },
+  { key: 'disposition', label: 'Disposition', type: 'select', options: ['voicemail', 'followup', 'not-interested', 'appointment', 'wrong-number'], readOnly: false },
+  { key: 'agentNotes', label: 'Agent Notes', type: 'textarea', readOnly: false },
   { key: 'followUpDate', label: 'Follow-Up Date', type: 'date', readOnly: false },
   { key: 'lastDialedAt', label: 'Last Dialed', type: 'datetime-local', readOnly: true },
 ];
@@ -73,19 +71,19 @@ export const getVisibleFields = (role) => {
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
       ...LEAD_FIELD_CONFIG['closer-agent'],
-      ...LEAD_STATUS_FIELDS,
+      ...LEAD_WORKFLOW_FIELDS,
     ];
   } else if (role === 'caller-agent') {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
-      ...LEAD_STATUS_FIELDS,
+      ...LEAD_WORKFLOW_FIELDS,
     ];
   } else if (role === 'closer-agent') {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['closer-agent'],
-      ...LEAD_STATUS_FIELDS,
+      ...LEAD_WORKFLOW_FIELDS,
     ];
   }
   return LEAD_FIELD_CONFIG.common;
@@ -101,7 +99,7 @@ export const getTableColumns = (role) => {
     { key: 'businessName', label: 'Business Name', width: 'w-40' },
     { key: 'phoneNumber', label: 'Phone', width: 'w-28' },
     { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
-    { key: 'leadStatus', label: 'Lead Status', width: 'w-24' },
+    { key: 'appointmentStatus', label: 'Appointment Status', width: 'w-28' },
   ];
 
   if (role === 'manager') {

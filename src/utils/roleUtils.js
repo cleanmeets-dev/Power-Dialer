@@ -10,7 +10,7 @@ export const ROLES = {
   CLOSER_AGENT: 'closer-agent',
 };
 
-export const AGENT_ROLES = [ROLES.CALLER_AGENT, ROLES.CLOSER_AGENT];
+export const AGENT_ROLES = [ROLES.CALLER_AGENT];
 
 /**
  * Check if user is any type of agent (caller-agent or closer-agent)
@@ -44,5 +44,7 @@ export const isManager = (role) => {
  * Get the home route for a given role
  */
 export const getRoleHomeRoute = (role) => {
-  return isManager(role) ? '/manager' : '/agent';
+  if (isManager(role)) return '/manager';
+  if (isCallerAgent(role)) return '/agent';
+  return '/login';
 };

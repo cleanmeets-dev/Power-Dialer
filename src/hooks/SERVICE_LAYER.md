@@ -419,8 +419,8 @@ For context, here's what these hooks consume:
 
 **Backend queueService:**
 - `getNextLeadsToCall()` - Fetch pending leads
-- `markAsDialing()` - Update lead status to dialing
-- `markAsCompleted()` - Update lead status to completed
+- `markAsDialing()` - Update dialer status to dialing
+- `markAsCompleted()` - Update dialer status to completed
 
 **Backend agentService:**
 - `getAvailableAgents()` - Find available agents

@@ -5,12 +5,11 @@ import { completeCall, getAvailableAgents } from '../../services/api.js';
 import { Loader } from 'lucide-react';
 
 const DISPOSITIONS = [
-  { value: 'interested', label: 'Interested' },
-  { value: 'not-interested', label: 'Not Interested' },
-  { value: 'callback', label: 'Callback' },
+  { value: 'appointment', label: 'Appointment' },
+  { value: 'followup', label: 'Follow Up' },
+  { value: 'voicemail', label: 'Voicemail' },
   { value: 'wrong-number', label: 'Wrong Number' },
-  { value: 'no-answer', label: 'No Answer' },
-  { value: 'do-not-call', label: 'Do Not Call' },
+  { value: 'not-interested', label: 'Not Interested' },
 ];
 
 const SENTIMENTS = [
@@ -38,7 +37,7 @@ export default function CompleteCallModal({
 }) {
   const [agents, setAgents] = useState([]);
   const [agentId, setAgentId] = useState(currentAgent?._id || '');
-  const [disposition, setDisposition] = useState('interested');
+  const [disposition, setDisposition] = useState('followup');
   const [agentNotes, setAgentNotes] = useState('');
   const [sentiment, setSentiment] = useState('neutral');
   const [callQuality, setCallQuality] = useState(3);
@@ -81,7 +80,7 @@ export default function CompleteCallModal({
       return;
     }
 
-    if (disposition === 'callback' && !followUpDate) {
+    if (disposition === 'followup' && !followUpDate) {
       onError?.('Follow-up date is required for callbacks');
       return;
     }
@@ -96,7 +95,7 @@ export default function CompleteCallModal({
         callQuality: parseInt(callQuality),
       };
 
-      if (disposition === 'callback' && followUpDate) {
+      if (disposition === 'followup' && followUpDate) {
         data.followUpDate = new Date(followUpDate).toISOString();
       }
 
@@ -204,7 +203,7 @@ export default function CompleteCallModal({
         </div>
 
         {/* Follow-up Date (if callback) */}
-        {disposition === 'callback' && (
+        {disposition === 'followup' && (
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Follow-up Date & Time *
@@ -214,7 +213,7 @@ export default function CompleteCallModal({
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
-              required={disposition === 'callback'}
+              required={disposition === 'followup'}
             />
           </div>
         )}

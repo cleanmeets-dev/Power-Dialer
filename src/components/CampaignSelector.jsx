@@ -21,7 +21,20 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
   const loadCampaigns = async () => {
     try {
       const data = await getCampaigns();
-      const campaignList = Array.isArray(data) ? data : (data?.data || []);
+      const rootCampaigns = Array.isArray(data) ? data : (data?.data || []);
+      const callerRoots = rootCampaigns.filter((root) => root.pipelineType === 'caller');
+      const campaignList = [];
+
+      callerRoots.forEach((root) => {
+        campaignList.push({ ...root, __isChild: false, __parentName: null });
+        const children = Array.isArray(root.children) ? root.children : [];
+        children
+          .filter((child) => child.pipelineType === 'caller')
+          .forEach((child) => {
+            campaignList.push({ ...child, __isChild: true, __parentName: root.name });
+          });
+      });
+
       setCampaigns(campaignList);
       // Auto-select first campaign if none selected
       if (campaignList && campaignList.length > 0 && !currentSelectedId && handleSelect) {
@@ -76,7 +89,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
           <option value="">Select a campaign...</option>
           {campaigns.map((campaign) => (
             <option key={campaign._id} value={campaign._id}>
-              {campaign.name}
+              {campaign.__isChild ? `-- ${campaign.name}` : campaign.name}
             </option>
           ))}
         </select>

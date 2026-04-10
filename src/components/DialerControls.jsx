@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import { Play, Square, Pause, SkipForward, Phone } from 'lucide-react';
-import { logAgentCallAttempt, startDialing, stopDialing, updateLeadStatus } from '../services/api';
+import { logAgentCallAttempt, startDialing, stopDialing } from '../services/api';
 import { LeadsContext } from '../context/LeadsContext';
 
 export default function DialerControls({
@@ -41,9 +41,6 @@ export default function DialerControls({
     onSuccess(`Dialing ${lead.businessName || lead.phoneNumber} via Zoom`);
 
     try {
-      // Update backend status to track progress
-      await updateLeadStatus(lead._id, 'connected');
-
       // Persist agent-attributed call attempts for dashboard daily call counts.
       if (isAgentMode && campaignId) {
         await logAgentCallAttempt(campaignId, lead._id, 'no-answer');
@@ -54,7 +51,7 @@ export default function DialerControls({
         leadsContext.updateLead({ ...lead, dialerStatus: 'connected' });
       }
     } catch (e) {
-      console.error('Failed to update lead status', e);
+      console.error('Failed to track call attempt', e);
     }
   };
 

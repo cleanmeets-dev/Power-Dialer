@@ -1,26 +1,24 @@
 import { useState, useEffect } from 'react';
 import Modal from '../common/Modal.jsx';
 import FormSelect from '../common/FormSelect.jsx';
-import { updateLeadStatus } from '../../services/api.js';
+import { updateQualificationStatus } from '../../services/api.js';
 import { Loader } from 'lucide-react';
 
-const LEAD_STATUS_OPTIONS = [
-  { value: 'new', label: 'New' },
-  { value: 'contacted', label: 'Contacted' },
-  { value: 'interested', label: 'Interested' },
-  { value: 'not_interested', label: 'Not Interested' },
-  { value: 'callback', label: 'Callback' },
-  { value: 'converted', label: 'Converted' },
-  { value: 'closed', label: 'Closed' },
+const QUALIFICATION_OPTIONS = [
+  { value: 'qualified', label: 'Qualified' },
+  { value: 'disqualified', label: 'Disqualified' },
+  { value: 'in-process', label: 'In Process' },
+  { value: 'reschedule', label: 'Reschedule' },
+  { value: 'onhold', label: 'On Hold' },
 ];
 
-export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess, onError }) {
+export default function UpdateQualificationModal({ isOpen, lead, onClose, onSuccess, onError }) {
   const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (lead) {
-      setStatus(lead.leadStatus || 'new');
+      setStatus(lead.appointmentStatus || 'in-process');
     }
   }, [lead, isOpen]);
 
@@ -30,18 +28,18 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
 
     setIsLoading(true);
     try {
-      const updated = await updateLeadStatus(lead._id, status);
+      const updated = await updateQualificationStatus(lead._id, status);
       onSuccess?.(updated);
       onClose();
     } catch (error) {
-      onError?.(error.response?.data?.error || 'Failed to update lead status');
+      onError?.(error.response?.data?.error || 'Failed to update qualification');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Update Lead Status - ${lead?.businessName || 'N/A'}`} maxWidth="max-w-sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Edit Qualification - ${lead?.businessName || 'N/A'}`} maxWidth="max-w-sm">
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Phone Number</p>
@@ -49,9 +47,9 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
         </div>
 
         <FormSelect
-          label="New Lead Status"
-          name="leadStatus"
-          options={LEAD_STATUS_OPTIONS}
+          label="Appointment Status"
+          name="appointmentStatus"
+          options={QUALIFICATION_OPTIONS}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           required
@@ -67,11 +65,11 @@ export default function UpdateLeadStatusModal({ isOpen, lead, onClose, onSuccess
           </button>
           <button
             type="submit"
-            disabled={isLoading || status === lead?.leadStatus}
+            disabled={isLoading || status === lead?.appointmentStatus}
             className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader className="w-4 h-4 animate-spin" />}
-            Update Status
+            Save Qualification
           </button>
         </div>
       </form>

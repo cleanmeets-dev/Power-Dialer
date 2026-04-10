@@ -1,15 +1,5 @@
 import { createContext, useCallback, useState, useEffect } from "react";
-import axios from "axios";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
-const api = axios.create({ baseURL: API_BASE_URL });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+import { getLeads } from "../services/api";
 
 export const LeadsContext = createContext();
 
@@ -24,8 +14,8 @@ export function LeadsProvider({ children, campaignId }) {
   });
   const [filters, setFilters] = useState({
     search: "",
-    status: "",
     disposition: "",
+    appointmentStatus: "",
     interestLevel: "",
     agentId: "",
   });
@@ -39,37 +29,27 @@ export function LeadsProvider({ children, campaignId }) {
 
       try {
         setIsLoading(true);
-        const response = await api.get("/leads", {
-          params: {
-            campaignId,
-            page: options.page ?? pagination.page,
-            limit: options.limit ?? pagination.limit,
-            status: (options.status ?? filters.status) || null,
-            search: (options.search ?? filters.search) || null,
-            disposition: (options.disposition ?? filters.disposition) || null,
-            interestLevel: (options.interestLevel ?? filters.interestLevel) || null,
-            agentId: (options.agentId ?? filters.agentId) || null,
-          },
+        const leadsData = await getLeads(campaignId, {
+          page: options.page ?? pagination.page,
+          limit: options.limit ?? pagination.limit,
+          search: (options.search ?? filters.search) || null,
+          disposition: (options.disposition ?? filters.disposition) || null,
+          appointmentStatus: (options.appointmentStatus ?? filters.appointmentStatus) || null,
+          interestLevel: (options.interestLevel ?? filters.interestLevel) || null,
+          agentId: (options.agentId ?? filters.agentId) || null,
         });
-        const leadsData = response.data;
 
-        console.log("Leads data: ", leadsData);
-
-        if (Array.isArray(leadsData)) {
-          setLeads(leadsData);
-          return { leads: leadsData, pagination: null };
+        setLeads(leadsData.leads || []);
+        if (leadsData.pagination) {
+          setPagination({
+            page: leadsData.pagination.page || pagination.page,
+            limit: leadsData.pagination.limit || pagination.limit,
+            total: leadsData.pagination.total || 0,
+            totalPages: leadsData.pagination.totalPages || leadsData.pagination.pages || 0,
+          });
         }
 
-        if (leadsData.data) {
-          setLeads(leadsData.data);
-          if (leadsData.pagination) {
-            setPagination(leadsData.pagination);
-          }
-          return { leads: leadsData.data, pagination: leadsData.pagination || null };
-        }
-
-        setLeads([]);
-        return { leads: [], pagination: null };
+        return leadsData;
       } catch (error) {
         console.error("Error loading leads:", error);
         setLeads([]);
@@ -82,9 +62,9 @@ export function LeadsProvider({ children, campaignId }) {
       campaignId,
       pagination.page,
       pagination.limit,
-      filters.status,
       filters.search,
       filters.disposition,
+      filters.appointmentStatus,
       filters.interestLevel,
       filters.agentId,
     ],
@@ -121,9 +101,9 @@ export function LeadsProvider({ children, campaignId }) {
 
   const setStatus = useCallback(
     (status) => {
-      setFilters((prev) => ({ ...prev, status }));
+      setFilters((prev) => ({ ...prev, appointmentStatus: status }));
       setPagination((prev) => ({ ...prev, page: 1 }));
-      loadLeads({ page: 1, status });
+      loadLeads({ page: 1, appointmentStatus: status });
     },
     [loadLeads],
   );

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { Plus, Edit2, Trash2, TrendingUp } from "lucide-react";
+import { Plus, Edit2, Trash2, ChevronRight, ChevronDown } from "lucide-react";
 import api, { getCampaigns } from "../services/api";
 import { isManager as checkIsManager, getRoleHomeRoute } from "../utils/roleUtils";
 import CreateCampaignModal from "../components/modals/CreateCampaignModal";
@@ -19,6 +19,31 @@ export default function CampaignsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [expandedRootIds, setExpandedRootIds] = useState(new Set());
+
+  const getParentName = (campaign) => {
+    if (!campaign?.parentCampaign) return 'None';
+    if (typeof campaign.parentCampaign === 'object') {
+      return campaign.parentCampaign.name || 'Parent campaign';
+    }
+    return 'Parent campaign';
+  };
+
+  const getAssignmentLabel = (campaign) => {
+    if (campaign?.dialerType === 'auto') {
+      const assigned = campaign?.assignedAgent;
+      if (!assigned) return 'Unassigned';
+      if (typeof assigned === 'object') return assigned.name || assigned.email || 'Assigned';
+      return 'Assigned';
+    }
+
+    if (campaign?.dialerType === 'parallel') {
+      const count = Array.isArray(campaign?.assignedAgents) ? campaign.assignedAgents.length : 0;
+      return `${count} agents`;
+    }
+
+    return 'N/A';
+  };
 
   useEffect(() => {
     loadCampaigns();
@@ -39,7 +64,21 @@ export default function CampaignsPage() {
     try {
       setIsLoading(true);
       const response = await getCampaigns();
-      setCampaigns(Array.isArray(response) ? response : []);
+      const callerRoots = (Array.isArray(response) ? response : [])
+        .filter((campaign) => campaign.pipelineType === 'caller')
+        .map((campaign) => ({
+          ...campaign,
+          children: Array.isArray(campaign.children)
+            ? campaign.children.filter((child) => child.pipelineType === 'caller')
+            : [],
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      callerRoots.forEach((root) => {
+        root.children.sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      setCampaigns(callerRoots);
     } catch (error) {
       showNotification("Failed to load campaigns", "error");
     } finally {
@@ -88,6 +127,19 @@ export default function CampaignsPage() {
     }
   };
 
+  const toggleChildren = (rootId) => {
+    setExpandedRootIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rootId)) next.delete(rootId);
+      else next.add(rootId);
+      return next;
+    });
+  };
+
+  const handleOpenLeads = (campaignId) => {
+    navigate(`/manager/leads?campaignId=${campaignId}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -108,63 +160,125 @@ export default function CampaignsPage() {
         </div>
       </div>
 
-      {/* Campaigns Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {campaigns.map((campaign) => (
-          <div
-            key={campaign._id}
-            className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-primary-400">
-                {campaign.name}
-              </h3>
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
-            </div>
+      {/* Campaigns Table */}
+      {campaigns.length > 0 && (
+        <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-100 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold w-12"></th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Campaign</th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Type</th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Dialer</th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Assigned</th>
+                <th className="text-right py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {campaigns.map((root) => {
+                const children = Array.isArray(root.children) ? root.children : [];
+                const isExpanded = expandedRootIds.has(root._id);
 
-            <div className="space-y-2 mb-4 text-sm">
-              {/* <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Status:</span>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-semibold ${
-                    campaign.status === "active"
-                      ? "bg-emerald-900/50 text-emerald-400"
-                      : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
-                  }`}
-                >
-                  {campaign.status}
-                </span>
-              </div> */}
+                return (
+                  <Fragment key={root._id}>
+                    <tr
+                      className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                    >
+                      <td className="py-3 px-4">
+                        {children.length > 0 ? (
+                          <button
+                            onClick={() => toggleChildren(root._id)}
+                            className="text-slate-600 dark:text-slate-300 hover:text-primary-500 transition cursor-pointer"
+                            title={isExpanded ? "Hide child campaigns" : "Show child campaigns"}
+                          >
+                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{root.name}</td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">Root</td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">N/A</td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">N/A</td>
+                      <td className="py-3 px-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleEditClick(root)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-secondary-600 hover:bg-secondary-700 text-white rounded transition text-xs cursor-pointer"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                          <button
+                            disabled={deletingId === root._id}
+                            onClick={() => handleDelete(root._id)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded transition text-xs disabled:opacity-50 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {deletingId === root._id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
 
-              {/* <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Total Leads:</span>
-                <span className="text-slate-900 dark:text-primary-400 font-semibold">
-                  {campaign.totalLeads || 0}
-                </span>
-              </div> */}
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEditClick(campaign)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-secondary-600 hover:bg-secondary-700 text-white rounded transition text-sm cursor-pointer"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit
-              </button>
-
-              <button
-                disabled={deletingId === campaign._id}
-                onClick={() => handleDelete(campaign._id)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded transition text-sm disabled:opacity-50 cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-                {deletingId === campaign._id ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+                    {isExpanded && children.map((child) => (
+                      <tr
+                        key={child._id}
+                        className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-700/30"
+                      >
+                        <td className="py-3 px-4"></td>
+                        <td className="py-3 px-4 pl-8 text-slate-900 dark:text-slate-100">
+                          <button
+                            onClick={() => handleOpenLeads(child._id)}
+                            className="hover:text-primary-500 transition cursor-pointer text-left"
+                            title="Open this campaign in Leads"
+                          >
+                            {child.name}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300">Child</td>
+                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300 uppercase">{child.dialerType || 'N/A'}</td>
+                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300" title={getAssignmentLabel(child)}>{getAssignmentLabel(child)}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenLeads(child._id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded transition text-xs cursor-pointer"
+                            >
+                              Open Leads
+                            </button>
+                            <button
+                              onClick={() => handleEditClick(child)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded transition text-xs cursor-pointer"
+                              title="Assign or change the campaign agent"
+                            >
+                              Assign Agent
+                            </button>
+                            <button
+                              onClick={() => handleEditClick(child)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-secondary-600 hover:bg-secondary-700 text-white rounded transition text-xs cursor-pointer"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              Edit
+                            </button>
+                            <button
+                              disabled={deletingId === child._id}
+                              onClick={() => handleDelete(child._id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded transition text-xs disabled:opacity-50 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              {deletingId === child._id ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {campaigns.length === 0 && !isLoading && (
         <div className="text-center py-12 bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-slate-200 dark:border-slate-700">

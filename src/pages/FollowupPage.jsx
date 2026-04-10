@@ -12,37 +12,33 @@ import {
   X,
   Download,
 } from 'lucide-react';
-import axios from 'axios';
+import { getAllAgents, getLeads } from '../services/api';
 import CampaignSelector from '../components/CampaignSelector';
 import LeadDetailModal from '../components/modals/LeadDetailModal';
 
-const LEAD_STATUSES = [
-  'contacted',
-  'interested',
-  'not_interested',
-  'callback',
-  'converted',
-  'closed',
+const DIALER_STATUSES = [
+  'pending',
+  'dialing',
+  'connected',
+  'failed',
+  'completed',
 ];
 
 const DISPOSITIONS = [
-  'interested',
+  'voicemail',
+  'followup',
   'not-interested',
-  'callback',
+  'appointment',
   'wrong-number',
-  'no-answer',
-  'do-not-call',
 ];
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-const api = axios.create({ baseURL: API_BASE_URL });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const APPOINTMENT_STATUSES = [
+  'in-process',
+  'qualified',
+  'disqualified',
+  'reschedule',
+  'onhold',
+];
 
 export default function FollowupPage() {
   const { showNotification } = useOutletContext();
@@ -52,11 +48,9 @@ export default function FollowupPage() {
   const [leads, setLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedDialerStatus, setSelectedDialerStatus] = useState('');
   const [selectedDisposition, setSelectedDisposition] = useState('');
-  const [selectedInterestLevel, setSelectedInterestLevel] = useState('');
-  const [daysSinceContact, setDaysSinceContact] = useState('');
-  const [followupUrgency, setFollowupUrgency] = useState('');
+  const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState('');
   const [selectedAgent, setSelectedAgent] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -77,53 +71,18 @@ export default function FollowupPage() {
     const fetchFollowupLeads = async () => {
       setIsLoading(true);
       try {
-        const params = {
-          campaignId: selectedCampaignId,
+        const response = await getLeads(selectedCampaignId, {
           page: currentPage,
           limit: pageSize,
-        };
+          search: searchInput || null,
+          status: selectedDialerStatus || null,
+          disposition: selectedDisposition || null,
+          appointmentStatus: selectedAppointmentStatus || null,
+          agentId: selectedAgent || null,
+        });
 
-        // Add search filter
-        if (searchInput) {
-          params.search = searchInput;
-        }
-
-        if (selectedStatus) {
-          params.leadStatus = selectedStatus;
-        }
-
-        if (selectedDisposition) {
-          params.disposition = selectedDisposition;
-        }
-
-        if (selectedInterestLevel) {
-          params.interestLevel = selectedInterestLevel;
-        }
-
-        if (daysSinceContact) {
-          params.daysSinceContact = daysSinceContact;
-        }
-
-        if (followupUrgency) {
-          params.followupUrgency = followupUrgency;
-        }
-
-        if (selectedAgent) {
-          params.agentId = selectedAgent;
-        }
-
-        const response = await api.get('/leads/followups', { params });
-        console.log('Followup response:', response.data);
-
-        if (response.data.success) {
-          setLeads(response.data.data);
-          setTotal(response.data.pagination.total);
-        } else {
-          showNotification(
-            response.data.error || 'Failed to fetch followup leads',
-            'error'
-          );
-        }
+        setLeads(Array.isArray(response?.leads) ? response.leads : []);
+        setTotal(response?.pagination?.total || 0);
       } catch (error) {
         console.error('Error fetching followup leads:', error);
         showNotification('Error fetching followup leads', 'error');
@@ -133,40 +92,29 @@ export default function FollowupPage() {
     };
 
     fetchFollowupLeads();
-  }, [selectedCampaignId, currentPage, pageSize, searchInput, selectedStatus, selectedDisposition, selectedInterestLevel, daysSinceContact, followupUrgency, selectedAgent]);
+  }, [selectedCampaignId, currentPage, pageSize, searchInput, selectedDialerStatus, selectedDisposition, selectedAppointmentStatus, selectedAgent, showNotification]);
 
   // Fetch available agents
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        // Extract unique agents from current leads
-        const uniqueAgents = new Map();
-        leads.forEach(lead => {
-          if (lead.assignedCaller && lead.assignedCaller._id) {
-            const agent = lead.assignedCaller;
-            uniqueAgents.set(agent._id, {
-              _id: agent._id,
-              name: agent.name || agent.email,
-              email: agent.email
-            });
-          }
-          if (lead.assignedCloser && lead.assignedCloser._id) {
-            const agent = lead.assignedCloser;
-            uniqueAgents.set(agent._id, {
-              _id: agent._id,
-              name: agent.name || agent.email,
-              email: agent.email
-            });
-          }
-        });
-        setAgents(Array.from(uniqueAgents.values()).sort((a, b) => a.name.localeCompare(b.name)));
+        const users = await getAllAgents();
+        const callerOnly = (Array.isArray(users) ? users : [])
+          .filter((user) => user.role === 'caller-agent')
+          .map((user) => ({
+            _id: user._id,
+            name: user.name || user.email,
+            email: user.email,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setAgents(callerOnly);
       } catch (error) {
-        console.error('Error extracting agents:', error);
+        console.error('Error loading caller agents:', error);
       }
     };
 
     fetchAgents();
-  }, [leads]);
+  }, []);
 
   const handleViewLead = (leadId) => {
     setSelectedLeadId(leadId);
@@ -180,11 +128,9 @@ export default function FollowupPage() {
 
   const clearAllFilters = () => {
     setSearchInput('');
-    setSelectedStatus('');
+    setSelectedDialerStatus('');
     setSelectedDisposition('');
-    setSelectedInterestLevel('');
-    setDaysSinceContact('');
-    setFollowupUrgency('');
+    setSelectedAppointmentStatus('');
     setSelectedAgent('');
     setCurrentPage(1);
   };
@@ -199,9 +145,9 @@ export default function FollowupPage() {
       'Business Name',
       'Phone',
       'Email',
-      'Lead Status',
+      'Dialer Status',
       'Disposition',
-      'Interest Level',
+      'Appointment Status',
       'Agent Assigned',
       'Last Contacted',
       'Notes',
@@ -210,12 +156,12 @@ export default function FollowupPage() {
       lead.businessName || '',
       lead.phoneNumber || '',
       lead.email || '',
-      lead.leadStatus || '',
+      lead.dialerStatus || '',
       lead.disposition || '',
-      lead.interestLevel || '',
+      lead.appointmentStatus || '',
       getAssignedAgentLabel(lead) || '',
-      formatDate(lead.lastContacted) || '',
-      lead.notes || '',
+      formatDate(lead.lastDialedAt) || '',
+      lead.agentNotes || '',
     ]);
 
     const csv = [
@@ -252,24 +198,22 @@ export default function FollowupPage() {
 
   const getStatusColor = (status) => {
     const colors = {
-      contacted: 'bg-blue-100 text-blue-800',
-      interested: 'bg-green-100 text-green-800',
-      not_interested: 'bg-red-100 text-red-800',
-      callback: 'bg-yellow-100 text-yellow-800',
-      converted: 'bg-emerald-100 text-emerald-800',
-      closed: 'bg-gray-100 text-gray-800',
+      pending: 'bg-slate-100 text-slate-800',
+      dialing: 'bg-blue-100 text-blue-800',
+      connected: 'bg-emerald-100 text-emerald-800',
+      failed: 'bg-rose-100 text-rose-800',
+      completed: 'bg-indigo-100 text-indigo-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const getDispositionColor = (disposition) => {
     const colors = {
-      interested: 'bg-green-50 text-green-700',
+      voicemail: 'bg-gray-50 text-gray-700',
+      followup: 'bg-yellow-50 text-yellow-700',
       'not-interested': 'bg-red-50 text-red-700',
-      callback: 'bg-yellow-50 text-yellow-700',
+      appointment: 'bg-emerald-50 text-emerald-700',
       'wrong-number': 'bg-orange-50 text-orange-700',
-      'no-answer': 'bg-gray-50 text-gray-700',
-      'do-not-call': 'bg-red-50 text-red-700',
     };
     return colors[disposition] || 'bg-gray-50 text-gray-700';
   };
@@ -279,15 +223,10 @@ export default function FollowupPage() {
   const endIndex = Math.min(currentPage * pageSize, total);
   const getAssignedAgentLabel = (lead) => {
     if (lead.assignedCallerName) return lead.assignedCallerName;
-    if (lead.assignedCloserName) return lead.assignedCloserName;
     if (lead.assignedCaller && typeof lead.assignedCaller === 'object') {
       return lead.assignedCaller.name || lead.assignedCaller.email || '—';
     }
-    if (lead.assignedCloser && typeof lead.assignedCloser === 'object') {
-      return lead.assignedCloser.name || lead.assignedCloser.email || '—';
-    }
     if (typeof lead.assignedCaller === 'string') return lead.assignedCaller;
-    if (typeof lead.assignedCloser === 'string') return lead.assignedCloser;
     return '—';
   };
 
@@ -322,19 +261,36 @@ export default function FollowupPage() {
               />
             </div>
 
-            {/* Lead Status Filter */}
+            {/* Dialer Status Filter */}
             <select
-              value={selectedStatus}
+              value={selectedDialerStatus}
               onChange={(e) => {
-                setSelectedStatus(e.target.value);
+                setSelectedDialerStatus(e.target.value);
                 setCurrentPage(1);
               }}
               className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
             >
               <option value="">All Statuses</option>
-              {LEAD_STATUSES.map((status) => (
+              {DIALER_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {status.replace('_', ' ').toUpperCase()}
+                </option>
+              ))}
+            </select>
+
+            {/* Appointment Status Filter */}
+            <select
+              value={selectedAppointmentStatus}
+              onChange={(e) => {
+                setSelectedAppointmentStatus(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
+            >
+              <option value="">All Appointment Statuses</option>
+              {APPOINTMENT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status.replace('-', ' ').toUpperCase()}
                 </option>
               ))}
             </select>
@@ -368,7 +324,7 @@ export default function FollowupPage() {
 
           {/* Advanced Filters */}
           {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
               {/* Agent Filter */}
               <select
                 value={selectedAgent}
@@ -384,50 +340,6 @@ export default function FollowupPage() {
                     {agent.name || agent.email}
                   </option>
                 ))}
-              </select>
-
-              {/* Interest Level Filter */}
-              <select
-                value={selectedInterestLevel}
-                onChange={(e) => {
-                  setSelectedInterestLevel(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
-              >
-                <option value="">All Interest Levels</option>
-                <option value="cold">Cold</option>
-                <option value="warm">Warm</option>
-                <option value="hot">Hot</option>
-              </select>
-
-              {/* Days Since Contact Filter */}
-              <input
-                type="number"
-                placeholder="Days since contact"
-                min="0"
-                value={daysSinceContact}
-                onChange={(e) => {
-                  setDaysSinceContact(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:border-primary-500"
-              />
-
-              {/* Follow-up Urgency Filter */}
-              <select
-                value={followupUrgency}
-                onChange={(e) => {
-                  setFollowupUrgency(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500"
-              >
-                <option value="">All Follow-ups</option>
-                <option value="overdue">Overdue</option>
-                <option value="due-today">Due Today</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="no-followup">No Scheduled</option>
               </select>
 
               {/* Clear Filters Button */}
@@ -538,10 +450,10 @@ export default function FollowupPage() {
                       <td className="px-4 py-3 text-sm">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            lead.leadStatus
+                            lead.dialerStatus
                           )}`}
                         >
-                          {lead.leadStatus
+                          {lead.dialerStatus
                             ?.replace('_', ' ')
                             .toUpperCase() || '—'}
                         </span>
@@ -579,7 +491,7 @@ export default function FollowupPage() {
                       <td className="px-4 py-3 text-sm">
                         <div className="max-w-xs">
                           <p className="text-slate-700 dark:text-slate-300 line-clamp-2">
-                            {lead.callNotes || lead.generalNotes || '—'}
+                            {lead.agentNotes || '—'}
                           </p>
                         </div>
                       </td>

@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { LeadsProvider } from "./context/LeadsContext";
 import { AuthProvider } from "./context/AuthContext";
-import { getRoleHomeRoute, AGENT_ROLES, ROLES } from "./utils/roleUtils";
+import { getRoleHomeRoute, ROLES } from "./utils/roleUtils";
 import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./pages/DashboardLayout";
 import OverviewPage from "./pages/OverviewPage";
@@ -23,7 +23,6 @@ import PowerDialerPage from "./pages/PowerDialerPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import React from "react";
-import AgentLeadsPage from "./pages/AgentLeadsPage";
 
 function App() {
   return (
@@ -54,7 +53,7 @@ function App() {
           <Route
             path="/agent"
             element={
-              <ProtectedRoute allowedRoles={AGENT_ROLES}>
+              <ProtectedRoute allowedRoles={[ROLES.CALLER_AGENT]}>
                 <LeadsProvider campaignId="">
                   <DashboardLayout />
                 </LeadsProvider>
@@ -62,7 +61,7 @@ function App() {
             }
           >
             <Route index element={<OverviewPage />} />
-            <Route path="leads" element={<AgentLeadsPage />} />
+            <Route path="leads" element={<LeadsPage />} />
             <Route path="power-dialer" element={<PowerDialerPage />} />
             <Route path="auto-dialer" element={<AutoDialerPage />} />
             <Route path="direct-dialer" element={<DirectDialerPage />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getLead, updateLead, updateLeadStatus } from '../services/api';
+import { getLead, updateLead, updateQualificationStatus } from '../services/api';
 
 /**
  * useLead - Manage a single lead by ID
@@ -55,18 +55,18 @@ export const useLead = (leadId) => {
     }
   }, [leadId]);
 
-  // Update lead status
+  // Update appointment qualification status
   const updateStatus = useCallback(async (status) => {
     if (!leadId) return null;
 
     try {
       setIsLoading(true);
       setError(null);
-      const updated = await updateLeadStatus(leadId, status);
+      const updated = await updateQualificationStatus(leadId, status);
       setLead(updated);
       return updated;
     } catch (err) {
-      console.error('Error updating lead status:', err);
+      console.error('Error updating qualification status:', err);
       setError(err.message);
       throw err;
     } finally {

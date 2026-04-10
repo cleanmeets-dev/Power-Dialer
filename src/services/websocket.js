@@ -47,7 +47,7 @@ class WebSocketService {
           const rawUser = localStorage.getItem('user');
           const user = rawUser ? JSON.parse(rawUser) : null;
           const agentId = user?._id || user?.id;
-          if (user?.role === 'agent' && agentId) {
+          if (user?.role === 'caller-agent' && agentId) {
             this.socket.emit('agent:register', agentId);
             console.log(`✅ Agent registered on socket: ${agentId}`);
           }

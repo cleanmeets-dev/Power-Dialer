@@ -4,7 +4,7 @@ import { getVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
 import FormInput from '../common/FormInput.jsx';
 import FormSelect from '../common/FormSelect.jsx';
-import { updateLead } from '../../services/api.js';
+import { updateDisposition, updateLead } from '../../services/api.js';
 import { Save, X, AlertCircle } from 'lucide-react';
 
 export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
@@ -43,11 +43,14 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
       
       visibleFields.forEach(field => {
         if (field.key in formData && !field.readOnly) {
+          if (user?.role === 'caller-agent' && field.key === 'appointmentStatus') return;
           updateData[field.key] = formData[field.key] || null;
         }
       });
 
-      const updated = await updateLead(lead._id, updateData);
+      const updated = user?.role === 'caller-agent'
+        ? await updateDisposition(lead._id, updateData)
+        : await updateLead(lead._id, updateData);
       onSave(updated);
       onClose();
     } catch (err) {
@@ -59,10 +62,18 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
 
   if (!lead) return null;
 
-  const editableFields = visibleFields.filter(f => !f.readOnly);
+  const editableFields = visibleFields.filter((f) => {
+    if (f.readOnly) return false;
+    if (user?.role === 'caller-agent' && f.key === 'appointmentStatus') return false;
+    return true;
+  });
+
+  const modalTitle = user?.role === 'caller-agent'
+    ? `Edit Disposition - ${lead.businessName || 'N/A'}`
+    : `Edit Lead - ${lead.businessName || 'N/A'}`;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Edit Lead - ${lead.businessName || 'N/A'}`} maxWidth="max-w-2xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} maxWidth="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
         {error && (
           <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-3 flex items-start gap-3">
@@ -137,7 +148,7 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
             className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition disabled:opacity-50 flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? 'Saving...' : (user?.role === 'caller-agent' ? 'Update Disposition' : 'Save Changes')}
           </button>
         </div>
       </form>

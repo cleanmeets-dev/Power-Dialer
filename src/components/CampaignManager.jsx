@@ -14,6 +14,30 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const getParentName = (campaign) => {
+    if (!campaign?.parentCampaign) return 'None';
+    if (typeof campaign.parentCampaign === 'object') {
+      return campaign.parentCampaign.name || 'Parent campaign';
+    }
+    return 'Parent campaign';
+  };
+
+  const getDialerSummary = (campaign) => {
+    if (!campaign?.parentCampaign) return 'Root campaign';
+    if (campaign?.dialerType === 'auto') {
+      const assigned = campaign?.assignedAgent;
+      if (assigned && typeof assigned === 'object') {
+        return `Auto - ${assigned.name || assigned.email || 'assigned'}`;
+      }
+      return 'Auto';
+    }
+    if (campaign?.dialerType === 'parallel') {
+      const count = Array.isArray(campaign?.assignedAgents) ? campaign.assignedAgents.length : 0;
+      return `Parallel - ${count} agents`;
+    }
+    return 'Child campaign';
+  };
+
   useEffect(() => {
     loadCampaigns();
   }, []);
@@ -22,9 +46,10 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
     setIsLoading(true);
     try {
       const data = await getCampaigns();
-      setCampaigns(Array.isArray(data) ? data : []);
-      if (data.length > 0 && !selectedCampaignId) {
-        onCampaignSelect?.(data[0]._id);
+      const callerCampaigns = (Array.isArray(data) ? data : []).filter((campaign) => campaign.pipelineType === 'caller');
+      setCampaigns(callerCampaigns);
+      if (callerCampaigns.length > 0 && !selectedCampaignId) {
+        onCampaignSelect?.(callerCampaigns[0]._id);
       }
     } catch (error) {
       onShowNotification?.('Failed to load campaigns', 'error');
@@ -104,7 +129,10 @@ export default function CampaignManager({ selectedCampaignId, onCampaignSelect, 
                 >
                   <div>
                     <p className="text-slate-900 dark:text-white font-medium">{campaign.name}</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">{campaign.leadsCount || 0} leads</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {campaign.parentCampaign ? `Child of ${getParentName(campaign)}` : 'Root campaign'}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{getDialerSummary(campaign)}</p>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
                     <button

@@ -5,26 +5,22 @@ import {
   Eye,
   Edit3,
   Download,
-  CheckCircle,
   Search,
   Filter,
   ChevronLeft,
   ChevronRight,
   Phone,
-  Calendar,
 } from "lucide-react";
 import { useLeads } from "../hooks/useLeads";
 import { useAuth } from "../hooks/useAuth";
 import { getTableColumns } from "../utils/leadFieldConfig";
 import LeadDetailModal from "./modals/LeadDetailModal.jsx";
 import EditLeadModal from "./modals/EditLeadModal.jsx";
-import UpdateLeadStatusModal from "./modals/UpdateLeadStatusModal.jsx";
-import CompleteCallModal from "./modals/CompleteCallModal.jsx";
-import ScheduleCallbackModal from "./modals/ScheduleCallbackModal.jsx";
+import UpdateQualificationModal from "./modals/UpdateQualificationModal.jsx";
 import ConfirmModal from "./common/ConfirmModal.jsx";
+import { deleteLead } from "../services/api";
 
 const DIALER_STATUSES = ["pending", "dialing", "connected", "failed", "completed"];
-const LEAD_STATUSES = ["new", "contacted", "interested", "not_interested", "callback", "converted", "closed"];
 // For filtering leads by technical state (dialerStatus)
 const STATUSES = DIALER_STATUSES;
 const API_BASE_URL =
@@ -72,10 +68,8 @@ export default function LeadsTable({ showNotification }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState(null);
   const [selectedRows, setSelectedRows] = useState(new Set());
-  const [selectedLeadForCompleteCall, setSelectedLeadForCompleteCall] = useState(null);
-  const [showCompleteCallModal, setShowCompleteCallModal] = useState(false);
-  const [selectedLeadForCallback, setSelectedLeadForCallback] = useState(null);
-  const [showScheduleCallbackModal, setShowScheduleCallbackModal] = useState(false);
+  const canUpdateQualification = ["admin", "manager"].includes(user?.role);
+  const canEditDisposition = user?.role === "caller-agent";
 
   // Modal handlers
   const handleViewLead = (leadId) => {
@@ -109,7 +103,7 @@ export default function LeadsTable({ showNotification }) {
     if (!leadToDelete) return;
 
     try {
-      await api.delete(`/leads/${leadToDelete._id}`);
+      await deleteLead(leadToDelete._id);
       deleteSingleLead(leadToDelete._id);
       showNotification("Lead deleted successfully", "success");
     } catch (error) {
@@ -125,32 +119,8 @@ export default function LeadsTable({ showNotification }) {
 
   const handleStatusUpdateSuccess = (updated) => {
     updateLead(updated);
-    showNotification("Lead status updated successfully", "success");
+    showNotification("Qualification updated successfully", "success");
     setShowStatusModal(false);
-  };
-
-  const handleCompleteCall = (lead) => {
-    setSelectedLeadForCompleteCall(lead);
-    setShowCompleteCallModal(true);
-  };
-
-  const handleCompleteCallSuccess = (result) => {
-    updateLead(result.lead);
-    showNotification("Call completed successfully", "success");
-    setShowCompleteCallModal(false);
-    setSelectedLeadForCompleteCall(null);
-  };
-
-  const handleScheduleCallback = (lead) => {
-    setSelectedLeadForCallback(lead);
-    setShowScheduleCallbackModal(true);
-  };
-
-  const handleScheduleCallbackSuccess = (updated) => {
-    updateLead(updated);
-    showNotification("Callback scheduled successfully", "success");
-    setShowScheduleCallbackModal(false);
-    setSelectedLeadForCallback(null);
   };
 
   // Selection handlers
@@ -184,9 +154,7 @@ export default function LeadsTable({ showNotification }) {
   const handleBulkDeleteConfirm = async () => {
     try {
       await Promise.all(
-        Array.from(selectedRows).map((leadId) =>
-          api.delete(`/leads/${leadId}`),
-        ),
+        Array.from(selectedRows).map((leadId) => deleteLead(leadId)),
       );
       deleteMultipleLeads(selectedRows);
       setSelectedRows(new Set());
@@ -204,26 +172,34 @@ export default function LeadsTable({ showNotification }) {
 
   const handleExport = async () => {
     try {
-      const params = {
-        campaignId: campaignId || undefined,
-        status: filters.status || undefined,
-        leadStatus: filters.leadStatus || undefined,
-        disposition: filters.disposition || undefined,
-        interestLevel: filters.interestLevel || undefined,
-        agentId: filters.agentId || undefined,
-        search: searchInput?.trim() || undefined,
-      };
+      const fileName = `caller-leads-${new Date().toISOString().split("T")[0]}.csv`;
+      const csvHeaders = [
+        "businessName",
+        "contactName",
+        "phoneNumber",
+        "email",
+        "city",
+        "state",
+        "country",
+        "dialerStatus",
+        "disposition",
+        "appointmentStatus",
+        "assignedCaller",
+      ];
 
-      const response = await api.get("/leads/export", {
-        params,
-        responseType: "blob",
-      });
+      const csvLines = [
+        csvHeaders.join(","),
+        ...leads.map((lead) => csvHeaders
+          .map((header) => {
+            const value = header === "assignedCaller"
+              ? (lead.assignedCaller?.name || lead.assignedCaller?.email || "")
+              : (lead[header] ?? "");
+            return `"${String(value).replace(/"/g, '""')}"`;
+          })
+          .join(",")),
+      ];
 
-      const contentDisposition = response.headers["content-disposition"] || "";
-      const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
-      const fileName = fileNameMatch?.[1] || `leads-export-${new Date().toISOString().split("T")[0]}.csv`;
-
-      const blob = new Blob([response.data], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -255,14 +231,6 @@ export default function LeadsTable({ showNotification }) {
     leads.forEach(lead => {
       if (lead.assignedCaller && lead.assignedCaller._id) {
         const agent = lead.assignedCaller;
-        uniqueAgents.set(agent._id, {
-          _id: agent._id,
-          name: agent.name || agent.email,
-          email: agent.email
-        });
-      }
-      if (lead.assignedCloser && lead.assignedCloser._id) {
-        const agent = lead.assignedCloser;
         uniqueAgents.set(agent._id, {
           _id: agent._id,
           name: agent.name || agent.email,
@@ -315,29 +283,27 @@ export default function LeadsTable({ showNotification }) {
                         ? "bg-blue-900/50 text-blue-400"
                         : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400"
             }`}
-            onClick={() => handleUpdateStatus(lead._id)}
-            title="Click to update lead status"
+            onClick={canUpdateQualification ? () => handleUpdateStatus(lead._id) : undefined}
+            title={canUpdateQualification ? "Click to update qualification" : "Dialer status"}
           >
             {lead.dialerStatus || "—"}
           </span>
         );
-      case 'leadStatus':
+      case 'appointmentStatus':
         const statusColors = {
-          new: 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-400',
-          contacted: 'bg-blue-900/50 text-blue-400',
-          interested: 'bg-green-900/50 text-green-400',
-          not_interested: 'bg-red-900/50 text-red-400',
-          callback: 'bg-yellow-900/50 text-yellow-400',
-          converted: 'bg-emerald-900/50 text-emerald-400',
-          closed: 'bg-gray-900/50 text-gray-400'
+          qualified: 'bg-emerald-900/50 text-emerald-400',
+          disqualified: 'bg-rose-900/50 text-rose-400',
+          'in-process': 'bg-cyan-900/50 text-cyan-400',
+          reschedule: 'bg-yellow-900/50 text-yellow-400',
+          onhold: 'bg-slate-900/50 text-slate-400',
         };
         return (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block ${statusColors[lead.leadStatus] || 'bg-slate-700 text-slate-400'}`}>
-            {lead.leadStatus?.replace('_', ' ') || "—"}
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-block ${statusColors[lead.appointmentStatus] || 'bg-slate-700 text-slate-400'}`}>
+            {lead.appointmentStatus?.replace('_', ' ') || "—"}
           </span>
         );
       case 'assignedAgentName':
-        return <span className="text-xs">{lead.assignedCallerName || lead.assignedCloserName || "—"}</span>;
+        return <span className="text-xs">{lead.assignedCallerName || lead.assignedCaller?.name || lead.assignedCaller?.email || "—"}</span>;
       case 'interestLevel':
         const levelColors = {
           cold: 'text-slate-700 dark:text-slate-400',
@@ -357,15 +323,10 @@ export default function LeadsTable({ showNotification }) {
   };
   const getAssignedAgentLabel = (lead) => {
     if (lead.assignedCallerName) return lead.assignedCallerName;
-    if (lead.assignedCloserName) return lead.assignedCloserName;
     if (lead.assignedCaller && typeof lead.assignedCaller === "object") {
       return lead.assignedCaller.name || lead.assignedCaller.email || "—";
     }
-    if (lead.assignedCloser && typeof lead.assignedCloser === "object") {
-      return lead.assignedCloser.name || lead.assignedCloser.email || "—";
-    }
     if (typeof lead.assignedCaller === "string") return lead.assignedCaller;
-    if (typeof lead.assignedCloser === "string") return lead.assignedCloser;
     return "—";
   };
 
@@ -422,7 +383,7 @@ export default function LeadsTable({ showNotification }) {
           <div className="relative">
             <Filter className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
             <select
-              value={filters.status}
+              value={filters.appointmentStatus || ""}
               onChange={(e) => setStatus(e.target.value)}
               disabled={isLoading}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
@@ -444,12 +405,11 @@ export default function LeadsTable({ showNotification }) {
               className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
             >
               <option value="">All Dispositions</option>
-              <option value="interested">Interested</option>
+              <option value="voicemail">Voicemail</option>
+              <option value="followup">Follow Up</option>
+              <option value="appointment">Appointment</option>
               <option value="not-interested">Not Interested</option>
-              <option value="callback">Callback</option>
               <option value="wrong-number">Wrong Number</option>
-              <option value="no-answer">No Answer</option>
-              <option value="do-not-call">Do Not Call</option>
             </select>
           </div>
 
@@ -586,30 +546,23 @@ export default function LeadsTable({ showNotification }) {
                       >
                         <Phone className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleEditLead(lead)}
-                        disabled={isLoading}
-                        className="text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
-                        title="Edit notes & disposition"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleCompleteCall(lead)}
-                        disabled={isLoading}
-                        className="text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
-                        title="Log Call Outcome"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleScheduleCallback(lead)}
-                        disabled={isLoading}
-                        className="text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
-                        title="Schedule callback"
-                      >
-                        <Calendar className="w-4 h-4" />
-                      </button>
+                      {(canEditDisposition || canUpdateQualification) && (
+                        <button
+                          onClick={() => {
+                            if (canUpdateQualification) {
+                              handleUpdateStatus(lead._id);
+                            } else {
+                              handleEditLead(lead);
+                            }
+                          }}
+                          disabled={isLoading}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 text-[11px]"
+                          title={canUpdateQualification ? "Edit qualification" : "Edit disposition"}
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          {canUpdateQualification ? "Edit Qualification" : "Edit Disposition"}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeleteClick(lead)}
                         disabled={isLoading}
@@ -713,7 +666,7 @@ export default function LeadsTable({ showNotification }) {
         }}
       />
 
-      <UpdateLeadStatusModal
+      <UpdateQualificationModal
         isOpen={showStatusModal}
         lead={selectedLeadForStatus}
         onClose={() => {
@@ -742,28 +695,6 @@ export default function LeadsTable({ showNotification }) {
           setLeadToDelete(null);
         }}
         danger
-      />
-
-      <CompleteCallModal
-        isOpen={showCompleteCallModal}
-        lead={selectedLeadForCompleteCall}
-        onClose={() => {
-          setShowCompleteCallModal(false);
-          setSelectedLeadForCompleteCall(null);
-        }}
-        onSuccess={handleCompleteCallSuccess}
-        onError={(error) => showNotification(error, "error")}
-      />
-
-      <ScheduleCallbackModal
-        isOpen={showScheduleCallbackModal}
-        lead={selectedLeadForCallback}
-        onClose={() => {
-          setShowScheduleCallbackModal(false);
-          setSelectedLeadForCallback(null);
-        }}
-        onSuccess={handleScheduleCallbackSuccess}
-        onError={(error) => showNotification(error, "error")}
       />
     </>
   );

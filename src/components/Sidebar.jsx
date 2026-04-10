@@ -9,7 +9,8 @@ import {
 	Clock,
 	PhoneCall,
 	CalendarDays,
-	Repeat2
+	Repeat2,
+	MapPin
 } from 'lucide-react';
 
 function getSidebarItems(role) {
@@ -22,6 +23,7 @@ function getSidebarItems(role) {
 			// { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
 			{ id: 'agents', label: 'Agents (Live)', icon: Users, path: '/manager/agents' },
 			{ id: 'attendance', label: 'Attendance Logs', icon: CalendarDays, path: '/manager/attendance' },
+			{ id: 'map-scraper', label: 'Map Scraper', icon: MapPin, path: '/manager/scraper' },
 		];
 	}
 

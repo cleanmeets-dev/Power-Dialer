@@ -24,6 +24,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import React from "react";
 import AgentLeadsPage from "./pages/AgentLeadsPage";
+import ManagerScraperPage from "./pages/ManagerScraperPage";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
             <Route path="campaigns" element={<CampaignsPage />} />
             <Route path="agents" element={<AgentAvailabilityPage />} />
             <Route path="attendance" element={<AttendanceHistoryPage />} />
+            <Route path="scraper" element={<ManagerScraperPage />} />
           </Route>
 
           <Route

@@ -464,6 +464,25 @@ export default function ScraperPage() {
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     Created {new Date(selectedSession.createdAt).toLocaleString()} | Requested {selectedSession.maxResults} | Found {selectedSession.totalFound || 0} | Imported {selectedSession.importedCount || 0}
                   </p>
+                  {selectedSession.status === "done" && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Completed at {selectedSession.completedAt ? new Date(selectedSession.completedAt).toLocaleString() : selectedSession.updatedAt ? new Date(selectedSession.updatedAt).toLocaleString() : "-"}
+                      {selectedSession.createdAt && (selectedSession.completedAt || selectedSession.updatedAt) && (
+                        (() => {
+                          const start = new Date(selectedSession.createdAt);
+                          const end = new Date(selectedSession.completedAt || selectedSession.updatedAt);
+                          const ms = end - start;
+                          if (ms > 0) {
+                            const sec = Math.floor(ms / 1000) % 60;
+                            const min = Math.floor(ms / 60000) % 60;
+                            const hr = Math.floor(ms / 3600000);
+                            return ` | Duration: ${hr ? hr + 'h ' : ''}${min ? min + 'm ' : ''}${sec}s`;
+                          }
+                          return '';
+                        })()
+                      )}
+                    </p>
+                  )}
                   {selectedSession.status === "running" ? (
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">

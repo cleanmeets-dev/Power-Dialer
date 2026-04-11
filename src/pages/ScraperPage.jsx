@@ -65,6 +65,7 @@ export default function ScraperPage() {
   const [isImporting, setIsImporting] = useState(false);
 
   const canImport = selectedSession?.status === "done" && results.length > 0 && selectedCampaignId && selectedAgentId;
+  const hasRunningSessions = sessions.some((session) => session.status === "running");
 
   const stats = useMemo(() => {
     return {
@@ -94,9 +95,13 @@ export default function ScraperPage() {
     }
   };
 
-  const loadSessions = async (preferredSessionId = null) => {
+  const loadSessions = async (preferredSessionId = null, options = {}) => {
+    const { silent = false } = options;
+
     try {
-      setIsLoadingSessions(true);
+      if (!silent) {
+        setIsLoadingSessions(true);
+      }
       const sessionList = await getScrapeSessions();
       setSessions(sessionList);
 
@@ -113,7 +118,9 @@ export default function ScraperPage() {
       console.error("Failed to load scrape sessions:", error);
       showNotification?.("Failed to load scrape sessions", "error");
     } finally {
-      setIsLoadingSessions(false);
+      if (!silent) {
+        setIsLoadingSessions(false);
+      }
     }
   };
 
@@ -149,6 +156,23 @@ export default function ScraperPage() {
     void loadSessionResults(selectedSessionId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSessionId]);
+
+  useEffect(() => {
+    if (!hasRunningSessions) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(async () => {
+      try {
+        await loadSessions(selectedSessionId, { silent: true });
+      } catch (error) {
+        console.error("Failed to refresh running scrape sessions:", error);
+      }
+    }, 2500);
+
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRunningSessions, selectedSessionId]);
 
   useEffect(() => {
     if (!selectedSessionId || selectedSession?.status !== "running") {
@@ -364,7 +388,7 @@ export default function ScraperPage() {
                   onChange={(event) => setForm((previous) => ({ ...previous, maxResults: Number(event.target.value) }))}
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
                 >
-                  {[10, 20, 40, 60].map((value) => (
+                  {[10, 20, 40, 60, 100].map((value) => (
                     <option key={value} value={value}>
                       {value}
                     </option>

@@ -41,6 +41,12 @@ function csvEscape(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
+function getProgressValue(session) {
+  return Number.isFinite(Number(session?.progressPercent))
+    ? Math.max(0, Math.min(100, Number(session.progressPercent)))
+    : 0;
+}
+
 export default function ScraperPage() {
   const { showNotification } = useOutletContext();
 
@@ -153,6 +159,14 @@ export default function ScraperPage() {
       try {
         const latestSession = await getScrapeSession(selectedSessionId);
         setSelectedSession(latestSession);
+        setSessions((previous) =>
+          previous.map((session) =>
+            session._id === latestSession._id ? { ...session, ...latestSession } : session,
+          ),
+        );
+
+        const latestResults = await getScrapeSessionResults(selectedSessionId);
+        setResults(latestResults.results || []);
 
         if (latestSession.status !== "running") {
           window.clearInterval(interval);
@@ -426,6 +440,23 @@ export default function ScraperPage() {
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     Created {new Date(selectedSession.createdAt).toLocaleString()} | Requested {selectedSession.maxResults} | Found {selectedSession.totalFound || 0} | Imported {selectedSession.importedCount || 0}
                   </p>
+                  {selectedSession.status === "running" ? (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+                        <span>{selectedSession.progressMessage || "Scraping in progress..."}</span>
+                        <span>{getProgressValue(selectedSession)}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-linear-to-r from-cyan-500 to-blue-500 transition-all duration-500"
+                          style={{ width: `${getProgressValue(selectedSession)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Processed {selectedSession.processedCount || 0} / {selectedSession.maxResults || 0} | Successful {selectedSession.successCount || 0} | Discovered {selectedSession.discoveredCount || 0}
+                      </p>
+                    </div>
+                  ) : null}
                   {selectedSession.error ? (
                     <p className="text-sm text-rose-600 dark:text-rose-300 mt-2">{selectedSession.error}</p>
                   ) : null}
@@ -606,6 +637,20 @@ export default function ScraperPage() {
                       <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
                         Requested {session.maxResults} | Found {session.totalFound || 0} | Imported {session.importedCount || 0}
                       </p>
+                      {session.status === "running" ? (
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+                            <span className="truncate">{session.progressMessage || "Scraping in progress..."}</span>
+                            <span>{getProgressValue(session)}%</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-linear-to-r from-cyan-500 to-blue-500 transition-all duration-500"
+                              style={{ width: `${getProgressValue(session)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : null}
                     </button>
 
                     <div className="mt-3 flex items-center justify-end">

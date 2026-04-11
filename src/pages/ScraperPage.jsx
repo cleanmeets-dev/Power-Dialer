@@ -359,7 +359,7 @@ export default function ScraperPage() {
               </label>
             </div>
 
-            <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="mt-5 flex flex-col md:items-center md:justify-between gap-3">
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Scrapes run in the background. You can leave this page open and import once the session finishes.
               </p>
@@ -367,7 +367,7 @@ export default function ScraperPage() {
               <button
                 type="submit"
                 disabled={isStarting}
-                className="px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-400 dark:disabled:bg-slate-600 text-white font-semibold transition inline-flex items-center justify-center gap-2"
+                className="w-full px-5 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-400 dark:disabled:bg-slate-600 text-white font-semibold transition inline-flex items-center justify-center gap-2"
               >
                 {isStarting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 {isStarting ? "Starting..." : "Start Scrape"}

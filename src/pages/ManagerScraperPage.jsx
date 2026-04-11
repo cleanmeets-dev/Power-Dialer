@@ -1,36 +1,89 @@
-import React, { useState } from 'react';
-import { Search, Loader2, Download, MapPin, Phone, Star } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Loader2, Download, MapPin, Phone, Star, Hash } from 'lucide-react';
 import api from '../services/api';
 
 export default function ManagerScraperPage() {
     const [businessType, setBusinessType] = useState('');
     const [location, setLocation] = useState('');
+    const [maxResults, setMaxResults] = useState(50);
+    const [sessionId, setSessionId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState([]);
     const [error, setError] = useState(null);
+    const [progress, setProgress] = useState(0);
+    const pollInterval = useRef(null);
+
+    const checkSession = async (id) => {
+        try {
+            const { data } = await api.get(`/scraper/session/${id}/results`);
+            if (data.success) {
+                setProgress(data.progress || 0);
+                
+                // Allow intermediate data to be viewed if available
+                if (data.data && data.data.length > 0) {
+                     setResults(data.data);
+                }
+
+                if (data.status === 'completed') {
+                    setLoading(false);
+                    clearInterval(pollInterval.current);
+                } else if (data.status === 'error') {
+                    setError(data.error || 'Scraping Job hit an error... showing collected records.');
+                    setLoading(false);
+                    clearInterval(pollInterval.current);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            // Ignore minor network hiccups, only stop on gross failures
+            if(err.response?.status === 404) {
+                 setError('Session not found or expired.');
+                 setLoading(false);
+                 clearInterval(pollInterval.current);
+            }
+        }
+    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        const combinedKeyword = `${businessType.trim()} in ${location.trim()}`;
         if (!businessType.trim() || !location.trim()) return;
 
         setLoading(true);
         setError(null);
         setResults([]);
+        setProgress(0);
+        setSessionId(null);
+
+        if (pollInterval.current) {
+            clearInterval(pollInterval.current);
+        }
 
         try {
-            const { data } = await api.post('/scraper/maps', { keyword: combinedKeyword, maxResults: 50 });
-            if (data.success) {
-                setResults(data.data);
+            const { data } = await api.post('/start-scraping', {
+                businessType: businessType.trim(),
+                location: location.trim(),
+                maxResults: parseInt(maxResults, 10)
+            });
+
+            if (data.success && data.sessionId) {
+                setSessionId(data.sessionId);
+                checkSession(data.sessionId);
+                pollInterval.current = setInterval(() => checkSession(data.sessionId), 3000);
             } else {
-                setError(data.message || 'Scraping failed');
+                setError(data.message || 'Failed to start scraping');
+                setLoading(false);
             }
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Error occurred while scraping');
-        } finally {
+            setError(err.response?.data?.message || err.message || 'Error occurred while starting scrape');
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        return () => {
+            if (pollInterval.current) clearInterval(pollInterval.current);
+        };
+    }, []);
 
     const handleExportCSV = () => {
         if (!results || results.length === 0) return;
@@ -66,24 +119,24 @@ export default function ManagerScraperPage() {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        Map Scraper
+                        Map Scraper (Headless)
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-2">
-                        Extract business leads directly from Google Maps.
+                        Extract deep business leads with zero browser timeouts using background processing.
                     </p>
                 </div>
             </header>
 
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-                <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-                    <div className="flex flex-col md:flex-row gap-4 flex-1">
+                <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 items-center">
+                    <div className="flex flex-col md:flex-row gap-4 flex-1 w-full">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <input
                                 type="text"
                                 value={businessType}
                                 onChange={(e) => setBusinessType(e.target.value)}
-                                placeholder="Business Type (e.g. Gyms)"
+                                placeholder="Business Type (e.g. Italian Restaurants)"
                                 className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                                 disabled={loading}
                             />
@@ -94,7 +147,20 @@ export default function ManagerScraperPage() {
                                 type="text"
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
-                                placeholder="Location (e.g. Austin, TX)"
+                                placeholder="Location (e.g. Tokyo, JP)"
+                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
+                                disabled={loading}
+                            />
+                        </div>
+                        <div className="relative w-full md:w-40">
+                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                type="number"
+                                min="1"
+                                max="150"
+                                value={maxResults}
+                                onChange={(e) => setMaxResults(e.target.value)}
+                                placeholder="Max"
                                 className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white"
                                 disabled={loading}
                             />
@@ -103,21 +169,37 @@ export default function ManagerScraperPage() {
                     <button
                         type="submit"
                         disabled={loading || !businessType.trim() || !location.trim()}
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="bg-primary-600 hover:bg-primary-700 text-white min-w-[140px] px-8 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <>
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                Scraping...
+                                {progress}%
                             </>
                         ) : (
-                            'Start'
+                            'Start Job'
                         )}
                     </button>
                 </form>
+                
+                {loading && (
+                    <div className="mt-6 w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                        <div 
+                            className="bg-primary-600 h-2.5 rounded-full transition-all duration-500" 
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                )}
+
                 {error && (
                     <div className="mt-4 p-4 text-sm text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-500/20">
                         {error}
+                    </div>
+                )}
+
+                {sessionId && (
+                    <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                        Session ID: {sessionId}
                     </div>
                 )}
             </div>

@@ -350,7 +350,7 @@ export default function ScraperPage() {
                   onChange={(event) => setForm((previous) => ({ ...previous, maxResults: Number(event.target.value) }))}
                   className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
                 >
-                  {[10, 20, 40, 60, 100, 150, 200].map((value) => (
+                  {[10, 20, 40, 60].map((value) => (
                     <option key={value} value={value}>
                       {value}
                     </option>

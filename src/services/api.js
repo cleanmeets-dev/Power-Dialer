@@ -461,4 +461,36 @@ export const assignLeadsToAgent = async (leadIds, agentId) => {
   return response.data.data;
 };
 
+// ==================== Scraper ====================
+
+export const startScrapeSession = async (payload) => {
+  const response = await api.post('/scraper/start', payload);
+  return response.data.data;
+};
+
+export const getScrapeSessions = async () => {
+  const response = await api.get('/scraper/sessions');
+  return response.data.data;
+};
+
+export const getScrapeSession = async (sessionId) => {
+  const response = await api.get(`/scraper/sessions/${sessionId}`);
+  return response.data.data;
+};
+
+export const getScrapeSessionResults = async (sessionId) => {
+  const response = await api.get(`/scraper/sessions/${sessionId}/results`);
+  return response.data.data;
+};
+
+export const importScrapeSessionResults = async (sessionId, payload) => {
+  const response = await api.post(`/scraper/sessions/${sessionId}/import`, payload);
+  return response.data;
+};
+
+export const deleteScrapeSession = async (sessionId) => {
+  const response = await api.delete(`/scraper/sessions/${sessionId}`);
+  return response.data;
+};
+
 export default api;

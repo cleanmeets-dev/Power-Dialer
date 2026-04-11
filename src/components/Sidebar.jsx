@@ -1,15 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import {
 	LayoutGrid,
 	Megaphone,
 	FileText,
 	Phone,
 	Users,
-	Clock,
 	PhoneCall,
 	CalendarDays,
-	Repeat2
+	Repeat2,
+	MapPinned
 } from 'lucide-react';
 
 function getSidebarItems(role) {
@@ -18,6 +17,7 @@ function getSidebarItems(role) {
 			{ id: 'overview', label: 'Dashboard', icon: LayoutGrid, path: '/manager' },
 			{ id: 'campaigns', label: 'Campaigns', icon: Megaphone, path: '/manager/campaigns' },
 			{ id: 'leads', label: 'Leads', icon: FileText, path: '/manager/leads' },
+			{ id: 'scraper', label: 'Maps Scraper', icon: MapPinned, path: '/manager/scraper' },
 			{ id: 'followups', label: 'Lead Followups', icon: Repeat2, path: '/manager/followups' },
 			// { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
 			{ id: 'agents', label: 'Agents (Live)', icon: Users, path: '/manager/agents' },
@@ -36,7 +36,6 @@ function getSidebarItems(role) {
 }
 
 export default function Sidebar({ user, isOpen, onClose }) {
-	const { theme } = useAuth();
 	const navItems = getSidebarItems(user?.role);
 
 	const navClassName = ({ isActive }) =>

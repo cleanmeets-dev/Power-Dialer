@@ -37,9 +37,9 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
 
       setCampaigns(campaignList);
       // Auto-select first campaign if none selected
-      if (campaignList && campaignList.length > 0 && !currentSelectedId && handleSelect) {
-        handleSelect(campaignList[0]._id);
-      }
+      // if (campaignList && campaignList.length > 0 && !currentSelectedId && handleSelect) {
+      //   handleSelect(campaignList[0]._id);
+      // }
     } catch (err) {
       setError('Failed to load campaigns');
       if (onShowNotification) {

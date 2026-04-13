@@ -87,9 +87,9 @@ export default function CampaignsPage() {
   };
 
   const handleCreateSuccess = () => {
-    loadCampaigns();
     setShowCreateModal(false);
     showNotification("Campaign created successfully", "success");
+    loadCampaigns();
   };
 
   const handleEditClick = (campaign) => {
@@ -98,9 +98,9 @@ export default function CampaignsPage() {
   };
 
   const handleEditSuccess = () => {
-    loadCampaigns();
     setShowEditModal(false);
     showNotification("Campaign updated successfully", "success");
+    loadCampaigns();
   };
 
   const handleDelete = async (id) => {
@@ -115,8 +115,7 @@ export default function CampaignsPage() {
 
       await api.delete(`/campaigns/${id}`);
 
-      // Remove campaign from UI immediately
-      setCampaigns((prev) => prev.filter((c) => c._id !== id));
+      await loadCampaigns();
 
       showNotification("Campaign deleted successfully", "success");
     } catch (error) {

@@ -230,7 +230,16 @@ export const getLeads = async (campaignId, options = {}) => {
   const response = await api.get(url);
   return {
     leads: response.data.data || [],
-    pagination: response.data.pagination || { total: 0, page, limit, totalPages: 0 }
+    pagination: response.data.pagination || { total: 0, page, limit, totalPages: 0 },
+    stats: response.data.stats || {
+      scopedTotal: 0,
+      interested: 0,
+      appointments: 0,
+      followupsScheduled: 0,
+      byDialerStatus: {},
+      byDisposition: {},
+      byAppointmentStatus: {},
+    },
   };
 };
 

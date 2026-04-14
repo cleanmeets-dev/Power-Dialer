@@ -62,6 +62,7 @@ function App() {
           >
             <Route index element={<OverviewPage />} />
             <Route path="leads" element={<LeadsPage />} />
+            <Route path="followups" element={<FollowupPage />} />
             <Route path="power-dialer" element={<PowerDialerPage />} />
             <Route path="auto-dialer" element={<AutoDialerPage />} />
             <Route path="direct-dialer" element={<DirectDialerPage />} />

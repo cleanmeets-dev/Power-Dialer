@@ -32,6 +32,7 @@ function getSidebarItems(role) {
 		{ id: 'direct-dialer', label: 'Direct Dialer', icon: Phone, path: '/agent/direct-dialer' },
 		// { id: 'power-dialer', label: 'Power Dialer', icon: PhoneCall, path: '/agent/power-dialer' },
 		// { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/agent/call-logs' },
+		{ id: 'followups', label: 'Lead Status/Followups', icon: Repeat2, path: '/agent/followups' },
 	];
 }
 

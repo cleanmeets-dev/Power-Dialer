@@ -35,7 +35,6 @@ api.interceptors.request.use((config) => {
 
 export default function LeadsTable({ showNotification }) {
   const {
-    campaignId,
     leads,
     isLoading,
     pagination,
@@ -321,14 +320,6 @@ export default function LeadsTable({ showNotification }) {
         return <span className="text-xs">{lead[columnKey] || "—"}</span>;
     }
   };
-  const getAssignedAgentLabel = (lead) => {
-    if (lead.assignedCallerName) return lead.assignedCallerName;
-    if (lead.assignedCaller && typeof lead.assignedCaller === "object") {
-      return lead.assignedCaller.name || lead.assignedCaller.email || "—";
-    }
-    if (typeof lead.assignedCaller === "string") return lead.assignedCaller;
-    return "—";
-  };
 
   return (
     <>
@@ -383,7 +374,7 @@ export default function LeadsTable({ showNotification }) {
           <div className="relative">
             <Filter className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
             <select
-              value={filters.appointmentStatus || ""}
+              value={filters.dialerStatus || ""}
               onChange={(e) => setStatus(e.target.value)}
               disabled={isLoading}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
@@ -488,7 +479,7 @@ export default function LeadsTable({ showNotification }) {
                   />
                 </th>
                 {tableColumns.map((col) => (
-                  <th key={col.key} className="text-left py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold">
+                  <th key={col.key} className={`text-left py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold ${col.width || ""}`}>
                     {col.label}
                   </th>
                 ))}
@@ -519,7 +510,7 @@ export default function LeadsTable({ showNotification }) {
                     />
                   </td>
                   {tableColumns.map((col) => (
-                    <td key={`${lead._id}-${col.key}`} className="py-3 px-3 text-slate-900 dark:text-slate-200 max-w-xs truncate">
+                    <td key={`${lead._id}-${col.key}`} className={`py-3 px-3 text-slate-900 dark:text-slate-200 max-w-xs truncate ${col.width || ""}`}>
                       {renderCellValue(lead, col.key)}
                     </td>
                   ))}

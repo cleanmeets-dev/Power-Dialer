@@ -14,6 +14,7 @@ export function LeadsProvider({ children, campaignId }) {
   });
   const [filters, setFilters] = useState({
     search: "",
+    dialerStatus: "",
     disposition: "",
     appointmentStatus: "",
     interestLevel: "",
@@ -33,6 +34,7 @@ export function LeadsProvider({ children, campaignId }) {
           page: options.page ?? pagination.page,
           limit: options.limit ?? pagination.limit,
           search: (options.search ?? filters.search) || null,
+          status: (options.status ?? filters.dialerStatus) || null,
           disposition: (options.disposition ?? filters.disposition) || null,
           appointmentStatus: (options.appointmentStatus ?? filters.appointmentStatus) || null,
           interestLevel: (options.interestLevel ?? filters.interestLevel) || null,
@@ -63,6 +65,7 @@ export function LeadsProvider({ children, campaignId }) {
       pagination.page,
       pagination.limit,
       filters.search,
+      filters.dialerStatus,
       filters.disposition,
       filters.appointmentStatus,
       filters.interestLevel,
@@ -101,9 +104,9 @@ export function LeadsProvider({ children, campaignId }) {
 
   const setStatus = useCallback(
     (status) => {
-      setFilters((prev) => ({ ...prev, appointmentStatus: status }));
+      setFilters((prev) => ({ ...prev, dialerStatus: status }));
       setPagination((prev) => ({ ...prev, page: 1 }));
-      loadLeads({ page: 1, appointmentStatus: status });
+      loadLeads({ page: 1, status });
     },
     [loadLeads],
   );

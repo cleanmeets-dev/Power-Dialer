@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, AlertCircle } from 'lucide-react';
 import { getCampaigns } from '../services/api';
 import CreateCampaignModal from './modals/CreateCampaignModal';
@@ -52,12 +52,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
 
   const selectedCampaign = findSelectedCampaign();
 
-  // Fetch campaigns on mount
-  useEffect(() => {
-    loadCampaigns();
-  }, [refreshKey]);
-
-  const loadCampaigns = async () => {
+  const loadCampaigns = useCallback(async () => {
     try {
       const data = await getCampaigns();
       const rootCampaigns = Array.isArray(data) ? data : (data?.data || []);
@@ -79,7 +74,16 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
       }
       console.error(err);
     }
-  };
+  }, [onShowNotification]);
+
+  // Fetch campaigns on mount/refresh
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      loadCampaigns();
+    }, 0);
+
+    return () => clearTimeout(timerId);
+  }, [loadCampaigns, refreshKey]);
 
   const handleCreateSuccess = async (newCampaign) => {
     setShowCreateModal(false);
@@ -120,13 +124,13 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
         </select>
 
         {/* Create Campaign Button */}
-        <button
+        {/* <button
           onClick={() => setShowCreateModal(true)}
           className="px-4 py-2 bg-linear-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-primary-700 flex items-center gap-2 transition"
         >
           <Plus className="w-5 h-5" />
           New
-        </button>
+        </button> */}
       </div>
 
       {/* Campaign Hierarchy */}

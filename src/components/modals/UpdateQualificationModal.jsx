@@ -5,7 +5,9 @@ import { updateQualificationStatus } from '../../services/api.js';
 import { Loader } from 'lucide-react';
 
 const QUALIFICATION_OPTIONS = [
-  { value: 'qualified', label: 'Qualified' },
+  { value: 'qualified-level-1', label: 'Qualified Level 1' },
+  { value: 'qualified-level-2', label: 'Qualified Level 2' },
+  { value: 'qualified-level-3', label: 'Qualified Level 3' },
   { value: 'disqualified', label: 'Disqualified' },
   { value: 'in-process', label: 'In Process' },
   { value: 'reschedule', label: 'Reschedule' },

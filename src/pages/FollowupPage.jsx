@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -19,6 +19,8 @@ import {
 import { getAllAgents, getLeads } from '../services/api';
 import CampaignSelector from '../components/CampaignSelector';
 import LeadDetailModal from '../components/modals/LeadDetailModal';
+import EditLeadModal from '../components/modals/EditLeadModal';
+import UpdateQualificationModal from '../components/modals/UpdateQualificationModal';
 
 const DIALER_STATUSES = [
   'pending',
@@ -37,16 +39,20 @@ const DISPOSITIONS = [
 ];
 
 const APPOINTMENT_STATUSES = [
-  'in-process',
-  'qualified',
-  'disqualified',
-  'reschedule',
-  'onhold',
+   "qualified-level-1",
+  "qualified-level-2",
+  "qualified-level-3",
+  "disqualified",
+  "in-process",
+  "reschedule",
+  "onhold",
 ];
 
 export default function FollowupPage() {
   const { showNotification } = useOutletContext();
-  useAuth();
+  const { user } = useAuth();
+  const canExport = ["admin", "manager"].includes(user?.role);
+  const canManageLeads = ["admin", "manager"].includes(user?.role);
 
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [leads, setLeads] = useState([]);
@@ -61,6 +67,10 @@ export default function FollowupPage() {
   const [total, setTotal] = useState(0);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [selectedLeadForEdit, setSelectedLeadForEdit] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedLeadForStatus, setSelectedLeadForStatus] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [agents, setAgents] = useState([]);
   const [stats, setStats] = useState({
@@ -71,7 +81,7 @@ export default function FollowupPage() {
   });
 
   // Fetch followup leads
-  useEffect(() => {
+  const loadFollowupLeads = useCallback(async () => {
     if (!selectedCampaignId) {
       setLeads([]);
       setTotal(0);
@@ -79,37 +89,47 @@ export default function FollowupPage() {
       return;
     }
 
-    const fetchFollowupLeads = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getLeads(selectedCampaignId, {
-          page: currentPage,
-          limit: pageSize,
-          search: searchInput || null,
-          status: selectedDialerStatus || null,
-          disposition: selectedDisposition || null,
-          appointmentStatus: selectedAppointmentStatus || null,
-          agentId: selectedAgent || null,
-        });
+    setIsLoading(true);
+    try {
+      const response = await getLeads(selectedCampaignId, {
+        page: currentPage,
+        limit: pageSize,
+        search: searchInput || null,
+        status: selectedDialerStatus || null,
+        disposition: selectedDisposition || null,
+        appointmentStatus: selectedAppointmentStatus || null,
+        agentId: selectedAgent || null,
+      });
 
-        setLeads(Array.isArray(response?.leads) ? response.leads : []);
-        setTotal(response?.pagination?.total || 0);
-        setStats({
-          scopedTotal: response?.stats?.scopedTotal || 0,
-          interested: response?.stats?.interested || 0,
-          appointments: response?.stats?.appointments || 0,
-          followupsScheduled: response?.stats?.followupsScheduled || 0,
-        });
-      } catch (error) {
-        console.error('Error fetching followup leads:', error);
-        showNotification('Error fetching followup leads', 'error');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setLeads(Array.isArray(response?.leads) ? response.leads : []);
+      setTotal(response?.pagination?.total || 0);
+      setStats({
+        scopedTotal: response?.stats?.scopedTotal || 0,
+        interested: response?.stats?.interested || 0,
+        appointments: response?.stats?.appointments || 0,
+        followupsScheduled: response?.stats?.followupsScheduled || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching followup leads:', error);
+      showNotification('Error fetching followup leads', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    selectedCampaignId,
+    currentPage,
+    pageSize,
+    searchInput,
+    selectedDialerStatus,
+    selectedDisposition,
+    selectedAppointmentStatus,
+    selectedAgent,
+    showNotification,
+  ]);
 
-    fetchFollowupLeads();
-  }, [selectedCampaignId, currentPage, pageSize, searchInput, selectedDialerStatus, selectedDisposition, selectedAppointmentStatus, selectedAgent, showNotification]);
+  useEffect(() => {
+    loadFollowupLeads();
+  }, [loadFollowupLeads]);
 
   // Fetch available agents
   useEffect(() => {
@@ -136,6 +156,31 @@ export default function FollowupPage() {
   const handleViewLead = (leadId) => {
     setSelectedLeadId(leadId);
     setShowDetailModal(true);
+  };
+
+  const handleEditLead = (lead) => {
+    setSelectedLeadForEdit(lead);
+    setShowEditModal(true);
+  };
+
+  const handleEditSave = (updated) => {
+    setLeads((prevLeads) => prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)));
+    showNotification('Lead updated successfully', 'success');
+    setShowEditModal(false);
+    loadFollowupLeads();
+  };
+
+  const handleUpdateStatus = (leadId) => {
+    const lead = leads.find((item) => item._id === leadId);
+    setSelectedLeadForStatus(lead || null);
+    setShowStatusModal(true);
+  };
+
+  const handleStatusUpdateSuccess = (updated) => {
+    setLeads((prevLeads) => prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)));
+    showNotification('Qualification updated successfully', 'success');
+    setShowStatusModal(false);
+    loadFollowupLeads();
   };
 
   const handleSearch = (e) => {
@@ -438,7 +483,7 @@ export default function FollowupPage() {
                   <option value={50}>50 per page</option>
                 </select>
 
-                {leads.length > 0 && (
+                {canExport && leads.length > 0 && (
                   <button
                     onClick={handleExport}
                     className="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-secondary-700"
@@ -634,7 +679,28 @@ export default function FollowupPage() {
         isOpen={showDetailModal}
         leadId={selectedLeadId}
         onClose={() => setShowDetailModal(false)}
+        onEditLead={canManageLeads ? handleEditLead : undefined}
+        onStatusUpdate={canManageLeads ? handleUpdateStatus : undefined}
       />
+
+      {canManageLeads && (
+        <>
+          <EditLeadModal
+            isOpen={showEditModal}
+            lead={selectedLeadForEdit}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleEditSave}
+          />
+
+          <UpdateQualificationModal
+            isOpen={showStatusModal}
+            lead={selectedLeadForStatus}
+            onClose={() => setShowStatusModal(false)}
+            onSuccess={handleStatusUpdateSuccess}
+            onError={(message) => showNotification(message, 'error')}
+          />
+        </>
+      )}
     </div>
   );
 }

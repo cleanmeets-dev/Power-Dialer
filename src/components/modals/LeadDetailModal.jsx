@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
@@ -39,13 +39,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
   const [lead, setLead] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && leadId) {
-      loadLead();
-    }
-  }, [isOpen, leadId]);
-
-  const loadLead = async () => {
+  const loadLead = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await getLead(leadId);
@@ -55,7 +49,13 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [leadId]);
+
+  useEffect(() => {
+    if (isOpen && leadId) {
+      loadLead();
+    }
+  }, [isOpen, leadId, loadLead]);
 
   if (isLoading) {
     return (
@@ -69,18 +69,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
 
   if (!lead) return null;
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleString();
-  };
-
-  const formatDateOnly = (date) => {
-    return new Date(date).toLocaleDateString();
-  };
-
-  // Group fields by category
-  const commonFields = visibleFields.filter(f => ['businessName', 'contactName', 'phoneNumber', 'email', 'businessAddress', 'city', 'state', 'country'].includes(f.key));
-  const roleSpecificFields = visibleFields.filter(f => !f.key.startsWith('dialerStatus') && !f.key.startsWith('appointmentStatus') && !f.key.startsWith('disposition') && !f.key.startsWith('agentNotes') && !f.key.startsWith('followUpDate') && !commonFields.some(cf => cf.key === f.key));
-  const statusFields = visibleFields.filter(f => ['dialerStatus', 'appointmentStatus', 'disposition', 'agentNotes', 'followUpDate'].includes(f.key));
+  const isManager = user?.role === 'manager';
 
   const renderFieldValue = (key, value) => {
     if (!value) return '—';
@@ -117,6 +106,14 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
               {lead.disposition}
             </span>
             <p className="text-xs text-slate-500 mt-1">Disposition</p>
+          </div>
+        )}
+        {isManager && (
+          <div>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${lead.wasPowerHour ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-slate-500/20 text-slate-700 dark:text-slate-300'}`}>
+              {lead.wasPowerHour ? 'Power Hour' : 'Normal Call'}
+            </span>
+            <p className="text-xs text-slate-500 mt-1">Qualification Scenario</p>
           </div>
         )}
       </div>

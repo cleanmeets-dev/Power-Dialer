@@ -53,6 +53,7 @@ export default function LeadsTable({ showNotification }) {
   
   const { user } = useAuth();
   const tableColumns = getTableColumns(user?.role);
+  const canExport = ["admin", "manager"].includes(user?.role);
 
   const [searchInput, setSearchInput] = useState("");
   const [agents, setAgents] = useState([]);
@@ -161,7 +162,7 @@ export default function LeadsTable({ showNotification }) {
         `${selectedRows.size} lead(s) deleted successfully`,
         "success",
       );
-    } catch (error) {
+    } catch {
       showNotification("Failed to delete some leads", "error");
     } finally {
       setShowDeleteConfirm(false);
@@ -222,7 +223,7 @@ export default function LeadsTable({ showNotification }) {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, setSearch]);
 
   // Extract unique agents from leads for manager filter
   useEffect(() => {
@@ -288,7 +289,7 @@ export default function LeadsTable({ showNotification }) {
             {lead.dialerStatus || "—"}
           </span>
         );
-      case 'appointmentStatus':
+      case 'appointmentStatus': {
         const statusColors = {
           qualified: 'bg-emerald-900/50 text-emerald-400',
           disqualified: 'bg-rose-900/50 text-rose-400',
@@ -301,15 +302,17 @@ export default function LeadsTable({ showNotification }) {
             {lead.appointmentStatus?.replace('_', ' ') || "—"}
           </span>
         );
+      }
       case 'assignedAgentName':
         return <span className="text-xs">{lead.assignedCallerName || lead.assignedCaller?.name || lead.assignedCaller?.email || "—"}</span>;
-      case 'interestLevel':
+      case 'interestLevel': {
         const levelColors = {
           cold: 'text-slate-700 dark:text-slate-400',
           warm: 'text-yellow-400',
           hot: 'text-red-400'
         };
         return <span className={`text-xs font-semibold capitalize ${levelColors[lead.interestLevel] || 'text-slate-400'}`}>{lead.interestLevel || "—"}</span>;
+      }
       case 'appointmentDate':
         return <span className="text-xs">{lead.appointmentDate ? new Date(lead.appointmentDate).toLocaleDateString() : "—"}</span>;
       case 'typeOfCleaning':
@@ -335,14 +338,16 @@ export default function LeadsTable({ showNotification }) {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={handleExport}
-              disabled={isLoading}
-              className="px-3 md:px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
-            >
-              <Download className="w-3 h-3 md:w-4 md:h-4" />
-              Export CSV
-            </button>
+            {canExport && (
+              <button
+                onClick={handleExport}
+                disabled={isLoading}
+                className="px-3 md:px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg transition font-semibold text-xs md:text-sm flex items-center gap-1 md:gap-2 whitespace-nowrap"
+              >
+                <Download className="w-3 h-3 md:w-4 md:h-4" />
+                Export CSV
+              </button>
+            )}
             {selectedRows.size > 0 && (
               <button
                 onClick={handleBulkDelete}

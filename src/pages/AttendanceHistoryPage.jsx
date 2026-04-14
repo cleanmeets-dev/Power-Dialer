@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { Download, Calendar as CalendarIcon, Clock, Coffee, CheckCircle, Search, User } from 'lucide-react';
 import { getAttendanceHistory, getAllAgents } from '../services/api';
 
 export default function AttendanceHistoryPage() {
   const { showNotification } = useOutletContext();
+  const { user } = useAuth();
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dateRange, setDateRange] = useState('7days');
@@ -13,8 +15,9 @@ export default function AttendanceHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [agentFilter, setAgentFilter] = useState('all');
   const [agentsList, setAgentsList] = useState([]);
+  const canExport = ["admin", "manager"].includes(user?.role);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       // Load agents for the dropdown once
@@ -53,13 +56,13 @@ export default function AttendanceHistoryPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [agentsList.length, customStart, customEnd, dateRange, showNotification]);
 
   useEffect(() => {
     if (dateRange !== 'custom' || (dateRange === 'custom' && customStart && customEnd)) {
       loadData();
     }
-  }, [dateRange, customStart, customEnd]);
+  }, [dateRange, customStart, customEnd, loadData]);
 
   const formatTime = (dateStr) => {
     if (!dateStr) return '—';
@@ -140,13 +143,15 @@ export default function AttendanceHistoryPage() {
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">Historical agent attendance reporting</p>
           </div>
-          <button
-            onClick={handleExportCSV}
-            disabled={isLoading || filteredLogs.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition font-semibold"
-          >
-            <Download className="w-4 h-4" /> Export CSV
-          </button>
+          {canExport && (
+            <button
+              onClick={handleExportCSV}
+              disabled={isLoading || filteredLogs.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition font-semibold"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
+          )}
         </div>
       </div>
 

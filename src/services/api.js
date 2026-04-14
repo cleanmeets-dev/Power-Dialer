@@ -42,6 +42,25 @@ api.interceptors.response.use(
   }
 );
 
+const getApiErrorMessage = (error, fallbackMessage) => {
+  const serverMessage = error.response?.data?.error || error.response?.data?.message;
+  const status = error.response?.status;
+
+  if (serverMessage && status) {
+    return `${fallbackMessage} (${status}): ${serverMessage}`;
+  }
+
+  if (serverMessage) {
+    return `${fallbackMessage}: ${serverMessage}`;
+  }
+
+  if (status) {
+    return `${fallbackMessage} (${status})`;
+  }
+
+  return `${fallbackMessage}: ${error.message}`;
+};
+
 // ==================== Authentication ====================
 
 /**
@@ -244,8 +263,15 @@ export const getLeads = async (campaignId, options = {}) => {
 };
 
 export const getLead = async (id) => {
-  const response = await api.get(`/caller-leads/${id}`);
-  return response.data.data;
+  try {
+    const response = await api.get(`/caller-leads/${id}`);
+    return response.data.data;
+  } catch (error) {
+    const normalizedError = new Error(getApiErrorMessage(error, "Failed to load lead"));
+    normalizedError.status = error.response?.status;
+    normalizedError.details = error.response?.data;
+    throw normalizedError;
+  }
 };
 
 export const updateQualificationStatus = async (id, status) => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useDialer } from '../hooks/useDialer';
@@ -12,7 +12,6 @@ export default function AutoDialerPage() {
   const { showNotification } = useOutletContext();
   const { user } = useAuth();
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   
   const { isDialing, setIsDialing } = useDialer(
     selectedCampaignId,
@@ -41,6 +40,8 @@ export default function AutoDialerPage() {
           selectedCampaignId={selectedCampaignId}
           onCampaignSelect={setSelectedCampaignId}
           onShowNotification={showNotification}
+          childDialerType="auto"
+          childOnly
         />
 
         {selectedCampaignId && (
@@ -53,7 +54,7 @@ export default function AutoDialerPage() {
                 onError={(message) => showNotification(message, 'error')}
                 onSuccess={(message) => showNotification(message, 'success')}
                 totalLeads={1}
-                isLoading={isLoading}
+                isLoading={false}
                 mode="agent"
                 agentId={user?._id}
               />

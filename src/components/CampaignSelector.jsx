@@ -3,7 +3,17 @@ import { Plus, AlertCircle } from 'lucide-react';
 import { getCampaigns } from '../services/api';
 import CreateCampaignModal from './modals/CreateCampaignModal';
 
-export default function CampaignSelector({ onCampaignSelect, onSelect, selectedCampaignId, selectedId, isLoading, onShowNotification, refreshKey = 0 }) {
+export default function CampaignSelector({
+  onCampaignSelect,
+  onSelect,
+  selectedCampaignId,
+  selectedId,
+  isLoading,
+  onShowNotification,
+  refreshKey = 0,
+  childDialerType = null,
+  childOnly = false,
+}) {
   const [campaignRoots, setCampaignRoots] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState('');
@@ -61,9 +71,14 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
         .map((root) => ({
           ...root,
           children: (Array.isArray(root.children) ? root.children : [])
-            .filter((child) => child.pipelineType === 'caller')
+            .filter((child) => {
+              if (child.pipelineType !== 'caller') return false;
+              if (!childDialerType) return true;
+              return child.dialerType === childDialerType;
+            })
             .sort((a, b) => a.name.localeCompare(b.name)),
         }))
+        .filter((root) => (childOnly ? root.children.length > 0 : true))
         .sort((a, b) => a.name.localeCompare(b.name));
 
       setCampaignRoots(callerRoots);
@@ -74,7 +89,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
       }
       console.error(err);
     }
-  }, [onShowNotification]);
+  }, [childDialerType, childOnly, onShowNotification]);
 
   // Fetch campaigns on mount/refresh
   useEffect(() => {
@@ -99,6 +114,12 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
     <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 mb-6">
       <h2 className="text-xl font-bold mb-4 text-primary-500">Select Campaign</h2>
 
+      {childDialerType && (
+        <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+          Showing only {childDialerType.toUpperCase()} child campaigns.
+        </p>
+      )}
+
       <div className="flex gap-4 mb-4">
         {/* Campaign Dropdown */}
         <select
@@ -112,7 +133,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
             const children = Array.isArray(root.children) ? root.children : [];
             return (
               <optgroup key={root._id} label={`Parent: ${root.name}`}>
-                <option value={root._id}>{`Parent - ${root.name}`}</option>
+                {!childOnly && <option value={root._id}>{`Parent - ${root.name}`}</option>}
                 {children.map((child) => (
                   <option key={child._id} value={child._id}>
                     {`Child - ${child.name} (${(child.dialerType || 'N/A').toUpperCase()})`}
@@ -142,10 +163,8 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
 
             return (
               <div key={root._id} className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white/70 dark:bg-slate-900/30">
-                <button
-                  type="button"
-                  onClick={() => handleSelect(root._id)}
-                  className={`w-full text-left px-3 py-2 rounded-t-lg transition ${rootSelected ? 'bg-primary-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
+                <div
+                  className={`w-full text-left px-3 py-2 rounded-t-lg transition ${!childOnly && rootSelected ? 'bg-primary-500/20' : 'bg-slate-50/60 dark:bg-slate-900/40'}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -156,7 +175,7 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
                       Leads: {root?.metrics?.totalLeads || 0}
                     </span> */}
                   </div>
-                </button>
+                </div>
 
                 {children.length > 0 ? (
                   <div className="border-t border-slate-200 dark:border-slate-700 px-2 py-2 space-y-1">

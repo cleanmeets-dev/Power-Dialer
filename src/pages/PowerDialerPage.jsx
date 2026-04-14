@@ -17,16 +17,13 @@ export default function PowerDialerPage() {
   const { isDialing, setIsDialing, activeCalls } = useDialer(selectedCampaignId, showNotification);
 
   useEffect(() => {
-    if (!selectedCampaignId) {
-      setTotalLeads(0);
-      return;
-    }
+    if (!selectedCampaignId) return;
 
     const loadLeadCount = async () => {
       try {
         const response = await getLeads(selectedCampaignId, { page: 1, limit: 1 });
         setTotalLeads(response?.pagination?.total || 0);
-      } catch (error) {
+      } catch {
         setTotalLeads(0);
       }
     };
@@ -54,6 +51,8 @@ export default function PowerDialerPage() {
         selectedCampaignId={selectedCampaignId}
         onCampaignSelect={setSelectedCampaignId}
         onShowNotification={showNotification}
+        childDialerType="parallel"
+        childOnly
       />
 
       {/* Power Dialer Controls */}

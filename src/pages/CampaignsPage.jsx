@@ -38,8 +38,19 @@ export default function CampaignsPage() {
     }
 
     if (campaign?.dialerType === 'parallel') {
-      const count = Array.isArray(campaign?.assignedAgents) ? campaign.assignedAgents.length : 0;
-      return `${count} agents`;
+      const agents = Array.isArray(campaign?.assignedAgents) ? campaign.assignedAgents : [];
+      if (!agents.length) return 'Unassigned';
+
+      const names = agents
+        .map((agent) => {
+          if (!agent) return null;
+          if (typeof agent === 'object') return agent.name || agent.email || null;
+          return null;
+        })
+        .filter(Boolean);
+
+      if (names.length > 0) return names.join(', ');
+      return `${agents.length} agents`;
     }
 
     return 'N/A';
@@ -92,9 +103,30 @@ export default function CampaignsPage() {
     loadCampaigns();
   };
 
+
   const handleEditClick = (campaign) => {
     setSelectedCampaign(campaign);
     setShowEditModal(true);
+  } 
+
+  // Remove Agent(s) handler
+  const handleRemoveAgents = async (campaign) => {
+    if (!campaign) return;
+    const confirmRemove = window.confirm(
+      'Are you sure you want to remove all agent assignments from this campaign? This will unassign all agents from remaining leads.'
+    );
+    if (!confirmRemove) return;
+    try {
+      // PATCH request to update campaign: clear assignedAgent and assignedAgents
+      await api.put(`/campaigns/${campaign._id}`, {
+        assignedAgent: null,
+        assignedAgents: [],
+      });
+      showNotification('Agent(s) removed successfully', 'success');
+      loadCampaigns();
+    } catch (error) {
+      showNotification('Failed to remove agent(s)', 'error');
+    }
   };
 
   const handleEditSuccess = () => {
@@ -195,9 +227,9 @@ export default function CampaignsPage() {
                         ) : null}
                       </td>
                       <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{root.name}</td>
-                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">Root</td>
-                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">N/A</td>
-                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">N/A</td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">Parent</td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300"></td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300"></td>
                       <td className="py-3 px-4">
                         <div className="flex justify-end gap-2">
                           <button
@@ -251,6 +283,13 @@ export default function CampaignsPage() {
                               title="Assign or change the campaign agent"
                             >
                               Assign Agent
+                            </button>
+                            <button
+                              onClick={() => handleRemoveAgents(child)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-500 hover:bg-gray-700 text-white rounded transition text-xs cursor-pointer"
+                              title="Remove all agent assignments from this campaign"
+                            >
+                              Remove Agent(s)
                             </button>
                             <button
                               onClick={() => handleEditClick(child)}

@@ -273,6 +273,26 @@ export const updateQualification = async (id, updates) => {
   return response.data.data;
 };
 
+// ==================== Power Hour ====================
+
+export const getPowerHourStatus = async () => {
+  const response = await api.get('/power-hour/status');
+  return response.data.data;
+};
+
+export const startPowerHour = async (durationMinutes = 60, pipelineType = 'all') => {
+  const response = await api.post('/power-hour/start', {
+    durationMinutes,
+    pipelineType,
+  });
+  return response.data.data;
+};
+
+export const stopPowerHour = async () => {
+  const response = await api.post('/power-hour/stop');
+  return response.data.data;
+};
+
 // ==================== Dialer ====================
 
 export const startDialing = async (campaignId, agentId = null) => {

@@ -148,9 +148,9 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{root.name}</p>
                       <p className="text-xs text-slate-600 dark:text-slate-400">Parent campaign</p>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                    {/* <span className="text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                       Leads: {root?.metrics?.totalLeads || 0}
-                    </span>
+                    </span> */}
                   </div>
                 </button>
 

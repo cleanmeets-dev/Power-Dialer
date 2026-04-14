@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Plus, AlertCircle } from 'lucide-react';
-import { createCampaign, getCampaigns } from '../services/api';
+import { getCampaigns } from '../services/api';
+import CreateCampaignModal from './modals/CreateCampaignModal';
 
 export default function CampaignSelector({ onCampaignSelect, onSelect, selectedCampaignId, selectedId, isLoading, onShowNotification, refreshKey = 0 }) {
   const [campaigns, setCampaigns] = useState([]);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState('');
-  const [creating, setCreating] = useState(false);
 
   // Support both prop names for backwards compatibility
   const handleSelect = onCampaignSelect || onSelect;
@@ -36,10 +35,6 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
       });
 
       setCampaigns(campaignList);
-      // Auto-select first campaign if none selected
-      // if (campaignList && campaignList.length > 0 && !currentSelectedId && handleSelect) {
-      //   handleSelect(campaignList[0]._id);
-      // }
     } catch (err) {
       setError('Failed to load campaigns');
       if (onShowNotification) {
@@ -49,29 +44,14 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
     }
   };
 
-  const handleCreateCampaign = async () => {
-    if (!newName.trim()) {
-      setError('Campaign name required');
-      return;
-    }
-
-    try {
-      setCreating(true);
-      const newCampaign = await createCampaign(newName);
-      setCampaigns([...campaigns, newCampaign]);
+  const handleCreateSuccess = async (newCampaign) => {
+    setShowCreateModal(false);
+    setError('');
+    await loadCampaigns();
+    if (newCampaign?._id) {
       handleSelect(newCampaign._id);
-      setNewName('');
-      setShowCreateForm(false);
-      setError('');
-    } catch (err) {
-      setError('Failed to create campaign');
-      if (onShowNotification) {
-        onShowNotification('Failed to create campaign', 'error');
-      }
-      console.error(err);
-    } finally {
-      setCreating(false);
     }
+    onShowNotification?.('Campaign created successfully', 'success');
   };
 
   return (
@@ -96,34 +76,13 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
 
         {/* Create Campaign Button */}
         <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
+          onClick={() => setShowCreateModal(true)}
           className="px-4 py-2 bg-linear-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-primary-700 flex items-center gap-2 transition"
         >
           <Plus className="w-5 h-5" />
           New
         </button>
       </div>
-
-      {/* Create Campaign Form */}
-      {showCreateForm && (
-        <div className="mb-4 p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-300 dark:border-slate-600">
-          <input
-            type="text"
-            placeholder="Campaign name (e.g., Q1 Sales Outreach)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleCreateCampaign()}
-            className="w-full px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded border border-slate-300 dark:border-slate-600 mb-2 focus:border-cyan-500 outline-none"
-          />
-          <button
-            onClick={handleCreateCampaign}
-            disabled={creating}
-            className="w-full px-4 py-2 bg-emerald-500 text-white rounded font-semibold hover:bg-emerald-600 disabled:bg-slate-600 transition"
-          >
-            {creating ? 'Creating...' : 'Create Campaign'}
-          </button>
-        </div>
-      )}
 
       {/* Selected Campaign Info */}
       {currentSelectedId && campaigns.length > 0 && (
@@ -140,6 +99,17 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
           <p className="text-rose-400 text-sm">{error}</p>
         </div>
       )}
+
+      <CreateCampaignModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+        onError={(message) => {
+          const nextMessage = message || 'Failed to create campaign';
+          setError(nextMessage);
+          onShowNotification?.(nextMessage, 'error');
+        }}
+      />
     </div>
   );
 }

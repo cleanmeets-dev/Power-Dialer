@@ -4,13 +4,53 @@ import { getCampaigns } from '../services/api';
 import CreateCampaignModal from './modals/CreateCampaignModal';
 
 export default function CampaignSelector({ onCampaignSelect, onSelect, selectedCampaignId, selectedId, isLoading, onShowNotification, refreshKey = 0 }) {
-  const [campaigns, setCampaigns] = useState([]);
+  const [campaignRoots, setCampaignRoots] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState('');
 
   // Support both prop names for backwards compatibility
   const handleSelect = onCampaignSelect || onSelect;
   const currentSelectedId = selectedCampaignId || selectedId;
+
+  const getAssignmentLabel = (campaign) => {
+    if (campaign?.dialerType === 'auto') {
+      const assigned = campaign?.assignedAgent;
+      if (!assigned) return 'Unassigned';
+      if (typeof assigned === 'object') return assigned.name || assigned.email || 'Assigned';
+      return 'Assigned';
+    }
+
+    if (campaign?.dialerType === 'parallel') {
+      const agents = Array.isArray(campaign?.assignedAgents) ? campaign.assignedAgents : [];
+      if (!agents.length) return 'Unassigned';
+      const namedAgents = agents
+        .map((agent) => (typeof agent === 'object' ? (agent.name || agent.email || null) : null))
+        .filter(Boolean);
+      return namedAgents.length ? namedAgents.join(', ') : `${agents.length} agents`;
+    }
+
+    return 'N/A';
+  };
+
+  const findSelectedCampaign = () => {
+    if (!currentSelectedId) return null;
+
+    for (const root of campaignRoots) {
+      if (String(root._id) === String(currentSelectedId)) {
+        return { ...root, __isChild: false, __parentName: null };
+      }
+
+      const children = Array.isArray(root.children) ? root.children : [];
+      const match = children.find((child) => String(child._id) === String(currentSelectedId));
+      if (match) {
+        return { ...match, __isChild: true, __parentName: root.name };
+      }
+    }
+
+    return null;
+  };
+
+  const selectedCampaign = findSelectedCampaign();
 
   // Fetch campaigns on mount
   useEffect(() => {
@@ -21,20 +61,17 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
     try {
       const data = await getCampaigns();
       const rootCampaigns = Array.isArray(data) ? data : (data?.data || []);
-      const callerRoots = rootCampaigns.filter((root) => root.pipelineType === 'caller');
-      const campaignList = [];
+      const callerRoots = rootCampaigns
+        .filter((root) => root.pipelineType === 'caller')
+        .map((root) => ({
+          ...root,
+          children: (Array.isArray(root.children) ? root.children : [])
+            .filter((child) => child.pipelineType === 'caller')
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-      callerRoots.forEach((root) => {
-        campaignList.push({ ...root, __isChild: false, __parentName: null });
-        const children = Array.isArray(root.children) ? root.children : [];
-        children
-          .filter((child) => child.pipelineType === 'caller')
-          .forEach((child) => {
-            campaignList.push({ ...child, __isChild: true, __parentName: root.name });
-          });
-      });
-
-      setCampaigns(campaignList);
+      setCampaignRoots(callerRoots);
     } catch (err) {
       setError('Failed to load campaigns');
       if (onShowNotification) {
@@ -63,15 +100,23 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
         <select
           value={currentSelectedId || ''}
           onChange={(e) => handleSelect(e.target.value)}
-          disabled={isLoading || campaigns.length === 0}
+          disabled={isLoading || campaignRoots.length === 0}
           className="flex-1 px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500"
         >
           <option value="">Select a campaign...</option>
-          {campaigns.map((campaign) => (
-            <option key={campaign._id} value={campaign._id}>
-              {campaign.__isChild ? `-- ${campaign.name}` : campaign.name}
-            </option>
-          ))}
+          {campaignRoots.map((root) => {
+            const children = Array.isArray(root.children) ? root.children : [];
+            return (
+              <optgroup key={root._id} label={`Parent: ${root.name}`}>
+                <option value={root._id}>{`Parent - ${root.name}`}</option>
+                {children.map((child) => (
+                  <option key={child._id} value={child._id}>
+                    {`Child - ${child.name} (${(child.dialerType || 'N/A').toUpperCase()})`}
+                  </option>
+                ))}
+              </optgroup>
+            );
+          })}
         </select>
 
         {/* Create Campaign Button */}
@@ -84,11 +129,75 @@ export default function CampaignSelector({ onCampaignSelect, onSelect, selectedC
         </button>
       </div>
 
+      {/* Campaign Hierarchy */}
+      {campaignRoots.length > 0 && (
+        <div className="mb-4 space-y-3 max-h-72 overflow-y-auto pr-1">
+          {campaignRoots.map((root) => {
+            const children = Array.isArray(root.children) ? root.children : [];
+            const rootSelected = String(currentSelectedId) === String(root._id);
+
+            return (
+              <div key={root._id} className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white/70 dark:bg-slate-900/30">
+                <button
+                  type="button"
+                  onClick={() => handleSelect(root._id)}
+                  className={`w-full text-left px-3 py-2 rounded-t-lg transition ${rootSelected ? 'bg-primary-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{root.name}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Parent campaign</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                      Leads: {root?.metrics?.totalLeads || 0}
+                    </span>
+                  </div>
+                </button>
+
+                {children.length > 0 ? (
+                  <div className="border-t border-slate-200 dark:border-slate-700 px-2 py-2 space-y-1">
+                    {children.map((child) => {
+                      const childSelected = String(currentSelectedId) === String(child._id);
+                      return (
+                        <button
+                          key={child._id}
+                          type="button"
+                          onClick={() => handleSelect(child._id)}
+                          className={`w-full text-left rounded-md px-3 py-2 transition ${childSelected ? 'bg-primary-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{child.name}</p>
+                            <span className="text-[11px] px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 uppercase">
+                              {child.dialerType || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                            <span>Assigned: {getAssignmentLabel(child)}</span>
+                            <span>Leads: {child?.metrics?.totalLeads || 0}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="border-t border-slate-200 dark:border-slate-700 px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
+                    No child campaigns yet.
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Selected Campaign Info */}
-      {currentSelectedId && campaigns.length > 0 && (
+      {selectedCampaign && (
         <div className="p-3 bg-primary-500/20 border border-primary-500/50 rounded">
-          <p className="text-primary-500 text-sm">
-            ✓ Campaign selected and ready for leads
+          <p className="text-primary-500 text-sm">✓ Selected: {selectedCampaign.name}</p>
+          <p className="text-primary-600/90 dark:text-primary-300 text-xs mt-1">
+            {selectedCampaign.__isChild
+              ? `Child of ${selectedCampaign.__parentName} • Dialer ${selectedCampaign.dialerType || 'N/A'} • Assigned ${getAssignmentLabel(selectedCampaign)}`
+              : 'Parent campaign'}
           </p>
         </div>
       )}

@@ -98,31 +98,18 @@ export const getVisibleFields = (role) => {
  */
 export const getTableColumns = (role) => {
   const baseColumns = [
-    { key: 'businessName', label: 'Business Name', width: 'w-40' },
+    { key: 'businessName', label: 'Business Name', width: 'w-48' },
+    { key: 'businessAddress', label: 'Address', width: 'w-56' },
     { key: 'phoneNumber', label: 'Phone', width: 'w-28' },
     { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
-    { key: 'leadStatus', label: 'Lead Status', width: 'w-24' },
   ];
 
   if (role === 'manager') {
     return [
       ...baseColumns,
       { key: 'assignedAgentName', label: 'Assigned Agent', width: 'w-32' },
-      { key: 'interestLevel', label: 'Interest Level', width: 'w-24' },
     ];
-  } else if (role === 'caller-agent') {
-    return [
-      ...baseColumns,
-      { key: 'interestLevel', label: 'Interest Level', width: 'w-24' },
-      { key: 'appointmentDate', label: 'Appointment', width: 'w-28' },
-    ];
-  } else if (role === 'closer-agent') {
-    return [
-      ...baseColumns,
-      { key: 'typeOfCleaning', label: 'Type', width: 'w-24' },
-      { key: 'onboardingStatus', label: 'Onboarding', width: 'w-28' },
-    ];
-  }
+  } 
 
   return baseColumns;
 };

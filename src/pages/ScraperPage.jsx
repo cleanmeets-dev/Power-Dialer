@@ -41,6 +41,27 @@ function csvEscape(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
+function normalizeExportPhone(phone) {
+  if (!phone) return "";
+
+  const normalized = String(phone)
+    .normalize("NFKC")
+    .replace(/^\uFEFF/, "")
+    .replace(/^'+/, "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Extract the first likely phone-like segment and drop stray icon/mojibake chars.
+  const phoneLikeMatch = normalized.match(/\+?\d[\d\s().-]{6,}\d/);
+  const candidate = phoneLikeMatch ? phoneLikeMatch[0] : normalized;
+
+  return candidate
+    .replace(/[^\d+().\-\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function getProgressValue(session) {
   return Number.isFinite(Number(session?.progressPercent))
     ? Math.max(0, Math.min(100, Number(session.progressPercent)))
@@ -64,7 +85,7 @@ export default function ScraperPage() {
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [isImporting, setIsImporting] = useState(false);
 
-  const canImport = selectedSession?.status === "done" && results.length > 0 && selectedCampaignId && selectedAgentId;
+  const canImport = Boolean(selectedSessionId) && results.length > 0 && selectedCampaignId && selectedAgentId;
   const hasRunningSessions = sessions.some((session) => session.status === "running");
 
   const stats = useMemo(() => {
@@ -291,21 +312,24 @@ export default function ScraperPage() {
 
     const headers = [
       "name",
-      "category",
-      "rating",
-      "reviews",
       "phone",
       "address",
       "website",
-      "hours",
-      "latitude",
-      "longitude",
       "mapUrl",
     ];
 
     const rows = [
       headers.join(","),
-      ...results.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
+      ...results.map((row) =>
+        headers
+          .map((header) => {
+            if (header === "phone") {
+              return csvEscape(normalizeExportPhone(row.phone));
+            }
+            return csvEscape(row[header]);
+          })
+          .join(","),
+      ),
     ];
 
     const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
@@ -399,7 +423,7 @@ export default function ScraperPage() {
 
             <div className="mt-5 flex flex-col md:items-center md:justify-between gap-3">
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Scrapes run in the background. You can leave this page open and import once the session finishes.
+                Scrapes run in the background. You can leave this page open and import available results anytime.
               </p>
 
               <button
@@ -513,7 +537,6 @@ export default function ScraperPage() {
                   <thead className="bg-slate-200/70 dark:bg-slate-900/50 sticky top-0">
                     <tr>
                       <th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Business</th>
-                      <th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Category</th>
                       <th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Phone</th>
                       <th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Address</th>
                       <th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Website</th>
@@ -522,13 +545,13 @@ export default function ScraperPage() {
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                     {isLoadingResults ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
                           Loading scrape results...
                         </td>
                       </tr>
                     ) : results.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
                           Select a session to review results.
                         </td>
                       </tr>
@@ -537,11 +560,7 @@ export default function ScraperPage() {
                         <tr key={row._id} className="bg-white dark:bg-slate-900/20 align-top">
                           <td className="px-4 py-3">
                             <div className="font-medium text-slate-900 dark:text-slate-100">{row.name || "Untitled business"}</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              {row.rating ? `Rating ${row.rating}` : "No rating"}{row.reviews ? ` | ${row.reviews} reviews` : ""}
-                            </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.category || "-"}</td>
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{row.phone || "-"}</td>
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{row.address || "-"}</td>
                           <td className="px-4 py-3">
@@ -626,6 +645,12 @@ export default function ScraperPage() {
                 Imports skip rows without a business name or phone number, and they also skip duplicates already present in the selected campaign by phone number.
               </div>
 
+              {selectedSession?.status === "running" ? (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-700 dark:text-amber-300">
+                  This session is still running. Import will include only results discovered so far.
+                </div>
+              ) : null}
+
               <button
                 type="button"
                 onClick={handleImport}
@@ -633,7 +658,7 @@ export default function ScraperPage() {
                 className="w-full px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 dark:disabled:bg-slate-600 text-white font-semibold transition inline-flex items-center justify-center gap-2"
               >
                 {isImporting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                {isImporting ? "Importing..." : "Import Results"}
+                {isImporting ? "Importing..." : "Import Available Results"}
               </button>
             </div>
           </div>

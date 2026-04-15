@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { LogOut, Users, UserPlus, Menu, Moon, Sun, Zap } from "lucide-react";
+import { LogOut, Users, Menu, Moon, Sun, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { isManager as checkIsManager } from "../utils/roleUtils";
-import AdminCreateUserModal from "./AdminCreateUserModal";
 import AgentListModal from "./modals/AgentListModal.jsx";
 import api, { getPowerHourStatus, startPowerHour, stopPowerHour } from "../services/api.js";
 
@@ -24,8 +23,6 @@ export default function Navbar({
 }) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useAuth();
-  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [showAgentListModal, setShowAgentListModal] = useState(false);
   const [powerHourActive, setPowerHourActive] = useState(false);
   const [isStartingPowerHour, setIsStartingPowerHour] = useState(false);
   const [isStoppingPowerHour, setIsStoppingPowerHour] = useState(false);
@@ -89,22 +86,6 @@ export default function Navbar({
   const handleLogout = () => {
     onLogout();
     navigate("/login");
-  };
-
-  const handleUserCreated = (message) => {
-    onShowNotification?.(message, "success");
-    setShowCreateUserModal(false);
-  };
-
-  const handleDeleteAgent = async (agentId) => {
-    try {
-      await api.delete(`/auth/agents/${agentId}`);
-      onShowNotification?.("Agent deleted successfully", "success");
-      setShowAgentListModal(false);
-    } catch (error) {
-      console.error("Failed to delete agent:", error);
-      onShowNotification?.("Failed to delete agent", "error");
-    }
   };
 
   const handleStartPowerHour = async () => {
@@ -179,23 +160,7 @@ export default function Navbar({
             <div className="flex items-center gap-2 ml-auto">
               {isManager && (
                 <>
-                  <button
-                    onClick={() => setShowAgentListModal(true)}
-                    className="flex items-center gap-1 px-3 py-2 bg-secondary-500/20 dark:bg-secondary-500/20 text-secondary-600 dark:text-secondary-400 rounded-lg hover:bg-secondary-500/30 dark:hover:bg-secondary-500/40 transition text-sm cursor-pointer"
-                    title="View agents"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span className="hidden sm:inline">Agents</span>
-                  </button>
-                  <button
-                    onClick={() => setShowCreateUserModal(true)}
-                    className="flex items-center gap-1 px-3 py-2 bg-secondary-500/20 dark:bg-secondary-500/20 text-secondary-500 dark:text-secondary-400 rounded-lg hover:bg-secondary-500/30 dark:hover:bg-secondary-500/40 transition text-sm cursor-pointer"
-                    title="Create new user"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    <span className="hidden sm:inline">Add User</span>
-                  </button>
-                  <select
+                                    <select
                     value={selectedPowerHourMinutes}
                     onChange={(event) => setSelectedPowerHourMinutes(Number(event.target.value))}
                     disabled={powerHourActive || isStartingPowerHour}
@@ -279,18 +244,6 @@ export default function Navbar({
         </div>
       </nav>
 
-      {/* Modals */}
-      <AdminCreateUserModal
-        isOpen={showCreateUserModal}
-        onClose={() => setShowCreateUserModal(false)}
-        onUserCreated={handleUserCreated}
-      />
-      <AgentListModal
-        isOpen={showAgentListModal}
-        onClose={() => setShowAgentListModal(false)}
-        onDeleteAgent={handleDeleteAgent}
-        onShowNotification={onShowNotification}
-      />
-    </>
+      </>
   );
 }

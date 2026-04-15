@@ -20,6 +20,7 @@ import MyAvailabilityPage from "./pages/MyAvailabilityPage";
 import AutoDialerPage from "./pages/AutoDialerPage";
 import DirectDialerPage from "./pages/DirectDialerPage";
 import PowerDialerPage from "./pages/PowerDialerPage";
+import AgentManagementPage from "./pages/AgentManagementPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import React from "react";
@@ -47,6 +48,7 @@ function App() {
             <Route path="call-logs" element={<CallLogsPage />} />
             <Route path="campaigns" element={<CampaignsPage />} />
             <Route path="agents" element={<AgentAvailabilityPage />} />
+            <Route path="user-management" element={<AgentManagementPage />} />
             <Route path="attendance" element={<AttendanceHistoryPage />} />
           </Route>
 

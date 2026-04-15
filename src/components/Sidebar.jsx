@@ -21,6 +21,7 @@ function getSidebarItems(role) {
 			{ id: 'followups', label: 'Lead Status/Followups', icon: Repeat2, path: '/manager/followups' },
 			// { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
 			{ id: 'agents', label: 'Agents (Live)', icon: Users, path: '/manager/agents' },
+			{ id: 'user-management', label: 'User Management', icon: Users, path: '/manager/user-management' },
 			{ id: 'attendance', label: 'Attendance Logs', icon: CalendarDays, path: '/manager/attendance' },
 		];
 	}

@@ -8,7 +8,7 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess, onUse
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('caller-agent');
+  const [role, setRole] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -20,7 +20,7 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess, onUse
     setEmail('');
     setPassword('');
     setConfirmPassword('');
-    setRole('caller-agent');
+    setRole('');
     setError('');
     setIsLoading(false);
     setSuccessMessage('');
@@ -138,6 +138,7 @@ export default function AdminCreateUserModal({ isOpen, onClose, onSuccess, onUse
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none transition appearance-none"
                 disabled={isLoading}
               >
+                <option>Select Role</option>
                 <option value="caller-agent">Caller Agent</option>
                 <option value="closer-agent">Closer Agent</option>
                 <option value="manager">Manager</option>

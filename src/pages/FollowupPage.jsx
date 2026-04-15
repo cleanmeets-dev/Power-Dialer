@@ -58,8 +58,8 @@ export default function FollowupPage() {
   const [leads, setLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [selectedDialerStatus, setSelectedDialerStatus] = useState('');
-  const [selectedDisposition, setSelectedDisposition] = useState('');
+  const [selectedDialerStatus, setSelectedDialerStatus] = useState('completed');
+  const [selectedDisposition, setSelectedDisposition] = useState('appointment');
   const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState('');
   const [selectedAgent, setSelectedAgent] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -190,8 +190,8 @@ export default function FollowupPage() {
 
   const clearAllFilters = () => {
     setSearchInput('');
-    setSelectedDialerStatus('');
-    setSelectedDisposition('');
+    setSelectedDialerStatus('completed');
+    setSelectedDisposition('appointment');
     setSelectedAppointmentStatus('');
     setSelectedAgent('');
     setCurrentPage(1);
@@ -520,13 +520,13 @@ export default function FollowupPage() {
                       Disposition
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                      Address
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       Last Dialed
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       Follow-Up Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Notes
                       </th>
                       <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       Action
@@ -574,6 +574,9 @@ export default function FollowupPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                          <span className="line-clamp-2">{lead.businessAddress || lead.address || '—'}</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                           <div className="flex flex-col">
                             <span className="font-medium">{formatDate(lead.lastDialedAt)}</span>
                             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -587,13 +590,6 @@ export default function FollowupPage() {
                             <span className="text-slate-700 dark:text-slate-300">
                               {lead.followUpDate ? formatDate(lead.followUpDate) : '—'}
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="max-w-xs">
-                            <p className="line-clamp-2 text-slate-700 dark:text-slate-300">
-                              {lead.agentNotes || '—'}
-                            </p>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center">

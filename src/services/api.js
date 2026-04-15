@@ -135,10 +135,14 @@ export const createUser = async (email, password, name, role = 'agent') => {
 
 /**
  * Get all agents (manager-only)
+ * @param {{includeClients?: boolean}} options - Include client users when true
  * @returns {Promise} List of agents
  */
-export const getAllAgents = async () => {
-  const response = await api.get('/auth/agents');
+export const getAllAgents = async (options = {}) => {
+  const includeClients = Boolean(options?.includeClients);
+  const response = await api.get('/auth/agents', {
+    params: includeClients ? { includeClients: true } : undefined,
+  });
   return response.data.data;
 };
 

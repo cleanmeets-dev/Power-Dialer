@@ -20,9 +20,9 @@ export default function AgentManagementPage() {
   // Determine available roles based on current user's role
   const getAvailableRoles = () => {
     if (user?.role === 'admin') {
-      return ['admin', 'manager', 'caller-agent', 'closer-agent'];
+      return ['admin', 'manager', 'caller-agent', 'closer-agent', 'client'];
     } else if (user?.role === 'manager') {
-      return ['caller-agent', 'closer-agent'];
+      return ['caller-agent', 'closer-agent', 'client'];
     }
     return [];
   };
@@ -37,14 +37,14 @@ export default function AgentManagementPage() {
   const loadUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      const data = await getAllAgents();
+      const data = await getAllAgents({ includeClients: true });
       // Filter users based on current user's role
       let filteredUsers = Array.isArray(data) ? data : [];
       
       if (user?.role === 'manager') {
         // Manager can only see agents/clients, not managers or admins
         filteredUsers = filteredUsers.filter(
-          u => u.role === 'caller-agent' || u.role === 'closer-agent'
+          u => u.role === 'caller-agent' || u.role === 'closer-agent' || u.role === 'client'
         );
       }
       
@@ -171,6 +171,7 @@ export default function AgentManagementPage() {
       'manager': 'Manager',
       'caller-agent': 'Caller Agent',
       'closer-agent': 'Closer Agent',
+      'client': 'Client',
     };
     return labels[role] || role;
   };
@@ -181,6 +182,7 @@ export default function AgentManagementPage() {
       'manager': 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
       'caller-agent': 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
       'closer-agent': 'bg-green-500/20 text-green-600 dark:text-green-400',
+      'client': 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
     };
     return colors[role] || 'bg-slate-500/20 text-slate-600 dark:text-slate-400';
   };

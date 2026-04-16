@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useState, useEffect, useCallback } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import {
   Search,
   Filter,
@@ -15,31 +15,31 @@ import {
   ClipboardCheck,
   Clock3,
   Layers3,
-} from 'lucide-react';
-import { getAllAgents, getLeads } from '../services/api';
-import CampaignSelector from '../components/CampaignSelector';
-import LeadDetailModal from '../components/modals/LeadDetailModal';
-import EditLeadModal from '../components/modals/EditLeadModal';
-import UpdateQualificationModal from '../components/modals/UpdateQualificationModal';
+} from "lucide-react";
+import { getAllAgents, getLeads } from "../services/api";
+import CampaignSelector from "../components/CampaignSelector";
+import LeadDetailModal from "../components/modals/LeadDetailModal";
+import EditLeadModal from "../components/modals/EditLeadModal";
+import UpdateQualificationModal from "../components/modals/UpdateQualificationModal";
 
 const DIALER_STATUSES = [
-  'pending',
-  'dialing',
-  'connected',
-  'failed',
-  'completed',
+  "pending",
+  "dialing",
+  "connected",
+  "failed",
+  "completed",
 ];
 
 const DISPOSITIONS = [
-  'voicemail',
-  'followup',
-  'not-interested',
-  'appointment',
-  'wrong-number',
+  "voicemail",
+  "followup",
+  "not-interested",
+  "appointment",
+  "wrong-number",
 ];
 
 const APPOINTMENT_STATUSES = [
-   "qualified-level-1",
+  "qualified-level-1",
   "qualified-level-2",
   "qualified-level-3",
   "disqualified",
@@ -57,11 +57,12 @@ export default function FollowupPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [leads, setLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
-  const [selectedDialerStatus, setSelectedDialerStatus] = useState('completed');
-  const [selectedDisposition, setSelectedDisposition] = useState('appointment');
-  const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState('');
-  const [selectedAgent, setSelectedAgent] = useState('');
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedDialerStatus, setSelectedDialerStatus] = useState("completed");
+  const [selectedDisposition, setSelectedDisposition] = useState("appointment");
+  const [selectedAppointmentStatus, setSelectedAppointmentStatus] =
+    useState("");
+  const [selectedAgent, setSelectedAgent] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -85,7 +86,12 @@ export default function FollowupPage() {
     if (!selectedCampaignId) {
       setLeads([]);
       setTotal(0);
-      setStats({ scopedTotal: 0, interested: 0, appointments: 0, followupsScheduled: 0 });
+      setStats({
+        scopedTotal: 0,
+        interested: 0,
+        appointments: 0,
+        followupsScheduled: 0,
+      });
       return;
     }
 
@@ -110,8 +116,8 @@ export default function FollowupPage() {
         followupsScheduled: response?.stats?.followupsScheduled || 0,
       });
     } catch (error) {
-      console.error('Error fetching followup leads:', error);
-      showNotification('Error fetching followup leads', 'error');
+      console.error("Error fetching followup leads:", error);
+      showNotification("Error fetching followup leads", "error");
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +143,7 @@ export default function FollowupPage() {
       try {
         const users = await getAllAgents();
         const callerOnly = (Array.isArray(users) ? users : [])
-          .filter((user) => user.role === 'caller-agent')
+          .filter((user) => user.role === "caller-agent")
           .map((user) => ({
             _id: user._id,
             name: user.name || user.email,
@@ -146,7 +152,7 @@ export default function FollowupPage() {
           .sort((a, b) => a.name.localeCompare(b.name));
         setAgents(callerOnly);
       } catch (error) {
-        console.error('Error loading caller agents:', error);
+        console.error("Error loading caller agents:", error);
       }
     };
 
@@ -164,8 +170,10 @@ export default function FollowupPage() {
   };
 
   const handleEditSave = (updated) => {
-    setLeads((prevLeads) => prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)));
-    showNotification('Lead updated successfully', 'success');
+    setLeads((prevLeads) =>
+      prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)),
+    );
+    showNotification("Lead updated successfully", "success");
     setShowEditModal(false);
     loadFollowupLeads();
   };
@@ -177,8 +185,10 @@ export default function FollowupPage() {
   };
 
   const handleStatusUpdateSuccess = (updated) => {
-    setLeads((prevLeads) => prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)));
-    showNotification('Qualification updated successfully', 'success');
+    setLeads((prevLeads) =>
+      prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)),
+    );
+    showNotification("Qualification updated successfully", "success");
     setShowStatusModal(false);
     loadFollowupLeads();
   };
@@ -189,95 +199,95 @@ export default function FollowupPage() {
   };
 
   const clearAllFilters = () => {
-    setSearchInput('');
-    setSelectedDialerStatus('completed');
-    setSelectedDisposition('appointment');
-    setSelectedAppointmentStatus('');
-    setSelectedAgent('');
+    setSearchInput("");
+    setSelectedDialerStatus("completed");
+    setSelectedDisposition("appointment");
+    setSelectedAppointmentStatus("");
+    setSelectedAgent("");
     setCurrentPage(1);
   };
 
   const handleExport = () => {
     if (leads.length === 0) {
-      showNotification('No leads to export', 'error');
+      showNotification("No leads to export", "error");
       return;
     }
 
     const headers = [
-      'Business Name',
-      'Phone',
-      'Email',
-      'Dialer Status',
-      'Disposition',
-      'Appointment Status',
-      'Agent Assigned',
-      'Last Contacted',
-      'Notes',
+      "Business Name",
+      "Phone",
+      "Email",
+      "Dialer Status",
+      "Disposition",
+      "Appointment Status",
+      "Agent Assigned",
+      "Last Contacted",
+      "Notes",
     ];
     const rows = leads.map((lead) => [
-      lead.businessName || '',
-      lead.phoneNumber || '',
-      lead.email || '',
-      lead.dialerStatus || '',
-      lead.disposition || '',
-      lead.appointmentStatus || '',
-      getAssignedAgentLabel(lead) || '',
-      formatDate(lead.lastDialedAt) || '',
-      lead.agentNotes || '',
+      lead.businessName || "",
+      lead.phoneNumber || "",
+      lead.email || "",
+      lead.dialerStatus || "",
+      lead.disposition || "",
+      lead.appointmentStatus || "",
+      getAssignedAgentLabel(lead) || "",
+      formatDate(lead.lastDialedAt) || "",
+      lead.agentNotes || "",
     ]);
 
     const csv = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n');
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `followup-leads-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `followup-leads-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-    showNotification('Followup leads exported successfully', 'success');
+    showNotification("Followup leads exported successfully", "success");
   };
 
   const formatDate = (date) => {
-    if (!date) return '—';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const formatTime = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    if (!date) return "";
+    return new Date(date).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: 'bg-slate-100 text-slate-800',
-      dialing: 'bg-blue-100 text-blue-800',
-      connected: 'bg-emerald-100 text-emerald-800',
-      failed: 'bg-rose-100 text-rose-800',
-      completed: 'bg-indigo-100 text-indigo-800',
+      pending: "bg-slate-800 text-slate-50",
+      dialing: "bg-blue-800 text-blue-50",
+      connected: "bg-emerald-800 text-emerald-50",
+      failed: "bg-rose-800 text-rose-50",
+      completed: "bg-indigo-800 text-indigo-50",
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const getDispositionColor = (disposition) => {
     const colors = {
-      voicemail: 'bg-gray-50 text-gray-700',
-      followup: 'bg-yellow-50 text-yellow-700',
-      'not-interested': 'bg-red-50 text-red-700',
-      appointment: 'bg-emerald-50 text-emerald-700',
-      'wrong-number': 'bg-orange-50 text-orange-700',
+      voicemail: "bg-gray-700 text-gray-50",
+      followup: "bg-yellow-700 text-yellow-50",
+      "not-interested": "bg-red-700 text-red-50",
+      appointment: "bg-emerald-800 text-emerald-50",
+      "wrong-number": "bg-orange-700 text-orange-50",
     };
-    return colors[disposition] || 'bg-gray-50 text-gray-700';
+    return colors[disposition] || "bg-gray-50 text-gray-700";
   };
 
   const totalPages = Math.ceil(total / pageSize);
@@ -286,11 +296,11 @@ export default function FollowupPage() {
 
   const getAssignedAgentLabel = (lead) => {
     if (lead.assignedCallerName) return lead.assignedCallerName;
-    if (lead.assignedCaller && typeof lead.assignedCaller === 'object') {
-      return lead.assignedCaller.name || lead.assignedCaller.email || '—';
+    if (lead.assignedCaller && typeof lead.assignedCaller === "object") {
+      return lead.assignedCaller.name || lead.assignedCaller.email || "—";
     }
-    if (typeof lead.assignedCaller === 'string') return lead.assignedCaller;
-    return '—';
+    if (typeof lead.assignedCaller === "string") return lead.assignedCaller;
+    return "—";
   };
 
   const activeFiltersCount = [
@@ -309,8 +319,12 @@ export default function FollowupPage() {
 
         <div className="relative flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Lead Followups</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300">Track call outcomes, assignments, and next actions in one place.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Lead Followups
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Track call outcomes, assignments, and next actions in one place.
+            </p>
           </div>
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-200">
             <Layers3 className="h-4 w-4" />
@@ -329,54 +343,27 @@ export default function FollowupPage() {
       {selectedCampaignId && (
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-cyan-100 bg-cyan-50/80 p-4 dark:border-cyan-900/40 dark:bg-cyan-950/30">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Interested</span>
-                <PhoneCall className="h-4 w-4 text-cyan-700 dark:text-cyan-300" />
-              </div>
-              <p className="text-2xl font-semibold text-cyan-900 dark:text-cyan-100">{stats.interested}</p>
-              <p className="text-xs text-cyan-700/80 dark:text-cyan-300/80">followup + appointment</p>
-            </div>
-
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Appointments</span>
-                <ClipboardCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-              </div>
-              <p className="text-2xl font-semibold text-emerald-900 dark:text-emerald-100">{stats.appointments}</p>
-              <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">overall in current scope</p>
-            </div>
-
-            <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-4 dark:border-amber-900/40 dark:bg-amber-950/30">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-300">Followups</span>
-                <Clock3 className="h-4 w-4 text-amber-700 dark:text-amber-300" />
-              </div>
-              <p className="text-2xl font-semibold text-amber-900 dark:text-amber-100">{stats.followupsScheduled}</p>
-              <p className="text-xs text-amber-700/80 dark:text-amber-300/80">scheduled date set</p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+            {/* <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-300">Filters active</span>
                 <Filter className="h-4 w-4 text-slate-600 dark:text-slate-300" />
               </div>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">{activeFiltersCount}</p>
               <p className="text-xs text-slate-600 dark:text-slate-300">search + field filters</p>
-            </div>
+            </div> */}
           </div>
 
           <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
               <div className="relative xl:col-span-2">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500 dark:text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name, phone..."
-                value={searchInput}
-                onChange={handleSearch}
-                className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-slate-900 placeholder-slate-500 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400"
-              />
+                <input
+                  type="text"
+                  placeholder="Search by name, phone..."
+                  value={searchInput}
+                  onChange={handleSearch}
+                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-slate-900 placeholder-slate-500 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400"
+                />
               </div>
 
               <select
@@ -390,7 +377,7 @@ export default function FollowupPage() {
                 <option value="">All Statuses</option>
                 {DIALER_STATUSES.map((status) => (
                   <option key={status} value={status}>
-                    {status.replace('_', ' ').toUpperCase()}
+                    {status.replace("_", " ").toUpperCase()}
                   </option>
                 ))}
               </select>
@@ -406,7 +393,7 @@ export default function FollowupPage() {
                 <option value="">All Appointment Statuses</option>
                 {APPOINTMENT_STATUSES.map((status) => (
                   <option key={status} value={status}>
-                    {status.replace('-', ' ').toUpperCase()}
+                    {status.replace("-", " ").toUpperCase()}
                   </option>
                 ))}
               </select>
@@ -422,7 +409,7 @@ export default function FollowupPage() {
                 <option value="">All Dispositions</option>
                 {DISPOSITIONS.map((disposition) => (
                   <option key={disposition} value={disposition}>
-                    {disposition.replace('-', ' ').toUpperCase()}
+                    {disposition.replace("-", " ").toUpperCase()}
                   </option>
                 ))}
               </select>
@@ -432,7 +419,7 @@ export default function FollowupPage() {
                 className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
               >
                 <Filter className="h-4 w-4" />
-                {showAdvancedFilters ? 'Hide' : 'More'} Filters
+                {showAdvancedFilters ? "Hide" : "More"} Filters
               </button>
             </div>
 
@@ -466,7 +453,8 @@ export default function FollowupPage() {
 
             <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Showing {leads.length > 0 ? startIndex : 0}-{endIndex} of {total} followup leads
+                Showing {leads.length > 0 ? startIndex : 0}-{endIndex} of{" "}
+                {total} followup leads
               </p>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -508,28 +496,28 @@ export default function FollowupPage() {
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/40">
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Lead
+                        Lead
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Agent
+                        Agent
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Status
+                        Status
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Disposition
+                        Disposition
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Address
+                        Address
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Last Dialed
+                        Last Dialed
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Follow-Up Date
+                        Follow-Up Date (If any)
                       </th>
                       <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                      Action
+                        Action
                       </th>
                     </tr>
                   </thead>
@@ -542,7 +530,7 @@ export default function FollowupPage() {
                         <td className="px-4 py-3 text-sm">
                           <div className="flex flex-col">
                             <span className="font-medium text-slate-900 dark:text-white">
-                              {lead.businessName || 'N/A'}
+                              {lead.businessName || "N/A"}
                             </span>
                             <span className="text-xs text-slate-500 dark:text-slate-400">
                               {lead.phoneNumber}
@@ -558,27 +546,35 @@ export default function FollowupPage() {
                         <td className="px-4 py-3 text-sm">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                              lead.dialerStatus
+                              lead.dialerStatus,
                             )}`}
                           >
-                            {lead.dialerStatus?.replace('_', ' ').toUpperCase() || '—'}
+                            {lead.dialerStatus
+                              ?.replace("_", " ")
+                              .toUpperCase() || "—"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getDispositionColor(
-                              lead.disposition
+                              lead.disposition,
                             )}`}
                           >
-                            {lead.disposition?.replace('-', ' ').toUpperCase() || '—'}
+                            {lead.disposition
+                              ?.replace("-", " ")
+                              .toUpperCase() || "—"}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                          <span className="line-clamp-2">{lead.businessAddress || lead.address || '—'}</span>
+                          <span className="line-clamp-2">
+                            {lead.businessAddress || lead.address || "—"}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                           <div className="flex flex-col">
-                            <span className="font-medium">{formatDate(lead.lastDialedAt)}</span>
+                            <span className="font-medium">
+                              {formatDate(lead.lastDialedAt)}
+                            </span>
                             <span className="text-xs text-slate-500 dark:text-slate-400">
                               {formatTime(lead.lastDialedAt)}
                             </span>
@@ -588,7 +584,9 @@ export default function FollowupPage() {
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-amber-500" />
                             <span className="text-slate-700 dark:text-slate-300">
-                              {lead.followUpDate ? formatDate(lead.followUpDate) : '—'}
+                              {lead.followUpDate
+                                ? formatDate(lead.followUpDate)
+                                : "—"}
                             </span>
                           </div>
                         </td>
@@ -618,9 +616,7 @@ export default function FollowupPage() {
           {totalPages > 1 && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
-                onClick={() =>
-                  setCurrentPage(Math.max(1, currentPage - 1))
-                }
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
                 className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-slate-800 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
               >
@@ -636,13 +632,13 @@ export default function FollowupPage() {
                       onClick={() => setCurrentPage(page)}
                       className={`h-8 w-8 rounded text-sm transition ${
                         currentPage === page
-                          ? 'bg-primary-600 text-white shadow'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                          ? "bg-primary-600 text-white shadow"
+                          : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                       }`}
                     >
                       {page}
                     </button>
-                  )
+                  ),
                 )}
               </div>
 
@@ -664,9 +660,12 @@ export default function FollowupPage() {
       {!selectedCampaignId && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-800">
           <Layers3 className="mb-3 h-10 w-10 text-slate-400 dark:text-slate-500" />
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Select a Campaign to Begin</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Select a Campaign to Begin
+          </h2>
           <p className="mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">
-            Choose a campaign above to load followup leads, apply filters, and export your current view.
+            Choose a campaign above to load followup leads, apply filters, and
+            export your current view.
           </p>
         </div>
       )}
@@ -693,7 +692,7 @@ export default function FollowupPage() {
             lead={selectedLeadForStatus}
             onClose={() => setShowStatusModal(false)}
             onSuccess={handleStatusUpdateSuccess}
-            onError={(message) => showNotification(message, 'error')}
+            onError={(message) => showNotification(message, "error")}
           />
         </>
       )}

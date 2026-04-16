@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { getVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
 import { getLead } from '../../services/api.js';
-import { Phone, Mail, MapPin, Calendar, Clock, CheckCircle, XCircle, FileText, AlertCircle, Briefcase, Edit3, ListChecks } from 'lucide-react';
+import { Edit3, ListChecks, User2 } from 'lucide-react';
 
 const STATUS_COLORS = {
   pending: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400',
@@ -60,8 +60,8 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
   if (isLoading) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title="Lead Details">
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-cyan-400"></div>
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-cyan-400 border-b-2"></div>
         </div>
       </Modal>
     );
@@ -83,54 +83,66 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={lead.businessName || 'Lead Details'} maxWidth="max-w-4xl">
-      {/* Status & Disposition Badges */}
-      <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-3xl">
+      {/* Modal Header */}
+      <div className="flex items-center gap-3 mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
+        <div className="bg-cyan-100 dark:bg-cyan-900/40 rounded-full p-2 shadow-sm">
+          <User2 className="w-7 h-7 text-cyan-600 dark:text-cyan-300" />
+        </div>
         <div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{lead.businessName || 'Lead Details'}</h2>
+          {lead.contactName && (
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Contact: <span className="font-medium text-slate-700 dark:text-slate-200">{lead.contactName}</span></p>
+          )}
+        </div>
+      </div>
+
+      {/* Status & Disposition Badges */}
+      <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex flex-col items-start">
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize shadow-sm border border-slate-200 dark:border-slate-700 mb-1 ${STATUS_COLORS[lead.dialerStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
             {lead.dialerStatus}
           </span>
-          <p className="text-xs text-slate-500 mt-1">Dialer Status</p>
+          <span className="text-xs text-slate-500">Dialer Status</span>
         </div>
         {lead.appointmentStatus && (
-          <div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${STATUS_COLORS[lead.appointmentStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
+          <div className="flex flex-col items-start">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize shadow-sm border border-slate-200 dark:border-slate-700 mb-1 ${STATUS_COLORS[lead.appointmentStatus] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
               {lead.appointmentStatus}
             </span>
-            <p className="text-xs text-slate-500 mt-1">Appointment Status</p>
+            <span className="text-xs text-slate-500">Appointment Status</span>
           </div>
         )}
         {lead.disposition && (
-          <div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${DISPOSITION_COLORS[lead.disposition] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
+          <div className="flex flex-col items-start">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize shadow-sm border border-slate-200 dark:border-slate-700 mb-1 ${DISPOSITION_COLORS[lead.disposition] || 'bg-slate-600/20 text-slate-700 dark:text-slate-300'}`}>
               {lead.disposition}
             </span>
-            <p className="text-xs text-slate-500 mt-1">Disposition</p>
+            <span className="text-xs text-slate-500">Disposition</span>
           </div>
         )}
         {isManager && (
-          <div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize block ${lead.wasPowerHour ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-slate-500/20 text-slate-700 dark:text-slate-300'}`}>
+          <div className="flex flex-col items-start">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize shadow-sm border border-slate-200 dark:border-slate-700 mb-1 ${lead.wasPowerHour ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-slate-500/20 text-slate-700 dark:text-slate-300'}`}>
               {lead.wasPowerHour ? 'Power Hour' : 'Normal Call'}
             </span>
-            <p className="text-xs text-slate-500 mt-1">Qualification Scenario</p>
+            <span className="text-xs text-slate-500">Qualification Scenario</span>
           </div>
         )}
       </div>
 
       {/* Fields Grid - Role-based */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto pr-2">
-        {visibleFields.map((field) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pr-1 mb-8">
+        {visibleFields.map((field, idx) => {
           const value = lead[field.key];
           if (!value || (typeof value === 'string' && value.trim() === '')) return null;
-          
           return (
-            <div key={field.key} className="space-y-1">
-              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">{field.label}</p>
+            <div key={field.key} className="space-y-1 bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
+              <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1">{field.label}</p>
               {field.type === 'textarea' ? (
-                <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/50 p-3 rounded whitespace-pre-wrap">{renderFieldValue(field.key, value)}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{renderFieldValue(field.key, value)}</p>
               ) : (
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{renderFieldValue(field.key, value)}</p>
+                <p className="text-base font-medium text-slate-900 dark:text-white">{renderFieldValue(field.key, value)}</p>
               )}
             </div>
           );
@@ -138,17 +150,17 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex-wrap">
+      <div className="flex flex-wrap gap-3 justify-end mt-2 pt-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 rounded-b-lg">
         <button
           onClick={onClose}
-          className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition flex items-center gap-2"
+          className="px-5 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-600 transition flex items-center gap-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
         >
           Close
         </button>
         {onEditLead && (
           <button
             onClick={() => onEditLead(lead)}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-2"
+            className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             <Edit3 className="w-4 h-4" />
             Edit
@@ -157,7 +169,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
         {onStatusUpdate && (
           <button
             onClick={() => onStatusUpdate?.(lead._id)}
-            className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition flex items-center gap-2"
+            className="px-5 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition flex items-center gap-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
           >
             <ListChecks className="w-4 h-4" />
             Update Qualification

@@ -69,7 +69,8 @@ export default function DashboardLayout() {
 
       <NotificationSystem successMessage={successMessage} errorMessage={errorMessage} />
 
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
+      {/* <div className="max-w-7xl mx-auto p-4 md:p-8"> */}
+      <div className="mx-auto p-4 md:p-8">
         <div className="flex gap-4 lg:gap-6">
           <Sidebar user={user} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 

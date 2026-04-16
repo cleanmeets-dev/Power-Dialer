@@ -25,6 +25,7 @@ const DEFAULT_FORM = {
   businessType: "",
   location: "",
   maxResults: 20,
+  strictLocation: true,
 };
 
 const STATUS_STYLES = {
@@ -248,6 +249,7 @@ export default function ScraperPage() {
         businessType,
         location,
         maxResults: Number(form.maxResults),
+        strictLocation: Boolean(form.strictLocation),
       });
 
       setForm((previous) => ({ ...previous, businessType: "", location: "" }));
@@ -421,6 +423,23 @@ export default function ScraperPage() {
               </label>
             </div>
 
+            <label className="mt-4 inline-flex items-start gap-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={Boolean(form.strictLocation)}
+                onChange={(event) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    strictLocation: event.target.checked,
+                  }))
+                }
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                Strict city match (exclude nearby areas)
+              </span>
+            </label>
+
             <div className="mt-5 flex flex-col md:items-center md:justify-between gap-3">
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Scrapes run in the background. You can leave this page open and import available results anytime.
@@ -487,6 +506,9 @@ export default function ScraperPage() {
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     Created {new Date(selectedSession.createdAt).toLocaleString()} | Requested {selectedSession.maxResults} | Found {selectedSession.totalFound || 0} | Imported {selectedSession.importedCount || 0}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Mode: {selectedSession.strictLocation === false ? "Nearby areas allowed" : "Strict city match"}
                   </p>
                   {selectedSession.status === "done" && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -704,6 +726,9 @@ export default function ScraperPage() {
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
                         Requested {session.maxResults} | Found {session.totalFound || 0} | Imported {session.importedCount || 0}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {session.strictLocation === false ? "Nearby areas allowed" : "Strict city match"}
                       </p>
                       {session.status === "running" ? (
                         <div className="mt-3 space-y-2">

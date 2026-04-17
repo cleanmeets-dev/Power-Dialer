@@ -153,6 +153,11 @@ export default function DirectDialerPage() {
         <input
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(formatDisplayNumber(e.target.value))}
+          onKeyDown={e => {
+            if (e.key === "Enter" && phoneNumber && !isDialing) {
+              handleDial();
+            }
+          }}
           placeholder="+1 405 555 1212"
           className="w-full mb-4 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
         />

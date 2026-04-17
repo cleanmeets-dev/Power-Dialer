@@ -9,25 +9,32 @@ export default function DirectDialerPage() {
   const { showNotification, twilioDialer } = useOutletContext();
   const [phoneNumber, setPhoneNumber] = useState("");
   // const [isDialing, setIsDialing] = useState(false);
-  const isDialing = twilioDialer?.callStatus === "ringing" || twilioDialer?.callStatus === "connected";
   const [callMethod, setCallMethod] = useState("twilio"); // "twilio" or "zoom"
+  const [inCallDigits, setInCallDigits] = useState("");
+  const isDialing =
+    twilioDialer?.callStatus === "ringing" ||
+    twilioDialer?.callStatus === "connected";
+  const isInCall =
+    callMethod === "twilio" &&
+    (twilioDialer?.callStatus === "ringing" ||
+      twilioDialer?.callStatus === "connected");
 
   // const statusText = useMemo(() => {
   //   return isDialing ? "Calling..." : "Ready to dial";
   // }, [isDialing]);
 
   const statusText = useMemo(() => {
-  if (callMethod === "zoom") return "Zoom handles call externally";
+    if (callMethod === "zoom") return "Zoom handles call externally";
 
-  switch (twilioDialer?.callStatus) {
-    case "ringing":
-      return "Ringing...";
-    case "connected":
-      return "In Call";
-    default:
-      return "Ready to dial";
-  }
-}, [twilioDialer?.callStatus, callMethod]);
+    switch (twilioDialer?.callStatus) {
+      case "ringing":
+        return "Ringing...";
+      case "connected":
+        return "In Call";
+      default:
+        return "Ready to dial";
+    }
+  }, [twilioDialer?.callStatus, callMethod]);
 
   const appendDigit = (digit) => {
     setPhoneNumber((prev) => `${prev}${digit}`.slice(0, 20));
@@ -38,7 +45,6 @@ export default function DirectDialerPage() {
   const handleBackspace = () => {
     setPhoneNumber((prev) => prev.slice(0, -1));
   };
-
 
   // const handleDial = async () => {
   //   if (!phoneNumber) return;
@@ -67,35 +73,39 @@ export default function DirectDialerPage() {
   // };
 
   const handleDial = async () => {
-  if (!phoneNumber) return;
+    if (!phoneNumber) return;
 
-  try {
-    if (callMethod === "zoom") {
-      window.open(`zoomphonecall://${phoneNumber}`, "_self");
-      showNotification(`Calling ${phoneNumber} via Zoom`, "success");
-      return; // 🚀 IMPORTANT
-    }
-
-    if (typeof twilioDialer?.placeOutgoingCall === "function") {
-      const result = await twilioDialer.placeOutgoingCall(phoneNumber);
-
-      if (result?.success) {
-        showNotification(`Calling ${result.number} via Twilio`, "success");
-      } else {
-        showNotification(result?.error || "Twilio call failed", "error");
+    try {
+      if (callMethod === "zoom") {
+        window.open(`zoomphonecall://${phoneNumber}`, "_self");
+        showNotification(`Calling ${phoneNumber} via Zoom`, "success");
+        return; // 🚀 IMPORTANT
       }
-    } else {
-      showNotification("Twilio dialer not available", "error");
+
+      if (typeof twilioDialer?.placeOutgoingCall === "function") {
+        const result = await twilioDialer.placeOutgoingCall(phoneNumber);
+
+        if (result?.success) {
+          showNotification(`Calling ${result.number} via Twilio`, "success");
+          setInCallDigits("");
+        } else {
+          showNotification(result?.error || "Twilio call failed", "error");
+        }
+      } else {
+        showNotification("Twilio dialer not available", "error");
+      }
+    } catch (error) {
+      showNotification("Failed to start call", "error");
     }
-  } catch (error) {
-    showNotification("Failed to start call", "error");
-  }
-};
+  };
 
   const handleHangup = () => {
-    // Twilio - Power Dial Only
-    // Zoom calls are handled externally
-    showNotification("Not applicable for Zoom Phone", "info");
+    if (callMethod === "twilio") {
+      twilioDialer?.hangupActiveCall?.();
+      showNotification("Call ended", "info");
+    } else {
+      showNotification("End call from Zoom app", "info");
+    }
   };
 
   return (
@@ -118,10 +128,12 @@ export default function DirectDialerPage() {
 
       <div className="max-w-md mx-auto bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 p-6">
         <div className="mb-4">
-          <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">Call Method</label>
+          <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
+            Call Method
+          </label>
           <select
             value={callMethod}
-            onChange={e => setCallMethod(e.target.value)}
+            onChange={(e) => setCallMethod(e.target.value)}
             className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
           >
             <option value="twilio">Twilio</option>
@@ -150,7 +162,16 @@ export default function DirectDialerPage() {
             (digit) => (
               <button
                 key={digit}
-                onClick={() => appendDigit(digit)}
+                // onClick={() => appendDigit(digit)}
+                onClick={() => {
+                  if (isInCall && twilioDialer?.activeCall) {
+                    twilioDialer.activeCall.sendDigits(digit);
+                    setInCallDigits((prev) => `${prev}${digit}`.slice(0, 20));
+                    console.log("Sent DTMF:", digit);
+                  } else {
+                    appendDigit(digit);
+                  }
+                }}
                 className="rounded-lg border border-slate-300/80 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/80 py-3 text-slate-800 dark:text-slate-100 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-50 dark:hover:bg-slate-600 hover:text-cyan-700 dark:hover:text-cyan-200 hover:border-cyan-300 dark:hover:border-cyan-500"
                 type="button"
               >
@@ -161,7 +182,6 @@ export default function DirectDialerPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          
           <button
             onClick={clearNumber}
             type="button"
@@ -171,7 +191,12 @@ export default function DirectDialerPage() {
           </button>
           <button
             onClick={handleDial}
-            disabled={!phoneNumber || isDialing}
+            // disabled={!phoneNumber || isDialing}
+            disabled={
+              !phoneNumber ||
+              isDialing ||
+              (callMethod === "twilio" && !twilioDialer?.isReady)
+            }
             type="button"
             className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:from-emerald-600 hover:to-teal-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:shadow-none"
           >
@@ -195,7 +220,8 @@ export default function DirectDialerPage() {
 
         <button
           onClick={handleHangup}
-          disabled={true} 
+          // disabled={true}
+          disabled={!twilioDialer?.activeCall}
           type="button"
           className="mt-3 w-full rounded-lg bg-slate-400/20 dark:bg-slate-600/40 border border-slate-300 dark:border-slate-600 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-70"
         >

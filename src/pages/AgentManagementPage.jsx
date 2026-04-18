@@ -17,6 +17,10 @@ export default function AgentManagementPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [editingUserId, setEditingUserId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', email: '' });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -33,6 +37,7 @@ export default function AgentManagementPage() {
 
   const availableRoles = getAvailableRoles();
 
+
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       !search ||
@@ -42,9 +47,20 @@ export default function AgentManagementPage() {
     return matchesSearch && matchesRole;
   });
 
+  // Pagination logic
+  const totalUsers = filteredUsers.length;
+  const totalPages = Math.ceil(totalUsers / pageSize) || 1;
+  const paginatedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+
+
   useEffect(() => {
     loadUsers();
   }, []);
+
+  // Reset to page 1 when filters/search change
+  useEffect(() => {
+    setPage(1);
+  }, [search, roleFilter, pageSize]);
 
   const loadUsers = async () => {
     setIsLoadingUsers(true);
@@ -210,8 +226,9 @@ export default function AgentManagementPage() {
 
       <SuccessMessage message={successMessage} />
 
+
       <AgentTable
-        users={filteredUsers}
+        users={paginatedUsers}
         isLoadingUsers={isLoadingUsers}
         editingUserId={editingUserId}
         editForm={editForm}
@@ -225,6 +242,51 @@ export default function AgentManagementPage() {
         onDeleteUser={handleDeleteUser}
         setEditForm={setEditForm}
       />
+
+      {/* Pagination Controls */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          Showing {totalUsers === 0 ? 0 : (page - 1) * pageSize + 1}
+          -{Math.min(page * pageSize, totalUsers)} of {totalUsers} users
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="px-2 py-1 rounded border disabled:opacity-50"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              className={`px-2 py-1 rounded border ${page === i + 1 ? 'bg-blue-500 text-white' : ''}`}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            className="px-2 py-1 rounded border disabled:opacity-50"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+          <label className="ml-4 flex items-center gap-1 text-sm">
+            <span>Rows per page:</span>
+            <select
+              className="px-2 py-1 rounded border focus:outline-none focus:ring focus:border-blue-400 bg-white dark:bg-slate-800 dark:text-white"
+              value={pageSize}
+              onChange={e => setPageSize(Number(e.target.value))}
+            >
+              {[5, 10, 20, 50, 100].map(size => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
 
       <EditErrorMessage error={editError && editingUserId ? editError : ""} />
 

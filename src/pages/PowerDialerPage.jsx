@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useDialer } from '../hooks/useDialer';
-import CampaignSelector from '../components/CampaignSelector';
+import SmartCampaignSelector from '../components/SmartCampaignSelector';
 import DialerControls from '../components/DialerControls';
 import { LeadsProvider } from '../context/LeadsContext';
 import LeadsTable from '../components/LeadsTable';
 import { getLeads } from '../services/api';
 import { Zap } from 'lucide-react';
+import SelectCampaignMsg from '../components/common/SelectCampaignMsg';
 
 export default function PowerDialerPage() {
   const { showNotification } = useOutletContext();
@@ -47,9 +48,9 @@ export default function PowerDialerPage() {
       </div>
 
       {/* Campaign Selector */}
-      <CampaignSelector
-        selectedCampaignId={selectedCampaignId}
-        onCampaignSelect={setSelectedCampaignId}
+      <SmartCampaignSelector
+        value={selectedCampaignId}
+        onChange={setSelectedCampaignId}
         onShowNotification={showNotification}
         childDialerType="parallel"
         childOnly
@@ -89,9 +90,7 @@ export default function PowerDialerPage() {
       )}
 
       {!selectedCampaignId && (
-        <div className="text-center py-12 bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-600 dark:text-slate-400">Select a campaign to start dialing</p>
-        </div>
+        <SelectCampaignMsg/>
       )}
     </div>
   );

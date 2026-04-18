@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Phone, Clock, MessageSquare, RefreshCw } from 'lucide-react';
-import CampaignSelector from '../components/CampaignSelector';
+import SmartCampaignSelector from '../components/SmartCampaignSelector';
 import { getCallLogs } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 
@@ -140,9 +140,9 @@ export default function CallLogsPage() {
       </div>
 
       {/* Campaign Selector */}
-      <CampaignSelector
-        selectedCampaignId={selectedCampaignId}
-        onCampaignSelect={setSelectedCampaignId}
+      <SmartCampaignSelector
+        value={selectedCampaignId}
+        onChange={setSelectedCampaignId}
         onShowNotification={showNotification}
       />
 

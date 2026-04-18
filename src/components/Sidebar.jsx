@@ -8,13 +8,15 @@ import {
 	PhoneCall,
 	CalendarDays,
 	Repeat2,
-	MapPinned
+	MapPinned,
+  ClipboardList
 } from 'lucide-react';
 
 function getSidebarItems(role) {
 	if (role === 'manager' || role === 'admin') {
 		return [
 			{ id: 'overview', label: 'Dashboard', icon: LayoutGrid, path: '/manager' },
+			{ id: 'tasks', label: 'My Tasks', icon: ClipboardList, path: '/manager/tasks' },
 			{ id: 'campaigns', label: 'Campaigns', icon: Megaphone, path: '/manager/campaigns' },
 			// { id: 'leads', label: 'Leads', icon: FileText, path: '/manager/leads' },
 			{ id: 'followups', label: 'Lead Status/Followups', icon: Repeat2, path: '/manager/followups' },
@@ -30,6 +32,7 @@ function getSidebarItems(role) {
 
 	return [
 		{ id: 'overview', label: 'Dashboard', icon: LayoutGrid, path: '/agent' },
+		{ id: 'tasks', label: 'My Tasks', icon: ClipboardList, path: '/agent/tasks' },
 		// { id: 'leads', label: 'View Leads', icon: FileText, path: '/agent/leads' },
 		{ id: 'auto-dialer', label: 'Auto Dialer', icon: PhoneCall, path: '/agent/auto-dialer' },
 		{ id: 'power-dialer', label: 'Power Dialer', icon: PhoneCall, path: '/agent/power-dialer' },

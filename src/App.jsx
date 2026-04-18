@@ -23,6 +23,7 @@ import PowerDialerPage from "./pages/PowerDialerPage";
 import AgentManagementPage from "./pages/AgentManagementPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
+import MyTasksPage from "./pages/MyTasksPage";
 import React from "react";
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
             }
           >
             <Route index element={<OverviewPage />} />
+            <Route path="tasks" element={<MyTasksPage />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="scraper" element={<ScraperPage />} />
             <Route path="followups" element={<FollowupPage />} />
@@ -64,6 +66,7 @@ function App() {
             }
           >
             <Route index element={<OverviewPage />} />
+            <Route path="tasks" element={<MyTasksPage />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="followups" element={<FollowupPage />} />
             <Route path="power-dialer" element={<PowerDialerPage />} />

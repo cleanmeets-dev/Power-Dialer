@@ -374,12 +374,13 @@ export const logAgentCallAttempt = async (campaignId, leadId, outcome = 'no-answ
   return response.data.data;
 };
 
-export const getDailyAgentCallCounts = async (hours = 12) => {
+export const getDailyAgentCallCounts = async (hours = 12, date = null) => {
   const sanitizedHours = Number.isFinite(Number(hours))
     ? Math.max(1, Math.min(72, Math.floor(Number(hours))))
     : 12;
 
-  const response = await api.get(`/dialer/calls/daily-agent-counts?hours=${sanitizedHours}`);
+  const queryParams = date ? `?date=${encodeURIComponent(date)}` : `?hours=${sanitizedHours}`;
+  const response = await api.get(`/dialer/calls/daily-agent-counts${queryParams}`);
   
   return response.data.data;
 };

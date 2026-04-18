@@ -1,0 +1,41 @@
+import React from "react";
+
+export default function AgentManagementHeader({ user, onCreate, search, setSearch, roleFilter, setRoleFilter, availableRoles, getRoleLabel }) {
+  return (
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Management</h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">
+          {user?.role === 'admin'
+            ? 'Manage all users: administrators, managers, and agents'
+            : 'Manage agents and clients'}
+        </p>
+      </div>
+      <div className="flex flex-col md:flex-row gap-2 md:items-center">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name or email"
+          className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-cyan-500 min-w-[180px]"
+        />
+        <select
+          value={roleFilter}
+          onChange={e => setRoleFilter(e.target.value)}
+          className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-cyan-500 min-w-[140px]"
+        >
+          <option value="">All Roles</option>
+          {availableRoles.map((r) => (
+            <option key={r} value={r}>{getRoleLabel(r)}</option>
+          ))}
+        </select>
+        <button
+          onClick={onCreate}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
+        >
+          <span>+ Create User</span>
+        </button>
+      </div>
+    </div>
+  );
+}

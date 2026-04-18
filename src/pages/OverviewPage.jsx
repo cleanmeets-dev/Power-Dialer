@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, ClipboardList, PhoneCall, Plus, RefreshCw, Trash2
 import { useAuth } from '../hooks/useAuth';
 import { isManager } from '../utils/roleUtils';
 import { getDailyAgentCallCounts } from '../services/api';
+import useWebSocket from '../hooks/useWebSocket';
 
 function getTodoStorageKey(user) {
   const userIdentifier = user?._id || user?.email || 'anonymous';
@@ -18,6 +19,7 @@ export default function OverviewPage() {
   const [todoInput, setTodoInput] = useState('');
   const [todos, setTodos] = useState([]);
   const [windowHours] = useState(12);
+  const [selectedDate, setSelectedDate] = useState('');
   const [dailyCallData, setDailyCallData] = useState({
     windowHours: 12,
     windowStart: null,
@@ -29,6 +31,20 @@ export default function OverviewPage() {
   const [dailyCallsError, setDailyCallsError] = useState('');
 
   const storageKey = useMemo(() => getTodoStorageKey(user), [user]);
+
+  useWebSocket({
+    onAgentCallCompleted: () => {
+      if (managerView) {
+        loadDailyCallCounts();
+      }
+    },
+    onCallCompleted: () => {
+      if (managerView) {
+        // Debounce or just load to capture manually logged calls and single-dialer calls
+        loadDailyCallCounts();
+      }
+    }
+  });
 
   useEffect(() => {
     try {
@@ -60,7 +76,7 @@ export default function OverviewPage() {
     try {
       setIsDailyCallsLoading(true);
       setDailyCallsError('');
-      const result = await getDailyAgentCallCounts(windowHours);
+      const result = await getDailyAgentCallCounts(windowHours, selectedDate || null);
       setDailyCallData(result);
     } catch (error) {
       console.error('Failed to load daily call counts:', error);
@@ -75,7 +91,7 @@ export default function OverviewPage() {
     if (!managerView) return;
     loadDailyCallCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [managerView, windowHours]);
+  }, [managerView, windowHours, selectedDate]);
 
   const completedCount = todos.filter((todo) => todo.completed).length;
   const pendingCount = todos.length - completedCount;
@@ -148,11 +164,33 @@ export default function OverviewPage() {
         <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 space-y-4">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Agent Calls (Past 12 Hours)</h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">Live rolling window for recent calls handled per agent.</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedDate ? `Agent Calls (${selectedDate})` : 'Agent Calls (Past 12 Hours)'}
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                {selectedDate 
+                  ? 'Daily calls handled per agent for selected date.' 
+                  : 'Live rolling window for recent calls handled per agent.'}
+              </p>
             </div>
 
             <div className="flex items-end gap-2">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 focus:outline-none focus:border-cyan-500 text-slate-700 dark:text-slate-300 h-[40px]"
+                title="Select date to view specific day's stats. Clear to view live activity."
+              />
+              {selectedDate && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate('')}
+                  className="px-3 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 transition text-sm font-medium h-[40px]"
+                >
+                  Clear
+                </button>
+              )}
               <button
                 onClick={loadDailyCallCounts}
                 disabled={isDailyCallsLoading}

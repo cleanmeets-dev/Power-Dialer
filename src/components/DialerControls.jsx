@@ -44,7 +44,7 @@ export default function DialerControls({
       }
 
       if (leadsContext?.updateLead) {
-        leadsContext.updateLead({ ...lead, dialerStatus: 'connected' });
+        leadsContext.updateLead({ ...lead, dialerStatus: 'connected', isAutoDialingCurrent: true });
       }
     } catch (e) {
       console.error('Failed to track call attempt', e);
@@ -52,6 +52,11 @@ export default function DialerControls({
   };
 
   const advanceNextCall = (prevState) => {
+    const previousLead = leads[prevState.currentIndex];
+    if (previousLead && leadsContext?.updateLead) {
+      leadsContext.updateLead({ ...previousLead, isAutoDialingCurrent: false });
+    }
+
     // Find the NEXT pending lead
     const nextPendingIndex = leads.findIndex((l, index) => index > prevState.currentIndex && l.dialerStatus === 'pending');
     if (nextPendingIndex === -1) {
@@ -67,6 +72,11 @@ export default function DialerControls({
   };
 
   const advanceToNextPageAndCall = async () => {
+    const currentLeadOnPage = leads[autoDialState.currentIndex];
+    if (currentLeadOnPage && leadsContext?.updateLead) {
+      leadsContext.updateLead({ ...currentLeadOnPage, isAutoDialingCurrent: false });
+    }
+
     if (!pagination || typeof changePage !== 'function') {
       setIsDialing(false);
       setAutoDialState({ active: false, currentIndex: 0, status: 'idle' });
@@ -151,6 +161,11 @@ export default function DialerControls({
   };
 
   const handleStopAutoDialer = () => {
+    const activeLead = leads[autoDialState.currentIndex];
+    if (activeLead && leadsContext?.updateLead) {
+      leadsContext.updateLead({ ...activeLead, isAutoDialingCurrent: false });
+    }
+
     setIsDialing(false);
     setAutoDialState({ active: false, currentIndex: 0, status: 'idle' });
     onSuccess('Agent auto dialer stopped');

@@ -96,7 +96,8 @@ export const getVisibleFields = (role) => {
  */
 export const getTableColumns = (role) => {
   const baseColumns = [
-    { key: 'businessName', label: 'Business Name', width: 'w-40' },
+    { key: 'businessName', label: 'Business Name', width: 'w-48' },
+    { key: 'businessAddress', label: 'Address', width: 'w-56' },
     { key: 'phoneNumber', label: 'Phone', width: 'w-28' },
     { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
   ];

@@ -33,7 +33,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export default function LeadsTable({ showNotification }) {
+export default function LeadsTable({ showNotification, activeCalls = [] }) {
   const {
     leads,
     isLoading,
@@ -171,6 +171,11 @@ export default function LeadsTable({ showNotification }) {
   };
 
   const handleExport = async () => {
+    if (!canExportLeads) {
+      showNotification("You are not allowed to export leads", "error");
+      return;
+    }
+
     try {
       const fileName = `caller-leads-${new Date().toISOString().split("T")[0]}.csv`;
       const csvHeaders = [
@@ -249,24 +254,46 @@ export default function LeadsTable({ showNotification }) {
   const startLead = (currentPage - 1) * pageSize + 1;
   const endLead = Math.min(currentPage * pageSize, totalLeads);
 
+  const activeCallLeadIds = new Set(
+    activeCalls
+      .map((call) => String(call.leadId || call.lead?._id || ""))
+      .filter(Boolean)
+  );
+
   const nextPendingLeadId = leads.find((l) => l.dialerStatus === "pending")?._id;
 
   // Helper function to render cell value based on column key
   const renderCellValue = (lead, columnKey) => {
     switch(columnKey) {
       case 'businessName':
+        const businessName = lead.businessName || "—";
+        const isBeingCalled =
+          lead.isAutoDialingCurrent ||
+          activeCallLeadIds.has(String(lead._id)) ||
+          lead.dialerStatus === "dialing";
+
         return (
-          <div className="flex items-center gap-2">
-            <span>{lead.businessName || "—"}</span>
-            {lead._id === nextPendingLeadId && (
+          <div className="flex items-center gap-2 min-w-0" title={businessName}>
+            <span className="min-w-0 flex-1 truncate">{businessName}</span>
+            {isBeingCalled ? (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-500 border border-amber-500/30 whitespace-nowrap">
+                Calling now
+              </span>
+            ) : lead._id === nextPendingLeadId ? (
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                 Next up
               </span>
-            )}
+            ) : null}
+          </div>
+        );
+      case 'businessAddress':
+        return (
+          <div className="min-w-0 truncate" title={lead.businessAddress || lead.address || ""}>
+            {lead.businessAddress || lead.address || "—"}
           </div>
         );
       case 'phoneNumber':
-        return <span className="font-mono text-xs">{lead.phoneNumber || "—"}</span>;
+        return <div className="font-mono text-xs truncate" title={lead.phoneNumber || ""}>{lead.phoneNumber || "—"}</div>;
       case 'dialerStatus':
         return (
           <span
@@ -314,16 +341,18 @@ export default function LeadsTable({ showNotification }) {
         return <span className={`text-xs font-semibold capitalize ${levelColors[lead.interestLevel] || 'text-slate-400'}`}>{lead.interestLevel || "—"}</span>;
       }
       case 'appointmentDate':
-        return <span className="text-xs">{lead.appointmentDate ? new Date(lead.appointmentDate).toLocaleDateString() : "—"}</span>;
+        return <div className="text-xs truncate" title={lead.appointmentDate ? new Date(lead.appointmentDate).toLocaleDateString() : ""}>{lead.appointmentDate ? new Date(lead.appointmentDate).toLocaleDateString() : "—"}</div>;
       case 'typeOfCleaning':
-        return <span className="text-xs">{lead.typeOfCleaning || "—"}</span>;
+        return <div className="text-xs truncate" title={lead.typeOfCleaning || ""}>{lead.typeOfCleaning || "—"}</div>;
       case 'onboardingStatus':
-        return <span className="text-xs">{lead.onboardingStatus || "—"}</span>;
+        return <div className="text-xs truncate" title={lead.onboardingStatus || ""}>{lead.onboardingStatus || "—"}</div>;
       default:
-        return <span className="text-xs">{lead[columnKey] || "—"}</span>;
+        return <div className="text-xs truncate" title={lead[columnKey] || ""}>{lead[columnKey] || "—"}</div>;
     }
   };
 
+  console.log(leads);
+  
   return (
     <>
       <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 mt-6 border border-slate-200 dark:border-slate-700">
@@ -469,10 +498,10 @@ export default function LeadsTable({ showNotification }) {
 
         {/* Table */}
         <div className="overflow-x-auto mb-4">
-          <table className="w-full text-sm select-none">
+          <table className="w-full table-fixed text-sm select-none border-separate border-spacing-0">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700/50 ">
-                <th className="text-left py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold w-8">
+                <th className="text-left py-3 px-2 text-cyan-700 dark:text-cyan-400 font-semibold w-8">
                   <input
                     type="checkbox"
                     checked={
@@ -488,24 +517,33 @@ export default function LeadsTable({ showNotification }) {
                     {col.label}
                   </th>
                 ))}
-                <th className="text-center py-3 px-3 text-cyan-700 dark:text-cyan-400 font-semibold">
+                  <th className="text-center py-3 px-2 text-cyan-700 dark:text-cyan-400 font-semibold w-48">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
               {leads.map((lead) => (
+                (() => {
+                  const isBeingCalled =
+                    lead.isAutoDialingCurrent ||
+                    activeCallLeadIds.has(String(lead._id)) ||
+                    lead.dialerStatus === "dialing";
+
+                  return (
                 <tr
                   key={lead._id}
                   className={`border-b transition ${
                     selectedRows.has(lead._id)
                       ? "bg-cyan-100 dark:bg-cyan-900/30 border-slate-200 dark:border-slate-700/50"
+                      : isBeingCalled
+                      ? "bg-amber-100 dark:bg-amber-900/20 border-l-off border-amber-400/60 dark:border-amber-500/50 shadow-[inset_4px_0_0_0_rgba(245,158,11,0.6)]"
                       : lead._id === nextPendingLeadId
                       ? "bg-emerald-100 dark:bg-emerald-900/20 border-l-off border-emerald-400/60 dark:border-emerald-500/50 shadow-[inset_4px_0_0_0_rgba(16,185,129,0.5)]"
                       : "hover:bg-slate-100 dark:hover:bg-slate-700/30 border-slate-200 dark:border-slate-700/50"
                   }`}
                 >
-                  <td className="py-3 px-3">
+                  <td className="py-3 px-2">
                     <input
                       type="checkbox"
                       checked={selectedRows.has(lead._id)}
@@ -519,8 +557,8 @@ export default function LeadsTable({ showNotification }) {
                       {renderCellValue(lead, col.key)}
                     </td>
                   ))}
-                  <td className="py-3 px-3">
-                    <div className="flex gap-2 justify-center">
+                  <td className="py-3 px-2">
+                    <div className="flex gap-1 justify-center flex-wrap">
                       <button
                         onClick={() => handleViewLead(lead._id)}
                         disabled={isLoading}
@@ -570,6 +608,8 @@ export default function LeadsTable({ showNotification }) {
                     </div>
                   </td>
                 </tr>
+                  );
+                })()
               ))}
             </tbody>
           </table>

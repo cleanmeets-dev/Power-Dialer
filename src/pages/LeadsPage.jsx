@@ -155,6 +155,7 @@ export default function LeadsPage() {
           )}
 
           <LeadsTable showNotification={showNotification} />
+          {/* <LeadsTable showNotification={showNotification} activeCalls={activeCalls} /> */}
         </LeadsProvider>
       )}
 

@@ -2,7 +2,6 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import { LeadsProvider } from "./context/LeadsContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -16,6 +15,7 @@ import CallLogsPage from "./pages/CallLogsPage";
 import CampaignsPage from "./pages/CampaignsPage";
 import AgentAvailabilityPage from "./pages/AgentAvailabilityPage";
 import AttendanceHistoryPage from "./pages/AttendanceHistoryPage";
+import ScraperPage from "./pages/ScraperPage";
 import MyAvailabilityPage from "./pages/MyAvailabilityPage";
 import AutoDialerPage from "./pages/AutoDialerPage";
 import DirectDialerPage from "./pages/DirectDialerPage";
@@ -44,6 +44,7 @@ function App() {
           >
             <Route index element={<OverviewPage />} />
             <Route path="leads" element={<LeadsPage />} />
+            <Route path="scraper" element={<ScraperPage />} />
             <Route path="followups" element={<FollowupPage />} />
             <Route path="call-logs" element={<CallLogsPage />} />
             <Route path="campaigns" element={<CampaignsPage />} />

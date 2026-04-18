@@ -1,13 +1,17 @@
-import { Phone, PhoneOff, Mic, MicOff, User, Clock } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Phone, PhoneOff, Mic, MicOff, User, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
 
-export default function ActiveCallPanel({ activeCall, callStatus, callDirection }) {
+export default function ActiveCallPanel({
+  activeCall,
+  callStatus,
+  callDirection,
+}) {
   const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     let interval;
-    if (callStatus === 'connected') {
+    if (callStatus === "connected") {
       interval = setInterval(() => {
         setDuration((prev) => prev + 1);
       }, 1000);
@@ -17,7 +21,7 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
     return () => clearInterval(interval);
   }, [callStatus]);
 
-  if (!activeCall && callStatus === 'idle') return null;
+  if (!activeCall && callStatus === "idle") return null;
 
   const handleMuteToggle = () => {
     if (activeCall) {
@@ -28,11 +32,11 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
   };
 
   const handleAcceptCall = () => {
-    if (activeCall && callStatus === 'ringing') {
+    if (activeCall && callStatus === "ringing") {
       try {
         activeCall.accept();
       } catch (err) {
-        console.error('Failed to accept call:', err);
+        console.error("Failed to accept call:", err);
       }
     }
   };
@@ -46,36 +50,44 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
   const formatDuration = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const customPhoneNumber = activeCall?.customParameters?.get?.('phoneNumber');
-  const customBusinessName = activeCall?.customParameters?.get?.('businessName');
+  const customPhoneNumber = activeCall?.customParameters?.get?.("phoneNumber");
+  const customBusinessName =
+    activeCall?.customParameters?.get?.("businessName");
   const displayPhoneNumber =
     customPhoneNumber ||
     activeCall?.parameters?.To ||
     activeCall?.parameters?.From ||
-    'Unknown caller';
+    "Unknown caller";
   const displayBusinessName =
     customBusinessName ||
     activeCall?.parameters?.businessName ||
-    'Connected via Dialer';
-  const isIncoming = callDirection !== 'outgoing';
+    "Connected via Dialer";
+  // const isIncoming = callDirection !== 'outgoing';
+  const callTypeParam = activeCall?.customParameters?.get?.("callType");
+  const isIncoming =
+    callTypeParam === "inbound" || callDirection !== "outgoing";
 
   return (
     <div className="fixed bottom-6 right-6 w-80 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-2xl dark:shadow-slate-900/40 border border-cyan-500/30 overflow-hidden z-50">
       <div className="bg-cyan-600/20 px-4 py-3 border-b border-cyan-500/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {callStatus === 'ringing' && isIncoming ? (
+          {callStatus === "ringing" && isIncoming ? (
             <Phone className="w-5 h-5 text-amber-400 animate-pulse" />
           ) : (
             <Phone className="w-5 h-5 text-emerald-400 animate-pulse" />
           )}
           <span className="font-semibold text-slate-900 dark:text-white">
-            {callStatus === 'ringing' && isIncoming ? 'Incoming Call...' : callStatus === 'ringing' ? 'Calling...' : 'Active Call'}
+            {callStatus === "ringing" && isIncoming
+              ? "Incoming Call..."
+              : callStatus === "ringing"
+                ? "Calling..."
+                : "Active Call"}
           </span>
         </div>
-        {callStatus === 'connected' && (
+        {callStatus === "connected" && (
           <div className="flex items-center gap-1 text-cyan-300 text-sm font-mono bg-cyan-900/40 px-2 py-1 rounded">
             <Clock className="w-3 h-3" />
             {formatDuration(duration)}
@@ -99,7 +111,7 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
         </div>
 
         <div className="flex gap-3">
-          {callStatus === 'ringing' && isIncoming ? (
+          {callStatus === "ringing" && isIncoming ? (
             <button
               onClick={handleAcceptCall}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg flex justify-center items-center gap-2 transition-colors font-medium border border-emerald-500"
@@ -111,13 +123,18 @@ export default function ActiveCallPanel({ activeCall, callStatus, callDirection 
             <>
               <button
                 onClick={handleMuteToggle}
-                className={`flex-1 py-2.5 rounded-lg flex justify-center items-center gap-2 transition-colors font-medium border ${isMuted
-                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 hover:bg-amber-500/30'
-                    : 'bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-400 dark:border-slate-600 hover:bg-slate-400 dark:hover:bg-slate-600'
-                  }`}
+                className={`flex-1 py-2.5 rounded-lg flex justify-center items-center gap-2 transition-colors font-medium border ${
+                  isMuted
+                    ? "bg-amber-500/20 text-amber-400 border-amber-500/50 hover:bg-amber-500/30"
+                    : "bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white border-slate-400 dark:border-slate-600 hover:bg-slate-400 dark:hover:bg-slate-600"
+                }`}
               >
-                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                {isMuted ? 'Muted' : 'Mute'}
+                {isMuted ? (
+                  <MicOff className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+                {isMuted ? "Muted" : "Mute"}
               </button>
 
               <button

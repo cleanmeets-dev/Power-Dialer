@@ -54,13 +54,14 @@ export default function ActiveCallPanel({
   };
 
   const customPhoneNumber = activeCall?.customParameters?.get?.("phoneNumber");
-  const customBusinessName =
-    activeCall?.customParameters?.get?.("businessName");
-  const displayPhoneNumber =
-    customPhoneNumber ||
-    activeCall?.parameters?.To ||
-    activeCall?.parameters?.From ||
-    "Unknown caller";
+  const customBusinessName = activeCall?.customParameters?.get?.("businessName");
+  // Prefer phone number: For outgoing, show To; for incoming, show From; fallback to customPhoneNumber
+  let displayPhoneNumber = "Unknown caller";
+  if (callDirection === "outgoing") {
+    displayPhoneNumber = activeCall?.parameters?.To || customPhoneNumber || "Unknown caller";
+  } else {
+    displayPhoneNumber = activeCall?.parameters?.From || customPhoneNumber || "Unknown caller";
+  }
   const displayBusinessName =
     customBusinessName ||
     activeCall?.parameters?.businessName ||

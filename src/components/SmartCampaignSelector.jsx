@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { getCampaigns } from "../services/api";
-  import LoadingSpinner from "./LoadingSpinner";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function SmartCampaignSelector({
   value,
@@ -13,6 +13,8 @@ export default function SmartCampaignSelector({
   const [campaigns, setCampaigns] = useState([]);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false); // 👈 prevent refetch spam
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -25,37 +27,51 @@ export default function SmartCampaignSelector({
 
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [open]);
 
-  // Load campaigns
+  // 🔥 Load campaigns ONLY when dropdown opens
   useEffect(() => {
+    if (!open || hasLoaded) return;
+
     const load = async () => {
-      const data = await getCampaigns();
-      const roots = Array.isArray(data) ? data : data?.data || [];
+      try {
+        setIsLoading(true);
 
-      const filtered = roots
-        .filter((r) => r.pipelineType === pipelineType)
-        .map((root) => ({
-          ...root,
-          children: (root.children || [])
-            .filter((c) => {
-              if (c.pipelineType !== pipelineType) return false;
-              if (!childDialerType) return true;
-              return c.dialerType === childDialerType;
-            })
-            .sort((a, b) => a.name.localeCompare(b.name)),
-        }))
-        .filter((root) => (childOnly ? root.children.length > 0 : true));
+        const data = await getCampaigns();
+        const roots = Array.isArray(data) ? data : data?.data || [];
 
-      setCampaigns(filtered);
+        const filtered = roots
+          .filter((r) => r.pipelineType === pipelineType)
+          .map((root) => ({
+            ...root,
+            children: (root.children || [])
+              .filter((c) => {
+                if (c.pipelineType !== pipelineType) return false;
+                if (!childDialerType) return true;
+                return c.dialerType === childDialerType;
+              })
+              .sort((a, b) => a.name.localeCompare(b.name)),
+          }))
+          .filter((root) =>
+            childOnly ? root.children.length > 0 : true
+          );
+
+        setCampaigns(filtered);
+        setHasLoaded(true);
+      } catch (err) {
+        console.error("Failed to load campaigns:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     load();
-  }, [pipelineType, childDialerType, childOnly]);
+  }, [open, hasLoaded, pipelineType, childDialerType, childOnly]);
 
-  // Filter campaigns by search term
+  // Filter campaigns
   const filtered = useMemo(() => {
     if (!search.trim()) return campaigns;
 
@@ -78,13 +94,18 @@ export default function SmartCampaignSelector({
       .filter(Boolean);
   }, [search, campaigns]);
 
-  // Get label for selected campaign
+  // Selected label
   const selectedLabel = useMemo(() => {
     for (const r of campaigns) {
-      if (r._id === value) return r.name;
+      const parentLabel = `${r.name} [${r.pipelineType || "?"}]`;
+      if (r._id === value) return parentLabel;
 
       for (const c of r.children || []) {
-        if (c._id === value) return `${r.name} → ${c.name}`;
+        if (c._id === value) {
+          return `${parentLabel} → ${c.name}${
+            c.pipelineType ? ` [${c.pipelineType}]` : ""
+          }`;
+        }
       }
     }
     return "Select campaign";
@@ -98,23 +119,25 @@ export default function SmartCampaignSelector({
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
-      {/* Trigger Button */}
+      {/* Trigger */}
       <button
         onClick={() => setOpen((p) => !p)}
         className="w-full flex justify-between items-center px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
       >
         <span className="text-left">{selectedLabel}</span>
+
         <ChevronDown
           size={18}
           className={`transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-96 overflow-hidden flex flex-col">
-          {/* Search Box */}
-          <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+          
+          {/* Search */}
+          <div className="p-3 border-b border-slate-200 dark:border-slate-700">
             <div className="relative">
               <Search
                 size={16}
@@ -125,36 +148,40 @@ export default function SmartCampaignSelector({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search campaigns..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-md text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-md text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
 
-          {/* Campaign List */}
+          {/* Content */}
           <div className="overflow-y-auto flex-1">
-            {filtered.length > 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner />
+              </div>
+            ) : filtered.length > 0 ? (
               <div className="p-2 space-y-1">
                 {filtered.map((root) => (
                   <div key={root._id}>
-                    {/* Parent Item */}
                     <button
                       onClick={() => handleSelect(root._id)}
-                      className="w-full text-left px-3 py-2.5 font-medium text-slate-900 dark:text-slate-100 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full text-left px-3 py-2.5 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md"
                     >
                       {root.name}
+                      <span className="text-xs text-slate-500 ml-1">
+                        [{root.pipelineType || "?"}]
+                      </span>
                     </button>
 
-                    {/* Child Items */}
                     {(root.children || []).length > 0 && (
-                      <div className="pl-2 space-y-0.5">
-                        {(root.children || []).map((child) => (
+                      <div className="pl-2">
+                        {root.children.map((child) => (
                           <button
                             key={child._id}
                             onClick={() => handleSelect(child._id)}
-                            className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-400 rounded-md hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+                            className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md"
                           >
-                            <span className="text-slate-400 dark:text-slate-600 mr-1">├</span>
-                            {child.name}
+                            ├ {child.name}
                           </button>
                         ))}
                       </div>
@@ -163,8 +190,8 @@ export default function SmartCampaignSelector({
                 ))}
               </div>
             ) : (
-              <div className="p-6 text-center text-slate-500 dark:text-slate-400">
-                <p className="text-sm">No campaigns found</p>
+              <div className="p-6 text-center text-slate-500">
+                No campaigns found
               </div>
             )}
           </div>

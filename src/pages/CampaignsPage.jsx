@@ -31,7 +31,10 @@ export default function CampaignsPage() {
   const getParentName = (campaign) => {
     if (!campaign?.parentCampaign) return "None";
     if (typeof campaign.parentCampaign === "object") {
-      return campaign.parentCampaign.name || "Parent campaign";
+      const parent = campaign.parentCampaign;
+      return parent.name
+        ? `${parent.name} [${parent.pipelineType || "?"}]`
+        : "Parent campaign";
     }
     return "Parent campaign";
   };
@@ -314,7 +317,7 @@ export default function CampaignsPage() {
                         ) : null}
                       </td>
                       <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">
-                        {root.name}
+                        {root.name} <span className="text-xs text-slate-500">[{root.pipelineType || "?"}]</span>
                       </td>
                       <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
                         Parent
@@ -356,6 +359,9 @@ export default function CampaignsPage() {
                               title="Open this campaign in Leads"
                             >
                               {child.name}
+                              {child.pipelineType && (
+                                <span className="text-xs text-slate-500"> [{child.pipelineType}]</span>
+                              )}
                             </button>
                           </td>
                           <td className="py-3 px-4 text-slate-700 dark:text-slate-300">

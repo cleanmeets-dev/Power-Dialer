@@ -15,6 +15,7 @@ export default function CampaignSelector({
   childOnly = false,
 }) {
   const [campaignRoots, setCampaignRoots] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState('');
 
@@ -110,6 +111,24 @@ export default function CampaignSelector({
     onShowNotification?.('Campaign created successfully', 'success');
   };
 
+
+  // Filter campaigns by search term
+  const filteredCampaignRoots = campaignRoots
+    .map((root) => {
+      const rootMatches = !searchTerm || root.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const filteredChildren = Array.isArray(root.children)
+        ? root.children.filter((child) => !searchTerm || child.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        : [];
+      if (rootMatches) {
+        return { ...root, children: root.children || [] };
+      }
+      if (filteredChildren.length > 0) {
+        return { ...root, children: filteredChildren };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
   return (
     <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700 mb-6">
       <h2 className="text-xl font-bold mb-4 text-primary-500">Select Campaign</h2>
@@ -120,16 +139,24 @@ export default function CampaignSelector({
         </p>
       )}
 
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-4 items-stretch md:items-center">
+        {/* Search */}
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          placeholder="Search campaigns..."
+          className="border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 md:w-64"
+        />
         {/* Campaign Dropdown */}
         <select
           value={currentSelectedId || ''}
           onChange={(e) => handleSelect(e.target.value)}
-          disabled={isLoading || campaignRoots.length === 0}
+          disabled={isLoading || filteredCampaignRoots.length === 0}
           className="flex-1 px-4 py-2 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 focus:border-cyan-500 outline-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500"
         >
           <option value="">Select a campaign...</option>
-          {campaignRoots.map((root) => {
+          {filteredCampaignRoots.map((root) => {
             const children = Array.isArray(root.children) ? root.children : [];
             return (
               <optgroup key={root._id} label={`Parent: ${root.name}`}>
@@ -143,21 +170,12 @@ export default function CampaignSelector({
             );
           })}
         </select>
-
-        {/* Create Campaign Button */}
-        {/* <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-linear-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-primary-700 flex items-center gap-2 transition"
-        >
-          <Plus className="w-5 h-5" />
-          New
-        </button> */}
       </div>
 
       {/* Campaign Hierarchy */}
-      {campaignRoots.length > 0 && (
+      {filteredCampaignRoots.length > 0 && (
         <div className="mb-4 space-y-3 max-h-72 overflow-y-auto pr-1">
-          {campaignRoots.map((root) => {
+          {filteredCampaignRoots.map((root) => {
             const children = Array.isArray(root.children) ? root.children : [];
             const rootSelected = String(currentSelectedId) === String(root._id);
 

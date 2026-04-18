@@ -2,7 +2,10 @@ import { useState, useEffect, Fragment } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { Plus, Edit2, Trash2, ChevronRight, ChevronDown } from "lucide-react";
 import api, { getCampaigns } from "../services/api";
-import { isManager as checkIsManager, getRoleHomeRoute } from "../utils/roleUtils";
+import {
+  isManager as checkIsManager,
+  getRoleHomeRoute,
+} from "../utils/roleUtils";
 import CreateCampaignModal from "../components/modals/CreateCampaignModal";
 import EditCampaignModal from "../components/modals/EditCampaignModal";
 import { useAuth } from "../hooks/useAuth";
@@ -16,44 +19,52 @@ export default function CampaignsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
+  // Filters
+  const [pipelineTypeFilter, setPipelineTypeFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [expandedRootIds, setExpandedRootIds] = useState(new Set());
 
   const getParentName = (campaign) => {
-    if (!campaign?.parentCampaign) return 'None';
-    if (typeof campaign.parentCampaign === 'object') {
-      return campaign.parentCampaign.name || 'Parent campaign';
+    if (!campaign?.parentCampaign) return "None";
+    if (typeof campaign.parentCampaign === "object") {
+      return campaign.parentCampaign.name || "Parent campaign";
     }
-    return 'Parent campaign';
+    return "Parent campaign";
   };
 
   const getAssignmentLabel = (campaign) => {
-    if (campaign?.dialerType === 'auto') {
+    if (campaign?.dialerType === "auto") {
       const assigned = campaign?.assignedAgent;
-      if (!assigned) return 'Unassigned';
-      if (typeof assigned === 'object') return assigned.name || assigned.email || 'Assigned';
-      return 'Assigned';
+      if (!assigned) return "Unassigned";
+      if (typeof assigned === "object")
+        return assigned.name || assigned.email || "Assigned";
+      return "Assigned";
     }
 
-    if (campaign?.dialerType === 'parallel') {
-      const agents = Array.isArray(campaign?.assignedAgents) ? campaign.assignedAgents : [];
-      if (!agents.length) return 'Unassigned';
+    if (campaign?.dialerType === "parallel") {
+      const agents = Array.isArray(campaign?.assignedAgents)
+        ? campaign.assignedAgents
+        : [];
+      if (!agents.length) return "Unassigned";
 
       const names = agents
         .map((agent) => {
           if (!agent) return null;
-          if (typeof agent === 'object') return agent.name || agent.email || null;
+          if (typeof agent === "object")
+            return agent.name || agent.email || null;
           return null;
         })
         .filter(Boolean);
 
-      if (names.length > 0) return names.join(', ');
+      if (names.length > 0) return names.join(", ");
       return `${agents.length} agents`;
     }
 
-    return 'N/A';
+    return "N/A";
   };
 
   useEffect(() => {
@@ -75,21 +86,18 @@ export default function CampaignsPage() {
     try {
       setIsLoading(true);
       const response = await getCampaigns();
-      const callerRoots = (Array.isArray(response) ? response : [])
-        .filter((campaign) => campaign.pipelineType === 'caller')
+      const allRoots = (Array.isArray(response) ? response : [])
         .map((campaign) => ({
           ...campaign,
-          children: Array.isArray(campaign.children)
-            ? campaign.children.filter((child) => child.pipelineType === 'caller')
-            : [],
+          children: Array.isArray(campaign.children) ? campaign.children : [],
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
 
-      callerRoots.forEach((root) => {
+      allRoots.forEach((root) => {
         root.children.sort((a, b) => a.name.localeCompare(b.name));
       });
 
-      setCampaigns(callerRoots);
+      setCampaigns(allRoots);
     } catch (error) {
       showNotification("Failed to load campaigns", "error");
     } finally {
@@ -103,17 +111,16 @@ export default function CampaignsPage() {
     loadCampaigns();
   };
 
-
   const handleEditClick = (campaign) => {
     setSelectedCampaign(campaign);
     setShowEditModal(true);
-  } 
+  };
 
   // Remove Agent(s) handler
   const handleRemoveAgents = async (campaign) => {
     if (!campaign) return;
     const confirmRemove = window.confirm(
-      'Are you sure you want to remove all agent assignments from this campaign? This will unassign all agents from remaining leads.'
+      "Are you sure you want to remove all agent assignments from this campaign? This will unassign all agents from remaining leads.",
     );
     if (!confirmRemove) return;
     try {
@@ -122,10 +129,10 @@ export default function CampaignsPage() {
         assignedAgent: null,
         assignedAgents: [],
       });
-      showNotification('Agent(s) removed successfully', 'success');
+      showNotification("Agent(s) removed successfully", "success");
       loadCampaigns();
     } catch (error) {
-      showNotification('Failed to remove agent(s)', 'error');
+      showNotification("Failed to remove agent(s)", "error");
     }
   };
 
@@ -171,63 +178,147 @@ export default function CampaignsPage() {
     navigate(`/manager/leads?campaignId=${campaignId}`);
   };
 
+  // Filtering logic
+  const filteredCampaigns = campaigns
+    .map((root) => {
+      const rootMatches =
+        !searchTerm ||
+        root.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const filteredChildren = Array.isArray(root.children)
+        ? root.children.filter(
+            (child) =>
+              !searchTerm ||
+              child.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+        : [];
+
+      if (rootMatches) {
+        return {
+          ...root,
+          children: root.children || [],
+        };
+      }
+
+      if (filteredChildren.length > 0) {
+        return {
+          ...root,
+          children: filteredChildren,
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean)
+    .filter((root) => {
+      if (pipelineTypeFilter && root.pipelineType !== pipelineTypeFilter)
+        return false;
+      return true;
+    });
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Campaigns</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">Manage your calling campaigns</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Campaigns
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">
+              Manage your calling campaigns
+            </p>
           </div>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition font-semibold cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            New Campaign
-          </button>
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-stretch md:items-center">
+            {/* Pipeline Type Filter */}
+            <select
+              value={pipelineTypeFilter}
+              onChange={(e) => setPipelineTypeFilter(e.target.value)}
+              className="border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+            >
+              <option value="">All Pipelines</option>
+              <option value="caller">Caller</option>
+              <option value="closer">Closer</option>
+            </select>
+            {/* Search */}
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search campaigns..."
+              className="border border-slate-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+            />
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition font-semibold cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              New Campaign
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Campaigns Table */}
-      {campaigns.length > 0 && (
+      {filteredCampaigns.length > 0 && (
         <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
                 <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold w-12"></th>
-                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Campaign</th>
-                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Type</th>
-                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Dialer</th>
-                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Assigned</th>
-                <th className="text-right py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">Actions</th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">
+                  Campaign
+                </th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">
+                  Type
+                </th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">
+                  Dialer
+                </th>
+                <th className="text-left py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">
+                  Assigned
+                </th>
+                <th className="text-right py-3 px-4 text-slate-700 dark:text-slate-300 font-semibold">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
-              {campaigns.map((root) => {
-                const children = Array.isArray(root.children) ? root.children : [];
+              {filteredCampaigns.map((root) => {
+                const children = Array.isArray(root.children)
+                  ? root.children
+                  : [];
                 const isExpanded = expandedRootIds.has(root._id);
 
                 return (
                   <Fragment key={root._id}>
-                    <tr
-                      className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30"
-                    >
+                    <tr className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                       <td className="py-3 px-4">
                         {children.length > 0 ? (
                           <button
                             onClick={() => toggleChildren(root._id)}
                             className="text-slate-600 dark:text-slate-300 hover:text-primary-500 transition cursor-pointer"
-                            title={isExpanded ? "Hide child campaigns" : "Show child campaigns"}
+                            title={
+                              isExpanded
+                                ? "Hide child campaigns"
+                                : "Show child campaigns"
+                            }
                           >
-                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
                           </button>
                         ) : null}
                       </td>
-                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{root.name}</td>
-                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">Parent</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">
+                        {root.name}
+                      </td>
+                      <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                        Parent
+                      </td>
                       <td className="py-3 px-4 text-slate-700 dark:text-slate-300"></td>
                       <td className="py-3 px-4 text-slate-700 dark:text-slate-300"></td>
                       <td className="py-3 px-4">
@@ -251,65 +342,77 @@ export default function CampaignsPage() {
                       </td>
                     </tr>
 
-                    {isExpanded && children.map((child) => (
-                      <tr
-                        key={child._id}
-                        className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-700/30"
-                      >
-                        <td className="py-3 px-4"></td>
-                        <td className="py-3 px-4 pl-8 text-slate-900 dark:text-slate-100">
-                          <button
-                            onClick={() => handleOpenLeads(child._id)}
-                            className="hover:text-primary-500 transition cursor-pointer text-left"
-                            title="Open this campaign in Leads"
-                          >
-                            {child.name}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300">Child</td>
-                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300 uppercase">{child.dialerType || 'N/A'}</td>
-                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300" title={getAssignmentLabel(child)}>{getAssignmentLabel(child)}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex justify-end gap-2">
+                    {isExpanded &&
+                      children.map((child) => (
+                        <tr
+                          key={child._id}
+                          className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20 hover:bg-slate-100 dark:hover:bg-slate-700/30"
+                        >
+                          <td className="py-3 px-4"></td>
+                          <td className="py-3 px-4 pl-8 text-slate-900 dark:text-slate-100">
                             <button
                               onClick={() => handleOpenLeads(child._id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded transition text-xs cursor-pointer"
+                              className="hover:text-primary-500 transition cursor-pointer text-left"
+                              title="Open this campaign in Leads"
                             >
-                              Open Leads
+                              {child.name}
                             </button>
-                            <button
-                              onClick={() => handleEditClick(child)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded transition text-xs cursor-pointer"
-                              title="Assign or change the campaign agent"
-                            >
-                              Assign Agent
-                            </button>
-                            <button
-                              onClick={() => handleRemoveAgents(child)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-500 hover:bg-gray-700 text-white rounded transition text-xs cursor-pointer"
-                              title="Remove all agent assignments from this campaign"
-                            >
-                              Remove Agent(s)
-                            </button>
-                            <button
-                              onClick={() => handleEditClick(child)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-secondary-600 hover:bg-secondary-700 text-white rounded transition text-xs cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              Edit
-                            </button>
-                            <button
-                              disabled={deletingId === child._id}
-                              onClick={() => handleDelete(child._id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded transition text-xs disabled:opacity-50 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              {deletingId === child._id ? "Deleting..." : "Delete"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                            Child
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 dark:text-slate-300 uppercase">
+                            {child.dialerType || "N/A"}
+                          </td>
+                          <td
+                            className="py-3 px-4 text-slate-700 dark:text-slate-300"
+                            title={getAssignmentLabel(child)}
+                          >
+                            {getAssignmentLabel(child)}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleOpenLeads(child._id)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded transition text-xs cursor-pointer"
+                              >
+                                Open Leads
+                              </button>
+                              <button
+                                onClick={() => handleEditClick(child)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded transition text-xs cursor-pointer"
+                                title="Assign or change the campaign agent"
+                              >
+                                Assign Agent
+                              </button>
+                              <button
+                                onClick={() => handleRemoveAgents(child)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-500 hover:bg-gray-700 text-white rounded transition text-xs cursor-pointer"
+                                title="Remove all agent assignments from this campaign"
+                              >
+                                Remove Agent(s)
+                              </button>
+                              <button
+                                onClick={() => handleEditClick(child)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-secondary-600 hover:bg-secondary-700 text-white rounded transition text-xs cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                                Edit
+                              </button>
+                              <button
+                                disabled={deletingId === child._id}
+                                onClick={() => handleDelete(child._id)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded transition text-xs disabled:opacity-50 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                {deletingId === child._id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                   </Fragment>
                 );
               })}
@@ -318,10 +421,11 @@ export default function CampaignsPage() {
         </div>
       )}
 
-      {campaigns.length === 0 && !isLoading && (
+      {filteredCampaigns.length === 0 && !isLoading && (
         <div className="text-center py-12 bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-600 dark:text-slate-400 mb-4">No campaigns yet</p>
-
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            No campaigns yet
+          </p>
           <button
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition cursor-pointer"

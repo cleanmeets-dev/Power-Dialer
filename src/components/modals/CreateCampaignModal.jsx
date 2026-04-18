@@ -8,6 +8,7 @@ import { Loader } from 'lucide-react';
 export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onError }) {
   const [formData, setFormData] = useState({
     name: '',
+    pipelineType: '',
     parentCampaign: '',
     dialerType: '',
     assignedAgent: '',
@@ -24,9 +25,11 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onErro
 
   const parentCampaignOptions = useMemo(
     () => campaigns
-      .filter((campaign) => campaign.pipelineType === 'caller' && !campaign.parentCampaign)
+      .filter((campaign) =>
+        campaign.pipelineType === formData.pipelineType && !campaign.parentCampaign
+      )
       .map((campaign) => ({ value: campaign._id, label: campaign.name })),
-    [campaigns],
+    [campaigns, formData.pipelineType],
   );
 
   const callerAgentOptions = useMemo(
@@ -86,6 +89,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onErro
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Campaign name is required';
     if (formData.name.trim().length < 3) newErrors.name = 'Campaign name must be at least 3 characters';
+    if (!formData.pipelineType) newErrors.pipelineType = 'Pipeline type is required';
 
     if (isChildCampaign && !formData.dialerType) {
       newErrors.dialerType = 'Dialer type is required for child campaigns';
@@ -110,7 +114,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onErro
     try {
       const payload = {
         name: formData.name.trim(),
-        pipelineType: 'caller',
+        pipelineType: formData.pipelineType,
       };
 
       if (formData.parentCampaign) payload.parentCampaign = formData.parentCampaign;
@@ -122,6 +126,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onErro
       onSuccess?.(campaign);
       setFormData({
         name: '',
+        pipelineType: '',
         parentCampaign: '',
         dialerType: '',
         assignedAgent: '',
@@ -139,6 +144,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onErro
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create Campaign">
       <form onSubmit={handleSubmit}>
+
         <FormInput
           label="Campaign Name"
           name="name"
@@ -146,6 +152,19 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess, onErro
           value={formData.name}
           onChange={handleChange}
           error={errors.name}
+          required
+        />
+
+        <FormSelect
+          label="Pipeline Type"
+          name="pipelineType"
+          value={formData.pipelineType}
+          onChange={handleChange}
+          options={[
+            { value: 'caller', label: 'Caller Pipeline' },
+            { value: 'closer', label: 'Closer Pipeline' },
+          ]}
+          error={errors.pipelineType}
           required
         />
 

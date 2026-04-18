@@ -33,20 +33,16 @@ export default function DialerControls({
       onError("Lead missing phone number");
       return;
     }
-    // Clean phone number: remove all characters except digits and +
     const cleanNumber = String(lead.phoneNumber).replace(/[^\d+]/g, '');
     
-    // Zoom Phone Integration
     window.open(`zoomphonecall://${cleanNumber}`, '_self');
     onSuccess(`Dialing ${lead.businessName || lead.phoneNumber} via Zoom`);
 
     try {
-      // Persist agent-attributed call attempts for dashboard daily call counts.
       if (isAgentMode && campaignId) {
         await logAgentCallAttempt(campaignId, lead._id, 'no-answer');
       }
 
-      // Update local context so Next Up label moves in UI
       if (leadsContext?.updateLead) {
         leadsContext.updateLead({ ...lead, dialerStatus: 'connected' });
       }

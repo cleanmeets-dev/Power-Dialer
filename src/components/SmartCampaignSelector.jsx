@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { getCampaigns } from "../services/api";
+  import LoadingSpinner from "./LoadingSpinner";
 
 export default function SmartCampaignSelector({
   value,

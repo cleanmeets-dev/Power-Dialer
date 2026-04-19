@@ -1,16 +1,131 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Phone, PhoneOff, Keyboard, Delete } from "lucide-react";
+import { Phone, PhoneOff, Delete } from "lucide-react";
 
-const formatDisplayNumber = (value) =>
-  String(value || "").replace(/[^\d+]/g, "");
+// DTMF frequency pairs (Hz)
+const DTMF_FREQUENCIES = {
+  "1": [697, 1209],
+  "2": [697, 1336],
+  "3": [697, 1477],
+  "4": [770, 1209],
+  "5": [770, 1336],
+  "6": [770, 1477],
+  "7": [852, 1209],
+  "8": [852, 1336],
+  "9": [852, 1477],
+  "*": [941, 1209],
+  "0": [941, 1336],
+  "#": [941, 1477],
+};
+
+// Utility: Create audio context and generate DTMF tone
+const generateDTMFTone = (frequencies, duration = 100) => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + duration / 1000
+    );
+
+    frequencies.forEach((freq) => {
+      const osc = audioContext.createOscillator();
+      osc.frequency.value = freq;
+      osc.connect(gainNode);
+      osc.start(audioContext.currentTime);
+      osc.stop(audioContext.currentTime + duration / 1000);
+    });
+
+    return audioContext;
+  } catch (e) {
+    console.error("DTMF Error:", e);
+  }
+};
+
+// Sound effect generators
+const playDialTone = () => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+
+    const osc1 = audioContext.createOscillator();
+    const osc2 = audioContext.createOscillator();
+    osc1.frequency.value = 350;
+    osc2.frequency.value = 440;
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+
+    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+    osc1.start(audioContext.currentTime);
+    osc2.start(audioContext.currentTime);
+    osc1.stop(audioContext.currentTime + 2);
+    osc2.stop(audioContext.currentTime + 2);
+  } catch (e) {
+    console.error("Dial Tone Error:", e);
+  }
+};
+
+const playBusyTone = () => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+
+    const osc = audioContext.createOscillator();
+    osc.frequency.value = 480;
+    osc.connect(gainNode);
+
+    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+    osc.start(audioContext.currentTime);
+
+    for (let i = 0; i < 6; i++) {
+      gainNode.gain.setValueAtTime(0.08, audioContext.currentTime + i * 1);
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime + i * 1 + 0.5);
+    }
+
+    osc.stop(audioContext.currentTime + 6);
+  } catch (e) {
+    console.error("Busy Tone Error:", e);
+  }
+};
+
+const playDisconnectTone = () => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+
+    const osc = audioContext.createOscillator();
+    osc.frequency.value = 350;
+    osc.connect(gainNode);
+
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioContext.currentTime + 0.3
+    );
+
+    osc.start(audioContext.currentTime);
+    osc.stop(audioContext.currentTime + 0.3);
+  } catch (e) {
+    console.error("Disconnect Tone Error:", e);
+  }
+};
+
+const formatDisplayNumber = (value) => String(value || "").replace(/[^\d+]/g, "");
 
 export default function DirectDialerPage() {
   const { showNotification, twilioDialer } = useOutletContext();
   const [phoneNumber, setPhoneNumber] = useState("");
-  // const [isDialing, setIsDialing] = useState(false);
-  const [callMethod, setCallMethod] = useState("zoom"); // "twilio" or "zoom"
+  const [callMethod, setCallMethod] = useState("zoom");
   const [inCallDigits, setInCallDigits] = useState("");
+  const inputRef = useRef(null);
+  const pressedKeysRef = useRef(new Set());
+
   const isDialing =
     twilioDialer?.callStatus === "ringing" ||
     twilioDialer?.callStatus === "connected";
@@ -19,21 +134,83 @@ export default function DirectDialerPage() {
     (twilioDialer?.callStatus === "ringing" ||
       twilioDialer?.callStatus === "connected");
 
-  // const statusText = useMemo(() => {
-  //   return isDialing ? "Calling..." : "Ready to dial";
-  // }, [isDialing]);
+  // Auto-focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  // Keyboard handler
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const key = e.key;
+
+      // Prevent repeated firing from key hold
+      if (pressedKeysRef.current.has(key)) {
+        return;
+      }
+
+      // Handle digits (0-9)
+      if (/^[0-9]$/.test(key)) {
+        pressedKeysRef.current.add(key);
+        e.preventDefault();
+        handleKeypadPress(key);
+        return;
+      }
+
+      // Handle * and #
+      if (key === "*" || key === "#") {
+        pressedKeysRef.current.add(key);
+        e.preventDefault();
+        handleKeypadPress(key);
+        return;
+      }
+
+      // Handle Backspace
+      if (key === "Backspace") {
+        pressedKeysRef.current.add(key);
+        e.preventDefault();
+        handleBackspace();
+        return;
+      }
+
+      // Handle Enter to call
+      if (key === "Enter" && phoneNumber && !isDialing) {
+        pressedKeysRef.current.add(key);
+        e.preventDefault();
+        handleDial();
+        return;
+      }
+
+      // Handle Delete to clear all
+      if (key === "Delete") {
+        pressedKeysRef.current.add(key);
+        e.preventDefault();
+        clearNumber();
+        return;
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      pressedKeysRef.current.delete(e.key);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [phoneNumber, isDialing, isInCall]);
 
   const statusText = useMemo(() => {
     if (twilioDialer?.error) {
       return twilioDialer.error;
     }
-
     if (callMethod === "zoom") return "Zoom handles call externally";
-
     if (twilioDialer?.isInitializing) {
       return "Connecting to Twilio...";
     }
-
     switch (twilioDialer?.callStatus) {
       case "ringing":
         return "Ringing...";
@@ -52,6 +229,9 @@ export default function DirectDialerPage() {
 
   const appendDigit = (digit) => {
     setPhoneNumber((prev) => `${prev}${digit}`.slice(0, 20));
+    if (!isInCall) {
+      generateDTMFTone(DTMF_FREQUENCIES[digit], 100);
+    }
   };
 
   const clearNumber = () => setPhoneNumber("");
@@ -60,36 +240,11 @@ export default function DirectDialerPage() {
     setPhoneNumber((prev) => prev.slice(0, -1));
   };
 
-  // const handleDial = async () => {
-  //   if (!phoneNumber) return;
-  //   setIsDialing(true);
-  //   try {
-  //     if (callMethod === "zoom") {
-  //       window.open(`zoomphonecall://${phoneNumber}`, "_self");
-  //       showNotification(`Calling ${phoneNumber} via Zoom`, "success");
-  //     } else {
-  //       if (typeof twilioDialer?.placeOutgoingCall === "function") {
-  //         const result = await twilioDialer.placeOutgoingCall(phoneNumber);
-  //         if (result?.success) {
-  //           showNotification(`Calling ${phoneNumber} via Twilio`, "success");
-  //         } else {
-  //           showNotification(result?.error || "Twilio call failed", "error");
-  //         }
-  //       } else {
-  //         showNotification("Twilio dialer not available", "error");
-  //       }
-  //     }
-  //   } catch (error) {
-  //     showNotification(`Failed to launch ${callMethod === "zoom" ? "Zoom" : "Twilio"} call`, "error");
-  //   } finally {
-  //     setIsDialing(false);
-  //   }
-  // };
-
   const handleDial = async () => {
     if (!phoneNumber) return;
-
     try {
+      playDialTone();
+
       if (callMethod === "zoom") {
         window.open(`zoomphonecall://${phoneNumber}`, "_self");
         showNotification(`Calling ${phoneNumber} via Zoom`, "success");
@@ -98,27 +253,40 @@ export default function DirectDialerPage() {
 
       if (typeof twilioDialer?.placeOutgoingCall === "function") {
         const result = await twilioDialer.placeOutgoingCall(phoneNumber);
-
         if (result?.success) {
           showNotification(`Calling ${result.number} via Twilio`, "success");
           setInCallDigits("");
         } else {
+          playBusyTone();
           showNotification(result?.error || "Twilio call failed", "error");
         }
       } else {
         showNotification("Twilio dialer not available", "error");
       }
     } catch (error) {
+      playBusyTone();
       showNotification("Failed to start call", "error");
     }
   };
 
   const handleHangup = () => {
     if (callMethod === "twilio") {
+      playDisconnectTone();
       twilioDialer?.hangupActiveCall?.();
       showNotification("Call ended", "info");
     } else {
       showNotification("End call from Zoom app", "info");
+    }
+  };
+
+  const handleKeypadPress = (digit) => {
+    if (isInCall && twilioDialer?.activeCall) {
+      twilioDialer.activeCall.sendDigits(digit);
+      generateDTMFTone(DTMF_FREQUENCIES[digit], 100);
+      setInCallDigits((prev) => `${prev}${digit}`.slice(0, 20));
+      console.log("Sent DTMF:", digit);
+    } else {
+      appendDigit(digit);
     }
   };
 
@@ -134,7 +302,7 @@ export default function DirectDialerPage() {
               Direct Dialer
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Call any number directly from your browser
+              Call any number — use keyboard or keypad
             </p>
           </div>
         </div>
@@ -155,6 +323,7 @@ export default function DirectDialerPage() {
             <option value="zoom">Zoom</option>
           </select>
         </div>
+
         <div className="mb-4 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/40 px-4 py-3">
           <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
             Status
@@ -178,6 +347,7 @@ export default function DirectDialerPage() {
           Phone Number
         </label>
         <input
+          ref={inputRef}
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(formatDisplayNumber(e.target.value))}
           onKeyDown={(e) => {
@@ -186,30 +356,40 @@ export default function DirectDialerPage() {
             }
           }}
           placeholder="+1 405 555 1212"
-          className="w-full mb-4 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
+          className="w-full mb-4 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500 text-lg"
         />
+
+        {/* Keyboard shortcuts hint */}
+        <div className="mb-4 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <p className="text-xs text-blue-600 dark:text-blue-400">
+            ⌨️ Keys: 0-9, Enter to call, Backspace to delete, Delete to clear
+          </p>
+        </div>
+
+        {/* In-call DTMF display */}
+        {isInCall && inCallDigits && (
+          <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
+            <p className="text-xs text-green-600 dark:text-green-300 mb-1">
+              Digits sent
+            </p>
+            <p className="text-sm font-mono text-green-800 dark:text-green-200">
+              {inCallDigits}
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-2 mb-4">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(
             (digit) => (
               <button
                 key={digit}
-                // onClick={() => appendDigit(digit)}
-                onClick={() => {
-                  if (isInCall && twilioDialer?.activeCall) {
-                    twilioDialer.activeCall.sendDigits(digit);
-                    setInCallDigits((prev) => `${prev}${digit}`.slice(0, 20));
-                    console.log("Sent DTMF:", digit);
-                  } else {
-                    appendDigit(digit);
-                  }
-                }}
-                className="rounded-lg border border-slate-300/80 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/80 py-3 text-slate-800 dark:text-slate-100 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-50 dark:hover:bg-slate-600 hover:text-cyan-700 dark:hover:text-cyan-200 hover:border-cyan-300 dark:hover:border-cyan-500"
+                onClick={() => handleKeypadPress(digit)}
+                className="rounded-lg border border-slate-300/80 dark:border-slate-600 bg-slate-100 dark:bg-slate-700/80 py-3 text-slate-800 dark:text-slate-100 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-50 dark:hover:bg-slate-600 hover:text-cyan-700 dark:hover:text-cyan-200 hover:border-cyan-300 dark:hover:border-cyan-500 active:scale-95"
                 type="button"
               >
                 {digit}
               </button>
-            ),
+            )
           )}
         </div>
 
@@ -221,14 +401,9 @@ export default function DirectDialerPage() {
           >
             Clear All
           </button>
+
           <button
             onClick={handleDial}
-            // disabled={!phoneNumber || isDialing}
-            // disabled={
-            //   !phoneNumber ||
-            //   isDialing ||
-            //   (callMethod === "twilio" && !twilioDialer?.isReady)
-            // }
             disabled={
               !phoneNumber ||
               isDialing ||
@@ -236,13 +411,14 @@ export default function DirectDialerPage() {
                 (!twilioDialer?.isReady || twilioDialer?.error))
             }
             type="button"
-            className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:from-emerald-600 hover:to-teal-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:shadow-none"
+            className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:from-emerald-600 hover:to-teal-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:shadow-none active:scale-95"
           >
             <span className="inline-flex items-center gap-2">
               <Phone className="w-4 h-4" />
               {isDialing ? "Calling..." : "Call"}
             </span>
           </button>
+
           <button
             onClick={handleBackspace}
             disabled={!phoneNumber}
@@ -258,21 +434,15 @@ export default function DirectDialerPage() {
 
         <button
           onClick={handleHangup}
-          // disabled={true}
           disabled={!twilioDialer?.activeCall}
           type="button"
-          className="mt-3 w-full rounded-lg bg-slate-400/20 dark:bg-slate-600/40 border border-slate-300 dark:border-slate-600 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-3 w-full rounded-lg bg-slate-400/20 dark:bg-slate-600/40 border border-slate-300 dark:border-slate-600 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 transition hover:-translate-y-0.5 active:scale-95"
         >
           <span className="inline-flex items-center gap-2">
             <PhoneOff className="w-4 h-4" />
             Hang Up
           </span>
         </button>
-
-        {/* <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
-          <Keyboard className="w-4 h-4" />
-          Browser mic permission is required for audio.
-        </div> */}
       </div>
     </div>
   );

@@ -49,37 +49,43 @@ function getSidebarItems(role) {
       },
       // { id: 'leads', label: 'Leads', icon: FileText, path: '/manager/leads' },
       // { id: 'followups', label: 'Lead Followups', icon: Repeat2, path: '/manager/followups' },
-      // { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
+
       {
         id: "agents",
         label: "Agents Live Status",
         icon: Users,
         path: "/manager/agents",
       },
+	  {
+		id: "attendance",
+		label: "Attendance Record",
+		icon: CalendarDays,
+		path: "/manager/attendance",
+	  },
+	  {
+		id: "earnings",
+		label: "Earnings History",
+		icon: Coins,
+		path: "/manager/earnings",
+	  },
       {
         id: "user-management",
         label: "User Management",
         icon: Users,
         path: "/manager/user-management",
       },
-      {
-        id: "attendance",
-        label: "Attendance Record",
-        icon: CalendarDays,
-        path: "/manager/attendance",
-      },
+      //   {
+      //     id: "direct-dialer",
+      //     label: "Direct Dialer",
+      //     icon: Phone,
+      //     path: "/manager/direct-dialer",
+      //   },
     //   {
-    //     id: "direct-dialer",
-    //     label: "Direct Dialer",
+    //     id: "call-logs",
+    //     label: "Call Logs",
     //     icon: Phone,
-    //     path: "/manager/direct-dialer",
+    //     path: "/manager/call-logs",
     //   },
-      {
-        id: "earnings",
-        label: "Earnings History",
-        icon: Coins,
-        path: "/manager/earnings",
-      },
     ];
   }
 

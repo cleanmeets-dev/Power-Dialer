@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { User, Clock, Phone, CheckCircle, XCircle, RefreshCw, Users, AlertCircle } from 'lucide-react';
+import { User, Clock, Phone, CheckCircle, XCircle, RefreshCw, Users, AlertCircle, Search } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { isManager as checkIsManager, getRoleHomeRoute } from '../utils/roleUtils';
 import {
@@ -20,6 +20,7 @@ export default function AgentAvailabilityPage() {
   const [agents, setAgents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingAgentId, setLoadingAgentId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState(null);
   const pollIntervalRef = useRef(null);
 
@@ -177,6 +178,15 @@ export default function AgentAvailabilityPage() {
     totalCallsToday: agents.reduce((sum, a) => sum + (a.callsToday || 0), 0),
   };
 
+  const filteredAgents = agents.filter(agent => {
+    if (!searchQuery.trim()) return true;
+    const lowerQuery = searchQuery.toLowerCase();
+    return (
+      agent.name?.toLowerCase().includes(lowerQuery) ||
+      agent.email?.toLowerCase().includes(lowerQuery)
+    );
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -185,18 +195,31 @@ export default function AgentAvailabilityPage() {
         <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Monitor and manage agent status in real time</p>
       </div>
 
-      {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* Search and Refresh Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="relative w-full sm:w-96">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="w-5 h-5 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-200/60 dark:border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-slate-900 dark:text-slate-100 shadow-sm transition placeholder-slate-400 dark:placeholder-slate-500"
+            placeholder="Search agents by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${isLoading
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition ${isLoading
             ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-            : 'bg-linear-to-r from-cyan-500 to-cyan-600 text-white hover:from-cyan-600 hover:to-cyan-700 shadow-lg'
+            : 'bg-linear-to-r from-cyan-500 to-cyan-600 text-white hover:from-cyan-600 hover:to-cyan-700 shadow-md hover:shadow-lg hover:-translate-y-0.5'
             }`}
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          {isLoading ? 'Refreshing...' : 'Refresh'}
+          {isLoading ? 'Refreshing...' : 'Refresh Logs'}
         </button>
       </div>
 
@@ -242,7 +265,7 @@ export default function AgentAvailabilityPage() {
 
       {/* Agents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {agents.map((agent) => {
+        {filteredAgents.map((agent) => {
           const isActuallyAvailable = agent.isAvailable && !agent.attendance?.onBreak && !agent.activeLead && agent.attendance?.isCheckedIn;
 
           return (
@@ -291,79 +314,88 @@ export default function AgentAvailabilityPage() {
 
               {/* Attendance Details */}
               <div className="mt-auto border-t border-slate-200/60 dark:border-slate-700/50 pt-4 space-y-2.5">
-                {agent.attendance?.firstCallAt && (
-                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
-                    <span className="text-emerald-600 dark:text-emerald-500 font-medium flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5" />
-                      First Call
-                    </span>
-                    <span className="text-slate-800 dark:text-slate-200 font-bold">
-                      {new Date(agent.attendance.firstCallAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                  <span className="text-emerald-600 dark:text-emerald-500 font-medium flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" />
+                    First Call
+                  </span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold">
+                    {agent.attendance?.firstCallAt
+                      ? new Date(agent.attendance.firstCallAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                  </span>
+                </div>
                 
-                {agent.attendance?.lastCallAt && (
-                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
-                    <span className="text-cyan-600 dark:text-cyan-500 font-medium flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5" />
-                      Last Call
-                    </span>
-                    <span className="text-slate-800 dark:text-slate-200 font-bold">
-                      {new Date(agent.attendance.lastCallAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                  <span className="text-cyan-600 dark:text-cyan-500 font-medium flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" />
+                    Last Call
+                  </span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold">
+                    {agent.attendance?.lastCallAt
+                      ? new Date(agent.attendance.lastCallAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                  </span>
+                </div>
 
-                {agent.attendance?.breakStartedAt && (
-                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
-                    <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      Break Started
-                    </span>
-                    <span className="text-amber-700 dark:text-amber-400 font-bold">
-                      {new Date(agent.attendance.breakStartedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                  <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Break Started
+                  </span>
+                  <span className="text-amber-700 dark:text-amber-400 font-bold">
+                    {agent.attendance?.breakStartedAt
+                      ? new Date(agent.attendance.breakStartedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                  </span>
+                </div>
 
-                {agent.attendance?.breakEndedAt && (
-                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2 mb-0">
-                    <span className="text-indigo-600 dark:text-indigo-500 font-medium flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      Break Ended
-                    </span>
-                    <span className="text-indigo-700 dark:text-indigo-400 font-bold">
-                      {new Date(agent.attendance.breakEndedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2 mb-0">
+                  <span className="text-indigo-600 dark:text-indigo-500 font-medium flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Break Ended
+                  </span>
+                  <span className="text-indigo-700 dark:text-indigo-400 font-bold">
+                    {agent.attendance?.breakEndedAt
+                      ? new Date(agent.attendance.breakEndedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                  </span>
+                </div>
                 
-                {/* Fallbacks if there are no calls or breaks yet */}
-                {!agent.attendance?.firstCallAt && !agent.attendance?.breakStartedAt && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      Check In
-                    </span>
-                    <span className="text-slate-800 dark:text-slate-200 font-bold">
-                      {agent.attendance?.checkedInAt
-                        ? new Date(agent.attendance.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : '—'}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Check In
+                  </span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold">
+                    {agent.attendance?.checkedInAt
+                      ? new Date(agent.attendance.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                  <span className="text-rose-500 font-medium flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Check Out
+                  </span>
+                  <span className="text-rose-600 font-bold">
+                    {agent.attendance?.checkedOutAt
+                      ? new Date(agent.attendance.checkedOutAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                  </span>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {!isLoading && agents.length === 0 && (
+      {!isLoading && filteredAgents.length === 0 && (
         <div className="backdrop-blur-md bg-white/40 dark:bg-slate-800/40 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 text-center py-20">
           <Users className="w-14 h-14 text-slate-400 mx-auto mb-4" />
-          <p className="text-xl font-bold text-slate-700 dark:text-slate-300">No agents online</p>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Wait for agents to connect or clear filters.</p>
+          <p className="text-xl font-bold text-slate-700 dark:text-slate-300">No agents found</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Wait for agents to connect or clear active filters.</p>
         </div>
       )}
     </div>

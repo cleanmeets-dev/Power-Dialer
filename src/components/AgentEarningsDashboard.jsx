@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { TrendingUp, Award, Zap } from "lucide-react";
+import {
+  getAgentEarningsSummary,
+  getQualificationBreakdown,
+  getAgentEarningsLeaderboard,
+} from "../services/api";
 
 const AgentEarningsDashboard = () => {
   const { user } = useAuth();
@@ -13,16 +18,8 @@ const AgentEarningsDashboard = () => {
   useEffect(() => {
     const fetchEarnings = async () => {
       try {
-        const response = await fetch(
-          `/api/earnings/summary/${user._id}?timeframe=${timeframe}`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
-        );
-        const data = await response.json();
-        if (data.success) {
-          setEarnings(data.data);
-        }
+        const data = await getAgentEarningsSummary({ agentId: user._id, timeframe });
+        setEarnings(data);
       } catch (error) {
         console.error("Error fetching earnings:", error);
       }
@@ -33,16 +30,8 @@ const AgentEarningsDashboard = () => {
   useEffect(() => {
     const fetchBreakdown = async () => {
       try {
-        const response = await fetch(
-          `/api/earnings/breakdown/${user._id}`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
-        );
-        const data = await response.json();
-        if (data.success) {
-          setBreakdown(data.data);
-        }
+        const data = await getQualificationBreakdown({ agentId: user._id });
+        setBreakdown(data);
       } catch (error) {
         console.error("Error fetching breakdown:", error);
       }
@@ -54,16 +43,8 @@ const AgentEarningsDashboard = () => {
     const fetchLeaderboard = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(
-          `/api/earnings/leaderboard?timeframe=${timeframe}&limit=5`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
-        );
-        const data = await response.json();
-        if (data.success) {
-          setLeaderboard(data.data);
-        }
+        const data = await getAgentEarningsLeaderboard({ timeframe, limit: 5 });
+        setLeaderboard(data);
       } catch (error) {
         console.error("Error fetching leaderboard:", error);
       } finally {

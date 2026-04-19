@@ -10,6 +10,7 @@ import {
   Repeat2,
   MapPinned,
   ClipboardList,
+  Coins,
 } from "lucide-react";
 
 function getSidebarItems(role) {
@@ -63,15 +64,21 @@ function getSidebarItems(role) {
       },
       {
         id: "attendance",
-        label: "Attendance Logs",
+        label: "Attendance Record",
         icon: CalendarDays,
         path: "/manager/attendance",
       },
+    //   {
+    //     id: "direct-dialer",
+    //     label: "Direct Dialer",
+    //     icon: Phone,
+    //     path: "/manager/direct-dialer",
+    //   },
       {
-        id: "direct-dialer",
-        label: "Direct Dialer",
-        icon: Phone,
-        path: "/manager/direct-dialer",
+        id: "earnings",
+        label: "Earnings History",
+        icon: Coins,
+        path: "/manager/earnings",
       },
     ];
   }
@@ -109,6 +116,12 @@ function getSidebarItems(role) {
       label: "Lead Status/Followups",
       icon: Repeat2,
       path: "/agent/followups",
+    },
+    {
+      id: "earnings",
+      label: "Earnings History",
+      icon: Coins,
+      path: "/agent/earnings",
     },
   ];
 }

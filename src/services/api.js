@@ -638,4 +638,20 @@ export const getQualificationBreakdown = async ({ agentId, campaignId }) => {
   return response.data.data;
 };
 
+export const getMonthlyEarningsHistory = async ({ agentId } = {}) => {
+  const params = new URLSearchParams();
+  if (agentId) params.append("agentId", agentId);
+  const response = await api.get(`/earnings/monthly-history?${params.toString()}`);
+  return response.data.data;
+};
+
+export const getDetailedEarningsHistory = async ({ agentId, page = 1, limit = 20 } = {}) => {
+  const params = new URLSearchParams();
+  if (agentId) params.append("agentId", agentId);
+  if (page) params.append("page", page);
+  if (limit) params.append("limit", limit);
+  const response = await api.get(`/earnings/history?${params.toString()}`);
+  return response.data; // Return full data object as it includes pagination
+};
+
 export default api;

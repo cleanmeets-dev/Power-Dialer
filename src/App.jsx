@@ -20,6 +20,7 @@ import AgentManagementPage from "./pages/AgentManagementPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import MyTasksPage from "./pages/MyTasksPage";
+import EarningsHistoryPage from "./pages/EarningsHistoryPage";
 import React from "react";
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
             <Route path="agents" element={<AgentAvailabilityPage />} />
             <Route path="user-management" element={<AgentManagementPage />} />
             <Route path="attendance" element={<AttendanceHistoryPage />} />
+            <Route path="earnings" element={<EarningsHistoryPage />} />
             <Route path="direct-dialer" element={<DirectDialerPage />} />
           </Route>
 
@@ -69,6 +71,7 @@ function App() {
             <Route path="power-dialer" element={<PowerDialerPage />} />
             <Route path="auto-dialer" element={<AutoDialerPage />} />
             <Route path="direct-dialer" element={<DirectDialerPage />} />
+            <Route path="earnings" element={<EarningsHistoryPage />} />
             {/* <Route path="call-logs" element={<CallLogsPage />} /> */}
           </Route>
 

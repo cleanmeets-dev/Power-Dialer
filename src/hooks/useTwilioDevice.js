@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Device } from "@twilio/voice-sdk";
 import axios from "axios";
 import { useAuth } from "./useAuth";
+import { setMyDirectCallStatus } from "../services/api";
 
 /**
  * 🔴 FIX #8: useTwilioDevice hook - Initialize Twilio Voice SDK for agent browser
@@ -21,37 +22,56 @@ export function useTwilioDevice(isAgent = false) {
   const [callDirection, setCallDirection] = useState(null); // incoming, outgoing, null
   const deviceRef = useRef(null);
   const tokenRefreshIntervalRef = useRef(null);
+  const directCallStatusRef = useRef(false);
   const { user } = useAuth();
+
+  const syncDirectCallStatus = useCallback(async (inCall, provider = "twilio") => {
+    if (!user?._id || directCallStatusRef.current === inCall) return;
+
+    directCallStatusRef.current = inCall;
+
+    try {
+      await setMyDirectCallStatus(inCall, provider);
+    } catch (err) {
+      directCallStatusRef.current = !inCall;
+      console.error("Failed to sync direct call status:", err);
+    }
+  }, [user?._id]);
 
   const bindCallLifecycle = useCallback(
     (call, initialStatus = "ringing", direction = "incoming") => {
       setActiveCall(call);
       setCallStatus(initialStatus);
       setCallDirection(direction);
+      void syncDirectCallStatus(initialStatus !== "idle", "twilio");
 
       call.on("accept", () => {
         setCallStatus("connected");
+        void syncDirectCallStatus(true, "twilio");
       });
 
       call.on("disconnect", () => {
         setCallStatus("idle");
         setActiveCall(null);
         setCallDirection(null);
+        void syncDirectCallStatus(false, "twilio");
       });
 
       call.on("cancel", () => {
         setCallStatus("idle");
         setActiveCall(null);
         setCallDirection(null);
+        void syncDirectCallStatus(false, "twilio");
       });
 
       call.on("reject", () => {
         setCallStatus("idle");
         setActiveCall(null);
         setCallDirection(null);
+        void syncDirectCallStatus(false, "twilio");
       });
     },
-    [],
+    [syncDirectCallStatus],
   );
 
   const normalizeDialNumber = useCallback((value) => {
@@ -300,12 +320,15 @@ export function useTwilioDevice(isAgent = false) {
           deviceRef.current.destroy();
           setIsReady(false);
           setCallDirection(null);
+          if (directCallStatusRef.current) {
+            void syncDirectCallStatus(false, "twilio");
+          }
         } catch (err) {
           console.error("Error destroying Twilio device:", err);
         }
       }
     };
-  }, [bindCallLifecycle, isAgent]);
+  }, [bindCallLifecycle, isAgent, syncDirectCallStatus]);
 
   return {
     isReady,

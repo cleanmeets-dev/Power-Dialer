@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Phone, PhoneOff, Delete } from "lucide-react";
+import { setMyDirectCallStatus } from "../services/api";
 
 // DTMF frequency pairs (Hz)
 const DTMF_FREQUENCIES = {
@@ -123,6 +124,7 @@ export default function DirectDialerPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [callMethod, setCallMethod] = useState("zoom");
   const [inCallDigits, setInCallDigits] = useState("");
+  const [isZoomCallActive, setIsZoomCallActive] = useState(false);
   const inputRef = useRef(null);
   const pressedKeysRef = useRef(new Set());
 
@@ -246,6 +248,8 @@ export default function DirectDialerPage() {
       playDialTone();
 
       if (callMethod === "zoom") {
+        await setMyDirectCallStatus(true, "zoom");
+        setIsZoomCallActive(true);
         window.open(`zoomphonecall://${phoneNumber}`, "_self");
         showNotification(`Calling ${phoneNumber} via Zoom`, "success");
         return;
@@ -275,9 +279,19 @@ export default function DirectDialerPage() {
       twilioDialer?.hangupActiveCall?.();
       showNotification("Call ended", "info");
     } else {
+      void setMyDirectCallStatus(false, "zoom");
+      setIsZoomCallActive(false);
       showNotification("End call from Zoom app", "info");
     }
   };
+
+  useEffect(() => {
+    if (callMethod !== "zoom" || !isZoomCallActive) return undefined;
+
+    return () => {
+      void setMyDirectCallStatus(false, "zoom");
+    };
+  }, [callMethod, isZoomCallActive]);
 
   const handleKeypadPress = (digit) => {
     if (isInCall && twilioDialer?.activeCall) {

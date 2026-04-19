@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
@@ -8,6 +8,7 @@ import OverviewPage from './OverviewPage';
 import LeadsPage from './LeadsPage';
 import CallLogsPage from './CallLogsPage';
 import CampaignsPage from './CampaignsPage';
+import websocketService from '../services/websocket';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -19,6 +20,27 @@ export default function DashboardPage() {
     logout();
     navigate('/login');
   };
+
+  useEffect(() => {
+    // Subscribe to appointment-created notifications and show them using the notification hook
+    const handler = (payload) => {
+      if (!payload || !payload.message) return;
+      showNotification?.(payload.message, 'success');
+    };
+
+    try {
+      websocketService.connect();
+      websocketService.on('notification:appointment-created', handler);
+    } catch (e) {
+      // ignore websocket subscription errors
+    }
+
+    return () => {
+      try {
+        websocketService.off('notification:appointment-created', handler);
+      } catch (e) {}
+    };
+  }, [showNotification]);
 
   const renderPage = () => {
     switch (activePage) {

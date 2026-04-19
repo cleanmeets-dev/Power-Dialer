@@ -465,6 +465,11 @@ export const updateAgentAvailability = async (agentId, isAvailable) => {
   return response.data.data;
 };
 
+export const setMyDirectCallStatus = async (inCall, provider = 'direct') => {
+  const response = await api.put('/auth/me/call-status', { inCall, provider });
+  return response.data.data;
+};
+
 export const checkIn = async () => {
   const response = await api.post('/auth/attendance/check-in');
   return response.data.data;

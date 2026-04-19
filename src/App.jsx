@@ -21,9 +21,11 @@ import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import MyTasksPage from "./pages/MyTasksPage";
 import EarningsHistoryPage from "./pages/EarningsHistoryPage";
 import React from "react";
+import MobileBlockWrapper from "./components/MobileBlockWrapper";
 
 function App() {
   return (
+    <MobileBlockWrapper>
     <AuthProvider>
       <Router>
         <Routes>
@@ -82,6 +84,7 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
+    </MobileBlockWrapper>
   );
 }
 

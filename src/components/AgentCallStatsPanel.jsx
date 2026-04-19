@@ -56,7 +56,7 @@ export default function AgentCallStatsPanel({
         </div>
       </div>
       {dailyCallData.windowStart && dailyCallData.windowEnd && (
-        <p className="text-xs text-slate-600 dark:text-slate-400">
+        <p className="font-bold text-white-600 dark:text-yellow-600">
           Window: {new Date(dailyCallData.windowStart).toLocaleString()} - {new Date(dailyCallData.windowEnd).toLocaleString()}
         </p>
       )}

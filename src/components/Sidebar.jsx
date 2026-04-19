@@ -104,12 +104,12 @@ function getSidebarItems(role) {
       icon: PhoneCall,
       path: "/agent/auto-dialer",
     },
-    {
-      id: "power-dialer",
-      label: "Power Dialer",
-      icon: PhoneCall,
-      path: "/agent/power-dialer",
-    },
+    // {
+    //   id: "power-dialer",
+    //   label: "Power Dialer",
+    //   icon: PhoneCall,
+    //   path: "/agent/power-dialer",
+    // },
     {
       id: "direct-dialer",
       label: "Direct Dialer",

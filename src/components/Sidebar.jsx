@@ -52,7 +52,7 @@ function getSidebarItems(role) {
       // { id: 'call-logs', label: 'Call Logs', icon: Phone, path: '/manager/call-logs' },
       {
         id: "agents",
-        label: "Agents (Live)",
+        label: "Agents Live Status",
         icon: Users,
         path: "/manager/agents",
       },

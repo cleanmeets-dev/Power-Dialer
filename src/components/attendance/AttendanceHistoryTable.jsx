@@ -10,7 +10,7 @@ export default function AttendanceHistoryTable({
   formatDurationMs,
 }) {
   return (
-    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-xl dark:shadow-slate-900/30">
+    <div className="backdrop-blur-md bg-white/70 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm">
       {agentFilter !== 'all' && (
         <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-between">
           <p className="text-sm text-cyan-700 dark:text-cyan-300 font-medium">Showing history for selected agent only</p>
@@ -27,19 +27,19 @@ export default function AttendanceHistoryTable({
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-slate-100 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400">
             <tr>
-              <th className="px-6 py-4 font-semibold">Date</th>
-              <th className="px-6 py-4 font-semibold">Agent</th>
-              <th className="px-6 py-4 font-semibold">Check In</th>
-              <th className="px-6 py-4 font-semibold">Check Out</th>
-              <th className="px-6 py-4 font-semibold">Net Worked Time</th>
-              <th className="px-6 py-4 font-semibold text-center">Breaks</th>
+              <th className="px-6 py-5 font-semibold">Date</th>
+              <th className="px-6 py-5 font-semibold">Agent</th>
+              <th className="px-6 py-5 font-semibold">Check In</th>
+              <th className="px-6 py-5 font-semibold">Check Out</th>
+              <th className="px-6 py-5 font-semibold">Net Worked Time</th>
+              <th className="px-6 py-5 font-semibold text-center">Breaks</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
+          <tbody className="divide-y divide-slate-200/50 dark:divide-slate-700/50">
             {isLoading ? (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-slate-600 dark:text-slate-400">
-                  <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <td colSpan="6" className="px-6 py-16 text-center text-slate-500 font-medium tracking-wide">
+                  <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-cyan-500 rounded-full animate-spin mx-auto mb-3"></div>
                   Loading timesheets...
                 </td>
               </tr>
@@ -51,10 +51,10 @@ export default function AttendanceHistoryTable({
               </tr>
             ) : (
               logs.map((log) => (
-                <tr key={log._id} className="hover:bg-slate-100 dark:hover:bg-slate-700/30 transition">
+                <tr key={log._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors duration-200">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900 dark:text-slate-200">{formatDateKey(log.dateKey)}</div>
-                    <div className="text-xs text-slate-500">
+                    <div className="font-bold text-slate-900 dark:text-slate-200">{formatDateKey(log.dateKey)}</div>
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
                       Status: <span className="capitalize">{log.status}</span>
                     </div>
                   </td>

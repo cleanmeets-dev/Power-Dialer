@@ -59,15 +59,13 @@ export default function OverviewPage() {
   useEffect(() => {
     if (!managerView) return;
     loadDailyCallCounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [managerView, windowHours, selectedDate]);
 
-  // Utility for max date (today, local timezone)
   const maxDate = (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
   return (
     <div className="space-y-6">
-      <DashboardHeader managerView={managerView} />
+      <DashboardHeader managerView={managerView} role={user?.role.charAt(0).toUpperCase() + user?.role.slice(1) || ""}/>
       {managerView ? (
         <AgentCallStatsPanel
           selectedDate={selectedDate}

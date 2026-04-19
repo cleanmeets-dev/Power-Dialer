@@ -4,54 +4,51 @@ export default function AgentAttendanceSummaryTable({
   onSelectAgent,
 }) {
   return (
-    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-xl dark:shadow-slate-900/30">
-      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-200">Present vs Absent By Agent</h2>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Click an agent to filter history below. Counts are shift-days only, excluding Saturday and Sunday.</p>
+    <div className="space-y-4">
+      <div className="flex flex-col">
+        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Agent Scorecards</h2>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Click an agent to filter history below. Counts are shift-days only, excluding Saturday and Sunday.</p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-slate-100 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400">
-            <tr>
-              <th className="px-6 py-4 font-semibold">Agent</th>
-              <th className="px-6 py-4 font-semibold">Present</th>
-              <th className="px-6 py-4 font-semibold">Absent</th>
-              <th className="px-6 py-4 font-semibold">Working Days</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan="4" className="px-6 py-10 text-center text-slate-600 dark:text-slate-400">No summary data available for this selection.</td>
-              </tr>
-            ) : (
-              rows.map((item) => (
-                <tr
-                  key={item.agentId}
-                  onClick={() => onSelectAgent(item.agentId)}
-                  className={`transition cursor-pointer ${selectedAgentId === item.agentId ? 'bg-cyan-100 dark:bg-cyan-900/30' : 'hover:bg-slate-100 dark:hover:bg-slate-700/30'}`}
-                  title="Click to view this agent's history"
-                >
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-slate-900 dark:text-slate-200">{item.name}</p>
-                    <p className="text-xs text-slate-500">{item.email}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-semibold">
-                      {item.presentDays}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-semibold">
-                      {item.absentDays}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-700 dark:text-slate-300 font-medium">{item.workingDays}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {rows.length === 0 ? (
+          <div className="col-span-full py-12 text-center backdrop-blur-md bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 text-slate-500 font-medium tracking-wide">
+            No summary data available for this selection.
+          </div>
+        ) : (
+          rows.map((item) => (
+            <div
+              key={item.agentId}
+              onClick={() => onSelectAgent(item.agentId)}
+              className={`relative cursor-pointer transition-all duration-300 ease-out border rounded-2xl p-5 hover:-translate-y-1 ${
+                selectedAgentId === item.agentId
+                  ? 'backdrop-blur-xl bg-cyan-50/90 dark:bg-cyan-900/40 border-cyan-400 shadow-md ring-1 ring-cyan-400/50'
+                  : 'backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-slate-200/60 dark:border-slate-700/50 shadow-sm hover:shadow-lg'
+              }`}
+            >
+              <div className="mb-5">
+                <p className="font-bold text-slate-900 dark:text-white truncate pr-2">{item.name}</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{item.email}</p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">Present</span>
+                  <span className="font-extrabold text-emerald-700 dark:text-emerald-300">{item.presentDays}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">Absent</span>
+                  <span className="font-extrabold text-rose-700 dark:text-rose-300">{item.absentDays}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-medium uppercase tracking-wider">Working Days</span>
+                <span className="font-bold text-slate-700 dark:text-slate-200">{item.workingDays}</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

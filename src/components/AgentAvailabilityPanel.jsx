@@ -1,3 +1,4 @@
+// File removed: unused component
 import { useState, useEffect } from 'react';
 import { User, Phone, CheckCircle, XCircle, Loader, AlertCircle, Circle } from 'lucide-react';
 import { updateAgentAvailability } from '../services/api';

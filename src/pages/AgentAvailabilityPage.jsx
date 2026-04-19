@@ -56,11 +56,11 @@ export default function AgentAvailabilityPage() {
       prevAgents.map((agent) =>
         agent._id === data.agentId
           ? {
-              ...agent,
-              ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
-              ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {}),
-              ...(data.attendance ? { attendance: data.attendance } : {}),
-            }
+            ...agent,
+            ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
+            ...(data.activeLead !== undefined ? { activeLead: data.activeLead } : {}),
+            ...(data.attendance ? { attendance: data.attendance } : {}),
+          }
           : agent
       )
     );
@@ -180,9 +180,9 @@ export default function AgentAvailabilityPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Agent Availability</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">Monitor and manage agent status</p>
+      <div className="backdrop-blur-md bg-white/70 dark:bg-slate-900/60 rounded-2xl shadow-lg p-6 border border-slate-200/50 dark:border-slate-700/50 flex flex-col justify-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Agent Availability</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Monitor and manage agent status in real time</p>
       </div>
 
       {/* Refresh Button */}
@@ -190,11 +190,10 @@ export default function AgentAvailabilityPage() {
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
-            isLoading
-              ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-              : 'bg-linear-to-r from-cyan-500 to-cyan-600 text-white hover:from-cyan-600 hover:to-cyan-700 shadow-lg'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${isLoading
+            ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+            : 'bg-linear-to-r from-cyan-500 to-cyan-600 text-white hover:from-cyan-600 hover:to-cyan-700 shadow-lg'
+            }`}
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           {isLoading ? 'Refreshing...' : 'Refresh'}
@@ -202,38 +201,23 @@ export default function AgentAvailabilityPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-3">
-            <Users className="w-5 h-5 text-cyan-700 dark:text-cyan-400" />
-            <span className="text-slate-600 dark:text-slate-400 text-sm">Total Agents</span>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Agents', value: stats.total, icon: Users, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-500/10' },
+          { label: 'Available', value: stats.available, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: 'Busy', value: stats.busy, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        ].map((stat, idx) => (
+          <div key={idx} className="relative backdrop-blur-md bg-white/60 dark:bg-slate-800/60 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/50 p-6 overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+            <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-20 ${stat.bg} group-hover:scale-150 transition-transform duration-500`}></div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-2 rounded-xl ${stat.bg} ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
+              <span className="text-slate-600 dark:text-slate-400 font-medium text-sm">{stat.label}</span>
+            </div>
+            <p className={`text-4xl font-extrabold ${stat.color} drop-shadow-xs`}>{stat.value}</p>
           </div>
-          <p className="text-3xl font-bold text-cyan-700 dark:text-cyan-400">{stats.total}</p>
-        </div>
-
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-3">
-            <CheckCircle className="w-5 h-5 text-emerald-400" />
-            <span className="text-slate-600 dark:text-slate-400 text-sm">Available</span>
-          </div>
-          <p className="text-3xl font-bold text-emerald-400">{stats.available}</p>
-        </div>
-
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-3">
-            <XCircle className="w-5 h-5 text-rose-400" />
-            <span className="text-slate-600 dark:text-slate-400 text-sm">Busy</span>
-          </div>
-          <p className="text-3xl font-bold text-rose-400">{stats.busy}</p>
-        </div>
-
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-3">
-            <Phone className="w-5 h-5 text-blue-400" />
-            <span className="text-slate-600 dark:text-slate-400 text-sm">Calls Today</span>
-          </div>
-          <p className="text-3xl font-bold text-blue-400">{stats.totalCallsToday}</p>
-        </div>
+        ))}
       </div>
 
       {/* Error Alert */}
@@ -248,148 +232,138 @@ export default function AgentAvailabilityPage() {
 
       {/* Loading State */}
       {isLoading && agents.length === 0 && (
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-8 border border-slate-200 dark:border-slate-700 text-center">
+        <div className="backdrop-blur-md bg-white/40 dark:bg-slate-800/40 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 text-center py-16">
           <div className="flex justify-center mb-4">
-            <div className="w-8 h-8 border-4 border-slate-300 dark:border-slate-600 border-t-cyan-400 rounded-full animate-spin"></div>
+            <div className="w-10 h-10 border-4 border-slate-200 dark:border-slate-700 border-t-cyan-500 rounded-full animate-spin"></div>
           </div>
-          <p className="text-slate-600 dark:text-slate-400">Loading agents...</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium tracking-wide">Initializing secure sockets...</p>
         </div>
       )}
 
       {/* Agents Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {agents.map((agent) => (
-          <div
-            key={agent._id}
-            className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 p-6 hover:border-cyan-500/50 dark:hover:border-cyan-500/50 transition"
-          >
-            {/* Agent Header */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="bg-linear-to-r from-cyan-500 to-blue-500 rounded-full p-3 shrink-0">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-900 dark:text-slate-200 truncate">{agent.name}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{agent.email}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {agents.map((agent) => {
+          const isActuallyAvailable = agent.isAvailable && !agent.attendance?.onBreak && !agent.activeLead && agent.attendance?.isCheckedIn;
+
+          return (
+            <div
+              key={agent._id}
+              className="group relative backdrop-blur-md bg-white/70 dark:bg-slate-800/80 rounded-2xl shadow-sm hover:shadow-xl border border-slate-200/60 dark:border-slate-700/50 flex flex-col hover:-translate-y-1 transition-all duration-300 ease-out p-6"
+            >
+              {/* Agent Header */}
+              <div className="flex items-start justify-between mb-5">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="bg-linear-to-br from-cyan-500 to-blue-600 rounded-2xl p-3 shrink-0 shadow-inner group-hover:rotate-3 transition-transform duration-300">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-slate-900 dark:text-white truncate">{agent.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{agent.email}</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Availability Status */}
-            <div className="mb-4">
-              <span
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border ${getAvailabilityColor(
-                  agent
-                )}`}
-              >
-                {getAvailabilityIcon(agent)}
-                {!agent.attendance || !agent.attendance.isCheckedIn
-                  ? 'Checked Out'
-                  : agent.activeLead
-                    ? 'On Call'
-                    : agent.attendance.onBreak
-                      ? 'On Break'
-                      : agent.isAvailable
-                        ? 'Available'
-                        : 'Busy'}
-              </span>
-            </div>
-
-            <div className="mb-4 border-t border-slate-200 dark:border-slate-600 pt-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Calls Today
+              {/* Availability Status */}
+              <div className="mb-5">
+                <span
+                  className={`relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase border ${getAvailabilityColor(
+                    agent
+                  )}`}
+                >
+                  {getAvailabilityIcon(agent)}
+                  {isActuallyAvailable && (
+                    <span className="absolute flex h-2.5 w-2.5 -right-1 -top-1">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                    </span>
+                  )}
+                  {!agent.attendance || !agent.attendance.isCheckedIn
+                    ? 'Checked Out'
+                    : agent.activeLead
+                      ? 'On Call'
+                      : agent.attendance.onBreak
+                        ? 'On Break'
+                        : agent.isAvailable
+                          ? 'Available'
+                          : 'Busy'}
                 </span>
-                <span className="text-slate-900 dark:text-slate-200 font-semibold">{agent.callsToday || 0}</span>
               </div>
-            </div>
 
-            {/* Stats */}
-            {/* <div className="space-y-2 mb-4 pb-4 border-b border-slate-200 dark:border-slate-600">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Calls Handled
-                </span>
-                <span className="text-slate-900 dark:text-slate-200 font-semibold">{agent.callsHandled || 0}</span>
-              </div>
-              {agent.activeLead && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Active Call
-                  </span>
-                  <span className="text-cyan-700 dark:text-cyan-400 font-semibold">Yes</span>
-                </div>
-              )}
-            </div> */}
-
-            {/* Toggle Button */}
-            {/* <div className="space-y-2">
-              <button
-                onClick={() => handleToggleAvailability(agent)}
-                disabled={loadingAgentId === agent._id || !agent.attendance || !agent.attendance.isCheckedIn || Boolean(agent.activeLead)}
-                className={`w-full py-2 rounded-lg font-semibold transition text-sm ${
-                  agent.isAvailable
-                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-500'
-                    : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-500'
-                }`}
-              >
-                {loadingAgentId === agent._id ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                    Updating...
-                  </span>
-                ) : agent.isAvailable ? (
-                  'Mark as Busy'
-                ) : (
-                  'Mark as Available'
+              {/* Attendance Details */}
+              <div className="mt-auto border-t border-slate-200/60 dark:border-slate-700/50 pt-4 space-y-2.5">
+                {agent.attendance?.firstCallAt && (
+                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                    <span className="text-emerald-600 dark:text-emerald-500 font-medium flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5" />
+                      First Call
+                    </span>
+                    <span className="text-slate-800 dark:text-slate-200 font-bold">
+                      {new Date(agent.attendance.firstCallAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
                 )}
-              </button>
+                
+                {agent.attendance?.lastCallAt && (
+                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                    <span className="text-cyan-600 dark:text-cyan-500 font-medium flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5" />
+                      Last Call
+                    </span>
+                    <span className="text-slate-800 dark:text-slate-200 font-bold">
+                      {new Date(agent.attendance.lastCallAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
 
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleAttendanceAction(agent, 'check-in')}
-                  disabled={loadingAgentId === agent._id || Boolean(agent.activeLead) || Boolean(agent.attendance?.isCheckedIn)}
-                  className="py-2 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 disabled:bg-slate-700 disabled:text-slate-500"
-                >
-                  Check In
-                </button>
-                <button
-                  onClick={() => handleAttendanceAction(agent, 'check-out')}
-                  disabled={loadingAgentId === agent._id || Boolean(agent.activeLead) || !Boolean(agent.attendance?.isCheckedIn)}
-                  className="py-2 rounded-lg text-xs font-semibold bg-slate-500/20 text-slate-700 dark:text-slate-200 hover:bg-slate-500/30 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500"
-                >
-                  Check Out
-                </button>
-                <button
-                  onClick={() => handleAttendanceAction(agent, 'break-start')}
-                  disabled={loadingAgentId === agent._id || Boolean(agent.activeLead) || !Boolean(agent.attendance?.isCheckedIn) || Boolean(agent.attendance?.onBreak)}
-                  className="py-2 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500"
-                >
-                  Start Break
-                </button>
-                <button
-                  onClick={() => handleAttendanceAction(agent, 'break-end')}
-                  disabled={loadingAgentId === agent._id || !Boolean(agent.attendance?.onBreak)}
-                  className="py-2 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/30 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:text-slate-500"
-                >
-                  End Break
-                </button>
+                {agent.attendance?.breakStartedAt && (
+                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
+                    <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      Break Started
+                    </span>
+                    <span className="text-amber-700 dark:text-amber-400 font-bold">
+                      {new Date(agent.attendance.breakStartedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+
+                {agent.attendance?.breakEndedAt && (
+                  <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2 mb-0">
+                    <span className="text-indigo-600 dark:text-indigo-500 font-medium flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      Break Ended
+                    </span>
+                    <span className="text-indigo-700 dark:text-indigo-400 font-bold">
+                      {new Date(agent.attendance.breakEndedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Fallbacks if there are no calls or breaks yet */}
+                {!agent.attendance?.firstCallAt && !agent.attendance?.breakStartedAt && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      Check In
+                    </span>
+                    <span className="text-slate-800 dark:text-slate-200 font-bold">
+                      {agent.attendance?.checkedInAt
+                        ? new Date(agent.attendance.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : '—'}
+                    </span>
+                  </div>
+                )}
               </div>
-            </div> */}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Empty State */}
       {!isLoading && agents.length === 0 && (
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 text-center py-12">
-          <Users className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-          <p className="text-slate-600 dark:text-slate-400">No agents found</p>
-          <p className="text-slate-500 text-sm">Agents will appear here once they join</p>
+        <div className="backdrop-blur-md bg-white/40 dark:bg-slate-800/40 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 text-center py-20">
+          <Users className="w-14 h-14 text-slate-400 mx-auto mb-4" />
+          <p className="text-xl font-bold text-slate-700 dark:text-slate-300">No agents online</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Wait for agents to connect or clear filters.</p>
         </div>
       )}
     </div>

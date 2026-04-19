@@ -1,17 +1,44 @@
 import { useEffect, useState } from "react";
-import { LogOut, Users, Menu, Moon, Sun, Zap } from "lucide-react";
+import {
+  LogOut,
+  Users,
+  Menu,
+  Moon,
+  Sun,
+  Zap,
+  PauseCircle,
+  PlayCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { isManager as checkIsManager } from "../utils/roleUtils";
 import AgentListModal from "./modals/AgentListModal.jsx";
-import api, { getPowerHourStatus, startPowerHour, stopPowerHour } from "../services/api.js";
+import api, {
+  getPowerHourStatus,
+  startPowerHour,
+  stopPowerHour,
+  startBreak,
+  endBreak,
+} from "../services/api.js";
 
 const POWER_HOUR_DURATION_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 240, 300];
 
+function formatDurationOption(minutes) {
+  if (minutes < 60) return `${minutes} min`;
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (mins === 0) return `${hrs} hr${hrs > 1 ? "s" : ""}`;
+  return `${hrs} hr${hrs > 1 ? "s" : ""} ${mins} min`;
+}
+
 const formatRemainingTime = (totalSeconds) => {
   const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
-  const minutes = Math.floor(safeSeconds / 60);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 };
 
@@ -22,7 +49,7 @@ export default function Navbar({
   onToggleSidebar,
 }) {
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useAuth();
+  const { theme, toggleTheme, hydrateAuth } = useAuth();
   const [powerHourActive, setPowerHourActive] = useState(false);
   const [isStartingPowerHour, setIsStartingPowerHour] = useState(false);
   const [isStoppingPowerHour, setIsStoppingPowerHour] = useState(false);
@@ -30,20 +57,27 @@ export default function Navbar({
   const [powerHourEndsAt, setPowerHourEndsAt] = useState(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const isManager = checkIsManager(user?.role);
+  const isAgent = ["caller-agent", "closer-agent"].includes(user?.role);
+  const [isAgentBreakLoading, setIsAgentBreakLoading] = useState(false);
+  const [breakTimer, setBreakTimer] = useState(0);
 
   useEffect(() => {
     const loadPowerHourStatus = async () => {
-      if (!isManager) return;
       try {
         const status = await getPowerHourStatus();
         const isActive = Boolean(status?.isActive);
-        const endsAt = status?.session?.endsAt ? new Date(status.session.endsAt) : null;
+        const endsAt = status?.session?.endsAt
+          ? new Date(status.session.endsAt)
+          : null;
 
         setPowerHourActive(isActive);
         setPowerHourEndsAt(isActive ? endsAt : null);
 
         if (isActive && endsAt) {
-          const nextRemaining = Math.max(0, Math.floor((endsAt.getTime() - Date.now()) / 1000));
+          const nextRemaining = Math.max(
+            0,
+            Math.floor((endsAt.getTime() - Date.now()) / 1000),
+          );
           setRemainingSeconds(nextRemaining);
         } else {
           setRemainingSeconds(0);
@@ -61,7 +95,7 @@ export default function Navbar({
     // Keep navbar timer in sync with backend session state.
     const statusPollId = setInterval(loadPowerHourStatus, 30000);
     return () => clearInterval(statusPollId);
-  }, [isManager]);
+  }, []);
 
   useEffect(() => {
     if (!powerHourActive || !powerHourEndsAt) {
@@ -70,7 +104,10 @@ export default function Navbar({
     }
 
     const tick = () => {
-      const nextRemaining = Math.max(0, Math.floor((powerHourEndsAt.getTime() - Date.now()) / 1000));
+      const nextRemaining = Math.max(
+        0,
+        Math.floor((powerHourEndsAt.getTime() - Date.now()) / 1000),
+      );
       setRemainingSeconds(nextRemaining);
       if (nextRemaining === 0) {
         setPowerHourActive(false);
@@ -82,6 +119,52 @@ export default function Navbar({
     const timerId = setInterval(tick, 1000);
     return () => clearInterval(timerId);
   }, [powerHourActive, powerHourEndsAt]);
+
+  useEffect(() => {
+    if (
+      !isAgent ||
+      !user?.attendance?.onBreak ||
+      !user?.attendance?.breakStartedAt
+    ) {
+      setBreakTimer(0);
+      return;
+    }
+
+    const breakStart = new Date(user.attendance.breakStartedAt).getTime();
+
+    const tick = () => {
+      const elapsedSeconds = Math.floor((Date.now() - breakStart) / 1000);
+      const remaining = Math.max(0, 60 * 60 - elapsedSeconds);
+      setBreakTimer(remaining);
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [isAgent, user?.attendance]);
+
+  const handleToggleBreak = async () => {
+    try {
+      setIsAgentBreakLoading(true);
+      if (user?.attendance?.onBreak) {
+        await endBreak();
+        onShowNotification?.("Break ended successfully", "success");
+      } else {
+        await startBreak();
+        onShowNotification?.(
+          "Break started. 60 minute timer active.",
+          "success",
+        );
+      }
+      await hydrateAuth();
+    } catch (err) {
+      const message =
+        err?.response?.data?.error || "Failed to update break status";
+      onShowNotification?.(message, "error");
+    } finally {
+      setIsAgentBreakLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     onLogout();
@@ -96,12 +179,19 @@ export default function Navbar({
       const endsAt = session?.endsAt ? new Date(session.endsAt) : null;
       setPowerHourEndsAt(endsAt);
       if (endsAt) {
-        const nextRemaining = Math.max(0, Math.floor((endsAt.getTime() - Date.now()) / 1000));
+        const nextRemaining = Math.max(
+          0,
+          Math.floor((endsAt.getTime() - Date.now()) / 1000),
+        );
         setRemainingSeconds(nextRemaining);
       }
-      onShowNotification?.(`Power Hour started for all agents (${selectedPowerHourMinutes} min)`, "success");
+      onShowNotification?.(
+        `Power Hour started for all agents (${selectedPowerHourMinutes} min)`,
+        "success",
+      );
     } catch (error) {
-      const message = error?.response?.data?.error || "Failed to start Power Hour";
+      const message =
+        error?.response?.data?.error || "Failed to start Power Hour";
       onShowNotification?.(message, "error");
     } finally {
       setIsStartingPowerHour(false);
@@ -117,7 +207,8 @@ export default function Navbar({
       setRemainingSeconds(0);
       onShowNotification?.("Power Hour ended manually", "success");
     } catch (error) {
-      const message = error?.response?.data?.error || "Failed to stop Power Hour";
+      const message =
+        error?.response?.data?.error || "Failed to stop Power Hour";
       onShowNotification?.(message, "error");
     } finally {
       setIsStoppingPowerHour(false);
@@ -153,22 +244,76 @@ export default function Navbar({
                   className="h-11 w-auto transform-gpu scale-200 origin-left"
                 />
               )}
-         
             </div>
 
-            {/* Manager Actions & User Menu */}
+            {/* Actions & User Menu */}
             <div className="flex items-center gap-2 ml-auto">
+              {isAgent && user?.attendance?.isCheckedIn && (
+                <div className="mr-2">
+                  {user.attendance.onBreak ? (
+                    <div className="flex items-center gap-2">
+                      <div className="px-3 py-1.5 rounded-lg bg-rose-900/40 border border-rose-500/50 text-rose-400 text-sm font-bold tracking-wide shadow-[0_0_10px_rgba(244,63,94,0.3)]">
+                        Break: {formatRemainingTime(breakTimer)}
+                      </div>
+                      <button
+                        onClick={handleToggleBreak}
+                        disabled={isAgentBreakLoading}
+                        className="flex items-center gap-2 px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition text-sm font-bold shadow-md disabled:opacity-50"
+                      >
+                        <PlayCircle className="w-5 h-5" />
+                        {isAgentBreakLoading ? "..." : "End Break"}
+                      </button>
+                    </div>
+                  ) : (
+                    (user.attendance.breaksTaken || 0) < 1 && (
+                      <button
+                        onClick={handleToggleBreak}
+                        disabled={isAgentBreakLoading}
+                        className="flex items-center gap-2 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50"
+                      >
+                        <PauseCircle className="w-5 h-5" />
+                        {isAgentBreakLoading ? "Starting..." : "Take Break"}
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+
+              {powerHourActive && (
+                <div
+                  className="
+      px-3 py-2 rounded-lg text-sm font-semibold mr-2
+      bg-gradient-to-r from-amber-500/20 to-orange-500/20
+      text-amber-700 dark:text-amber-300
+      border border-amber-400/30
+      shadow-[0_0_15px_rgba(251,191,36,0.25)]
+      animate-powerPop
+    "
+                  title="Power Hour countdown"
+                >
+                  <span className="animate-pulseHotness">
+                    🔥 Power Hour Active:{" "}
+                    {formatRemainingTime(remainingSeconds)}
+                  </span>
+                </div>
+              )}
+
+              {/* Power Hour controls only for managers */}
               {isManager && (
                 <>
-                                    <select
+                  <select
                     value={selectedPowerHourMinutes}
-                    onChange={(event) => setSelectedPowerHourMinutes(Number(event.target.value))}
+                    onChange={(event) =>
+                      setSelectedPowerHourMinutes(Number(event.target.value))
+                    }
                     disabled={powerHourActive || isStartingPowerHour}
                     className="px-2 py-2 rounded-lg border border-amber-300/60 dark:border-amber-400/30 bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 text-sm disabled:opacity-50"
                     title="Select Power Hour duration"
                   >
                     {POWER_HOUR_DURATION_OPTIONS.map((minutes) => (
-                      <option key={minutes} value={minutes}>{minutes} min</option>
+                      <option key={minutes} value={minutes}>
+                        {formatDurationOption(minutes)}
+                      </option>
                     ))}
                   </select>
                   {!powerHourActive && (
@@ -180,7 +325,9 @@ export default function Navbar({
                     >
                       <Zap className="w-4 h-4" />
                       <span className="hidden sm:inline">
-                        {isStartingPowerHour ? "Starting..." : "Start Power Hour"}
+                        {isStartingPowerHour
+                          ? "Starting..."
+                          : "Start Power Hour"}
                       </span>
                     </button>
                   )}
@@ -195,14 +342,6 @@ export default function Navbar({
                         {isStoppingPowerHour ? "Ending..." : "End Power Hour"}
                       </span>
                     </button>
-                  )}
-                  {powerHourActive && (
-                    <div
-                      className="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-sm font-semibold"
-                      title="Power Hour countdown"
-                    >
-                      {formatRemainingTime(remainingSeconds)}
-                    </div>
                   )}
                 </>
               )}
@@ -243,7 +382,6 @@ export default function Navbar({
           </div>
         </div>
       </nav>
-
-      </>
+    </>
   );
 }

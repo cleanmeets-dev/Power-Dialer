@@ -12,7 +12,6 @@ import CampaignsPage from "./pages/CampaignsPage";
 import AgentAvailabilityPage from "./pages/AgentAvailabilityPage";
 import AttendanceHistoryPage from "./pages/AttendanceHistoryPage";
 import ScraperPage from "./pages/ScraperPage";
-import MyAvailabilityPage from "./pages/MyAvailabilityPage";
 import AutoDialerPage from "./pages/AutoDialerPage";
 import DirectDialerPage from "./pages/DirectDialerPage";
 import PowerDialerPage from "./pages/PowerDialerPage";

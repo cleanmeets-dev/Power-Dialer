@@ -303,6 +303,11 @@ export const updateQualification = async (id, updates) => {
   return response.data.data;
 };
 
+export const getAllowedQualifications = async (leadId) => {
+  const response = await api.get(`/caller-leads/${leadId}/allowed-qualifications`);
+  return response.data.data;
+};
+
 // ==================== Power Hour ====================
 
 export const getPowerHourStatus = async () => {
@@ -588,6 +593,49 @@ export const importScrapeSessionResults = async (sessionId, payload) => {
 export const deleteScrapeSession = async (sessionId) => {
   const response = await api.delete(`/scraper/sessions/${sessionId}`);
   return response.data;
+};
+
+// ==================== Earnings ====================
+
+/**
+ * Get agent earnings summary
+ * @param {string} agentId
+ * @param {string} [timeframe] - all | month | week | today
+ * @param {string} [campaignId]
+ */
+export const getAgentEarningsSummary = async ({ agentId, timeframe = "all", campaignId }) => {
+  const params = new URLSearchParams();
+  if (timeframe) params.append("timeframe", timeframe);
+  if (campaignId) params.append("campaignId", campaignId);
+  const response = await api.get(`/earnings/summary/${agentId}?${params.toString()}`);
+  return response.data.data;
+};
+
+/**
+ * Get agent earnings leaderboard
+ * @param {string} [campaignId]
+ * @param {string} [timeframe]
+ * @param {number} [limit]
+ */
+export const getAgentEarningsLeaderboard = async ({ campaignId, timeframe = "all", limit = 10 } = {}) => {
+  const params = new URLSearchParams();
+  if (campaignId) params.append("campaignId", campaignId);
+  if (timeframe) params.append("timeframe", timeframe);
+  if (limit) params.append("limit", limit);
+  const response = await api.get(`/earnings/leaderboard?${params.toString()}`);
+  return response.data.data;
+};
+
+/**
+ * Get agent qualification breakdown
+ * @param {string} agentId
+ * @param {string} [campaignId]
+ */
+export const getQualificationBreakdown = async ({ agentId, campaignId }) => {
+  const params = new URLSearchParams();
+  if (campaignId) params.append("campaignId", campaignId);
+  const response = await api.get(`/earnings/breakdown/${agentId}?${params.toString()}`);
+  return response.data.data;
 };
 
 export default api;

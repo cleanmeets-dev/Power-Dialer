@@ -6,6 +6,7 @@ import { getDailyAgentCallCounts } from '../services/api';
 import useWebSocket from '../hooks/useWebSocket';
 import DashboardHeader from '../components/DashboardHeader';
 import AgentCallStatsPanel from '../components/AgentCallStatsPanel';
+import AgentEarningsDashboard from '../components/AgentEarningsDashboard';
 
 export default function OverviewPage() {
   const { showNotification } = useOutletContext();
@@ -78,11 +79,7 @@ export default function OverviewPage() {
           maxDate={maxDate}
         />
       ) : (
-        <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-600 dark:text-slate-400 text-center py-10">
-            Welcome to your agent dashboard! Select an option from the sidebar to begin dialing leads.
-          </p>
-        </div>
+        <AgentEarningsDashboard />
       )}
     </div>
   );

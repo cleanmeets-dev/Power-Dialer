@@ -291,6 +291,19 @@ export default function FollowupPage() {
     return colors[disposition] || "bg-gray-50 text-gray-700";
   };
 
+  const getAppointmentColor = (appointmentStatus) => {
+    const colors = {
+      "qualified-level-1": "bg-blue-700 text-blue-50",
+      "qualified-level-2": "bg-indigo-700 text-indigo-50",
+      "qualified-level-3": "bg-emerald-800 text-emerald-50",
+      disqualified: "bg-red-700 text-red-50",
+      "in-process": "bg-yellow-700 text-yellow-50",
+      reschedule: "bg-orange-700 text-orange-50",
+      onhold: "bg-gray-500 text-gray-50",
+    };
+    return colors[appointmentStatus] || "bg-gray-50 text-gray-700";
+  };
+
   const totalPages = Math.ceil(total / pageSize);
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, total);
@@ -509,14 +522,17 @@ export default function FollowupPage() {
                         Disposition
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                        Appointment Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         Address
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         Last Dialed
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                      {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         Follow-Up Date (If any)
-                      </th>
+                      </th> */}
                       <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         Action
                       </th>
@@ -566,6 +582,17 @@ export default function FollowupPage() {
                               .toUpperCase() || "—"}
                           </span>
                         </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getAppointmentColor(
+                              lead.appointmentStatus,
+                            )}`}
+                          >
+                            {lead.appointmentStatus
+                              ?.replace("-", " ")
+                              .toUpperCase() || "—"}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                           <span className="line-clamp-2">
                             {lead.businessAddress || lead.address || "—"}
@@ -581,7 +608,7 @@ export default function FollowupPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        {/* <td className="px-4 py-3 text-sm">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-amber-500" />
                             <span className="text-slate-700 dark:text-slate-300">
@@ -590,7 +617,7 @@ export default function FollowupPage() {
                                 : "—"}
                             </span>
                           </div>
-                        </td>
+                        </td> */}
                         <td className="px-4 py-3 text-center">
                           <button
                             onClick={() => handleViewLead(lead._id)}
@@ -658,9 +685,7 @@ export default function FollowupPage() {
         </>
       )}
 
-      {!selectedCampaignId && (
-        <SelectCampaignMsg/>
-      )}
+      {!selectedCampaignId && <SelectCampaignMsg />}
 
       <LeadDetailModal
         isOpen={showDetailModal}

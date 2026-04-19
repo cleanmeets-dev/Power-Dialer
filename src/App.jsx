@@ -1,8 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LeadsProvider } from "./context/LeadsContext";
 import { AuthProvider } from "./context/AuthContext";
 import { getRoleHomeRoute, ROLES } from "./utils/roleUtils";
@@ -53,6 +49,7 @@ function App() {
             <Route path="agents" element={<AgentAvailabilityPage />} />
             <Route path="user-management" element={<AgentManagementPage />} />
             <Route path="attendance" element={<AttendanceHistoryPage />} />
+            <Route path="direct-dialer" element={<DirectDialerPage />} />
           </Route>
 
           <Route

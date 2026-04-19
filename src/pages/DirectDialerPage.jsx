@@ -9,7 +9,7 @@ export default function DirectDialerPage() {
   const { showNotification, twilioDialer } = useOutletContext();
   const [phoneNumber, setPhoneNumber] = useState("");
   // const [isDialing, setIsDialing] = useState(false);
-  const [callMethod, setCallMethod] = useState("twilio"); // "twilio" or "zoom"
+  const [callMethod, setCallMethod] = useState("zoom"); // "twilio" or "zoom"
   const [inCallDigits, setInCallDigits] = useState("");
   const isDialing =
     twilioDialer?.callStatus === "ringing" ||
@@ -24,7 +24,15 @@ export default function DirectDialerPage() {
   // }, [isDialing]);
 
   const statusText = useMemo(() => {
+    if (twilioDialer?.error) {
+      return twilioDialer.error;
+    }
+
     if (callMethod === "zoom") return "Zoom handles call externally";
+
+    if (twilioDialer?.isInitializing) {
+      return "Connecting to Twilio...";
+    }
 
     switch (twilioDialer?.callStatus) {
       case "ringing":
@@ -32,9 +40,15 @@ export default function DirectDialerPage() {
       case "connected":
         return "In Call";
       default:
-        return "Ready to dial";
+        return twilioDialer?.isReady ? "Ready to dial" : "Twilio not connected";
     }
-  }, [twilioDialer?.callStatus, callMethod]);
+  }, [
+    twilioDialer?.error,
+    twilioDialer?.isInitializing,
+    twilioDialer?.callStatus,
+    twilioDialer?.isReady,
+    callMethod,
+  ]);
 
   const appendDigit = (digit) => {
     setPhoneNumber((prev) => `${prev}${digit}`.slice(0, 20));
@@ -79,7 +93,7 @@ export default function DirectDialerPage() {
       if (callMethod === "zoom") {
         window.open(`zoomphonecall://${phoneNumber}`, "_self");
         showNotification(`Calling ${phoneNumber} via Zoom`, "success");
-        return; // 🚀 IMPORTANT
+        return;
       }
 
       if (typeof twilioDialer?.placeOutgoingCall === "function") {
@@ -136,6 +150,7 @@ export default function DirectDialerPage() {
             onChange={(e) => setCallMethod(e.target.value)}
             className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
           >
+            <option value="">Select Any Method</option>
             <option value="twilio">Twilio</option>
             <option value="zoom">Zoom</option>
           </select>
@@ -144,7 +159,19 @@ export default function DirectDialerPage() {
           <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
             Status
           </p>
-          <p className="text-sm font-semibold text-cyan-300">{statusText}</p>
+          <p
+            className={`text-sm font-semibold ${
+              twilioDialer?.error
+                ? "text-red-400"
+                : callMethod === "zoom"
+                  ? "text-cyan-400"
+                  : twilioDialer?.callStatus === "connected"
+                    ? "text-green-400"
+                    : "text-slate-400"
+            }`}
+          >
+            {statusText}
+          </p>
         </div>
 
         <label className="block text-sm text-slate-700 dark:text-slate-300 mb-2">
@@ -153,7 +180,7 @@ export default function DirectDialerPage() {
         <input
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(formatDisplayNumber(e.target.value))}
-          onKeyDown={e => {
+          onKeyDown={(e) => {
             if (e.key === "Enter" && phoneNumber && !isDialing) {
               handleDial();
             }
@@ -197,10 +224,16 @@ export default function DirectDialerPage() {
           <button
             onClick={handleDial}
             // disabled={!phoneNumber || isDialing}
+            // disabled={
+            //   !phoneNumber ||
+            //   isDialing ||
+            //   (callMethod === "twilio" && !twilioDialer?.isReady)
+            // }
             disabled={
               !phoneNumber ||
               isDialing ||
-              (callMethod === "twilio" && !twilioDialer?.isReady)
+              (callMethod === "twilio" &&
+                (!twilioDialer?.isReady || twilioDialer?.error))
             }
             type="button"
             className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:from-emerald-600 hover:to-teal-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:shadow-none"

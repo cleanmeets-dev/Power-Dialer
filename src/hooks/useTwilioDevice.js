@@ -81,7 +81,7 @@ export function useTwilioDevice(isAgent = false) {
         // const call = await device.connect({ params: { To: to, to } });
         const call = await deviceRef.current.connect({
           params: {
-            To: to, 
+            To: to,
             agentIdentity: user?._id?.toString(),
           },
         });
@@ -164,10 +164,42 @@ export function useTwilioDevice(isAgent = false) {
         });
 
         // Device error (e.g., network issues)
+        // device.on("error", (err) => {
+        //   console.error("❌ Twilio Device error:", err.message);
+        //   if (isMounted) {
+        //     setError(err.message || "Device error occurred");
+        //   }
+        // });
+
         device.on("error", (err) => {
-          console.error("❌ Twilio Device error:", err.message);
+          let errMsg = "";
+
+          if (typeof err === "string") {
+            errMsg = err;
+          } else if (err?.message) {
+            errMsg = err.message;
+          } else {
+            try {
+              errMsg = JSON.stringify(err);
+            } catch {
+              errMsg = "Unknown device error";
+            }
+          }
+
+          console.error("❌ Twilio Device error:", errMsg);
+
+          if (errMsg.includes("AccessTokenInvalid")) {
+            errMsg =
+              "Twilio authentication failed (Account suspended or token invalid)";
+          } else if (errMsg.includes("expired")) {
+            errMsg = "Session expired. Reconnecting...";
+          } else if (errMsg.includes("network")) {
+            errMsg = "Network issue. Check your internet connection.";
+          }
+
           if (isMounted) {
-            setError(err.message || "Device error occurred");
+            setError(errMsg);
+            setIsReady(false);
           }
         });
 
@@ -221,9 +253,29 @@ export function useTwilioDevice(isAgent = false) {
           ); // 40 minutes
         }
       } catch (err) {
-        console.error("Failed to initialize Twilio Device:", err.message);
+        // console.error("Failed to initialize Twilio Device:", err.message);
+        // if (isMounted) {
+        //   setError(err.message || "Failed to initialize Twilio");
+        //   setIsReady(false);
+        // }
+        let errMsg = "";
+
+        if (typeof err === "string") {
+          errMsg = err;
+        } else if (err?.message) {
+          errMsg = err.message;
+        } else {
+          try {
+            errMsg = JSON.stringify(err);
+          } catch {
+            errMsg = "Failed to initialize Twilio";
+          }
+        }
+
+        console.error("Failed to initialize Twilio Device:", errMsg);
+
         if (isMounted) {
-          setError(err.message || "Failed to initialize Twilio");
+          setError(errMsg);
           setIsReady(false);
         }
       } finally {

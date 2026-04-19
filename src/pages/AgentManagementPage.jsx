@@ -213,16 +213,18 @@ export default function AgentManagementPage() {
 
   return (
     <div className="space-y-6">
-      <AgentManagementHeader
-        user={user}
-        onCreate={() => setShowCreateModal(true)}
-        search={search}
-        setSearch={setSearch}
-        roleFilter={roleFilter}
-        setRoleFilter={setRoleFilter}
-        availableRoles={availableRoles}
-        getRoleLabel={getRoleLabel}
-      />
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+        <AgentManagementHeader
+          user={user}
+          onCreate={() => setShowCreateModal(true)}
+          search={search}
+          setSearch={setSearch}
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
+          availableRoles={availableRoles}
+          getRoleLabel={getRoleLabel}
+        />
+      </div>
 
       <SuccessMessage message={successMessage} />
 

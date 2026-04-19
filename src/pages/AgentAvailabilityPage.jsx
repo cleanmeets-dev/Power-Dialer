@@ -190,9 +190,16 @@ export default function AgentAvailabilityPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="backdrop-blur-md bg-white/70 dark:bg-slate-900/60 rounded-2xl shadow-lg p-6 border border-slate-200/50 dark:border-slate-700/50 flex flex-col justify-center">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Agent Availability</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Monitor and manage agent status in real time</p>
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="bg-linear-to-r from-cyan-500 to-blue-500 p-3 rounded-lg">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Agent Availability</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Monitor and manage agent status in real time</p>
+          </div>
+        </div>
       </div>
 
       {/* Search and Refresh Actions */}

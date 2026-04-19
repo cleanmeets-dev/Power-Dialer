@@ -326,21 +326,17 @@ export default function FollowupPage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-linear-to-r from-cyan-50 via-sky-50 to-slate-100 p-6 shadow-xl dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-500/20" />
-        <div className="pointer-events-none absolute -bottom-10 left-1/3 h-32 w-32 rounded-full bg-indigo-300/20 blur-2xl dark:bg-indigo-500/20" />
-
-        <div className="relative flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Lead Followups
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              Track call outcomes, assignments, and next actions in one place.
-            </p>
+    <div className="flex flex-col gap-6 ">
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="bg-linear-to-r from-cyan-500 to-blue-500 p-3 rounded-lg">
+            <Layers3 className="w-6 h-6 text-white" />
           </div>
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-200">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Lead Followups</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Track call outcomes, assignments, and next actions in one place.</p>
+          </div>
+          <div className="ml-auto inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-200">
             <Layers3 className="h-4 w-4" />
             {stats.scopedTotal} total followup leads
           </div>

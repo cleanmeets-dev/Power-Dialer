@@ -1,15 +1,21 @@
 import React from "react";
+import { Users } from "lucide-react";
 
 export default function AgentManagementHeader({ user, onCreate, search, setSearch, roleFilter, setRoleFilter, availableRoles, getRoleLabel }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Management</h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">
-          {user?.role === 'admin'
-            ? 'Manage all users: administrators, managers, and agents'
-            : 'Manage agents and clients'}
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="bg-linear-to-r from-cyan-500 to-blue-500 p-3 rounded-lg">
+          <Users className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Management</h1>
+          <p className="text-slate-600 dark:text-slate-400">
+            {user?.role === 'admin'
+              ? 'Manage all users: administrators, managers, and agents'
+              : 'Manage agents and clients'}
+          </p>
+        </div>
       </div>
       <div className="flex flex-col md:flex-row gap-2 md:items-center">
         <input

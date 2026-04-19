@@ -106,45 +106,50 @@ export default function EarningsHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Earnings History</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {isManagerUser
-              ? "Monitor and export earnings metrics across all campaigns."
-              : "Review your personal past earnings and qualifications history."}
-          </p>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-3">
-          {isManagerUser && (
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <Users className="h-4 w-4 text-slate-400" />
-              <select
-                className="bg-transparent text-sm font-medium text-slate-700 outline-none dark:text-slate-200"
-                value={selectedAgentId}
-                onChange={(e) => {
-                  setSelectedAgentId(e.target.value);
-                  setPagination({ ...pagination, page: 1 });
-                }}
-              >
-                <option className="dark:bg-slate-800 dark:text-slate-200" value="">All Agents</option>
-                {agents.map((agent) => (
-                  <option className="dark:bg-slate-800 dark:text-slate-200" key={agent._id} value={agent._id}>
-                    {agent.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+      <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="bg-linear-to-r from-cyan-500 to-blue-500 p-3 rounded-lg">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Earnings History</h1>
+            <p className=" text-slate-500 dark:text-slate-400">
+              {isManagerUser
+                ? "Monitor and export earnings metrics across all campaigns."
+                : "Review your personal past earnings and qualifications history."}
+            </p>
+          </div>
 
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
-          >
-            <FileDown className="h-4 w-4" />
-            <span>Export CSV</span>
-          </button>
+          <div className="ml-auto flex items-center gap-3">
+            {isManagerUser && (
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <Users className="h-4 w-4 text-slate-400" />
+                <select
+                  className="bg-transparent text-sm font-medium text-slate-700 outline-none dark:text-slate-200"
+                  value={selectedAgentId}
+                  onChange={(e) => {
+                    setSelectedAgentId(e.target.value);
+                    setPagination({ ...pagination, page: 1 });
+                  }}
+                >
+                  <option className="dark:bg-slate-800 dark:text-slate-200" value="">All Agents</option>
+                  {agents.map((agent) => (
+                    <option className="dark:bg-slate-800 dark:text-slate-200" key={agent._id} value={agent._id}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+            >
+              <FileDown className="h-4 w-4" />
+              <span>Export CSV</span>
+            </button>
+          </div>
         </div>
       </div>
 

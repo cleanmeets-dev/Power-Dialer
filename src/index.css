@@ -57,10 +57,27 @@ body {
 }
 
 /* Light mode backgrounds */
+/* Modern SaaS: cool gray-tinted white background and softer text */
 :root[data-theme="light"] body,
 :root[data-theme="light"] #root {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-slate-100 text-slate-800;
+  /* Subtle background for panels/cards */
+  --panel-bg: #f6f8fa;
+  --card-bg: #f8fafc;
+  --border-color: #e5e7eb;
 }
+
+/* Utility classes for panels/cards (optional, use in components) */
+.panel-bg {
+  background-color: var(--panel-bg);
+}
+.card-bg {
+  background-color: var(--card-bg);
+}
+.border-default {
+  border-color: var(--border-color);
+}
+
 
 /* Dark mode backgrounds */
 :root[data-theme="dark"] body,

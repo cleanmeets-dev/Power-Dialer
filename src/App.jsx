@@ -22,68 +22,70 @@ import MyTasksPage from "./pages/MyTasksPage";
 import EarningsHistoryPage from "./pages/EarningsHistoryPage";
 import React from "react";
 import MobileBlockWrapper from "./components/MobileBlockWrapper";
+import CelebrationListener from "./components/CelebrationListener";
 
 function App() {
   return (
     <MobileBlockWrapper>
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
+      <AuthProvider>
+        <CelebrationListener />
+        <Router>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
 
-          <Route
-            path="/manager"
-            element={
-              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}>
-                <LeadsProvider campaignId="">
-                  <DashboardLayout />
-                </LeadsProvider>
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<OverviewPage />} />
-            <Route path="tasks" element={<MyTasksPage />} />
-            <Route path="leads" element={<LeadsPage />} />
-            <Route path="scraper" element={<ScraperPage />} />
-            <Route path="followups" element={<FollowupPage />} />
-            <Route path="call-logs" element={<CallLogsPage />} />
-            <Route path="campaigns" element={<CampaignsPage />} />
-            <Route path="agents" element={<AgentAvailabilityPage />} />
-            <Route path="user-management" element={<AgentManagementPage />} />
-            <Route path="attendance" element={<AttendanceHistoryPage />} />
-            <Route path="earnings" element={<EarningsHistoryPage />} />
-            <Route path="direct-dialer" element={<DirectDialerPage />} />
-          </Route>
+            <Route
+              path="/manager"
+              element={
+                <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.MANAGER]}>
+                  <LeadsProvider campaignId="">
+                    <DashboardLayout />
+                  </LeadsProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<OverviewPage />} />
+              <Route path="tasks" element={<MyTasksPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="scraper" element={<ScraperPage />} />
+              <Route path="followups" element={<FollowupPage />} />
+              <Route path="call-logs" element={<CallLogsPage />} />
+              <Route path="campaigns" element={<CampaignsPage />} />
+              <Route path="agents" element={<AgentAvailabilityPage />} />
+              <Route path="user-management" element={<AgentManagementPage />} />
+              <Route path="attendance" element={<AttendanceHistoryPage />} />
+              <Route path="earnings" element={<EarningsHistoryPage />} />
+              <Route path="direct-dialer" element={<DirectDialerPage />} />
+            </Route>
 
-          <Route
-            path="/agent"
-            element={
-              <ProtectedRoute allowedRoles={[ROLES.CALLER_AGENT]}>
-                <LeadsProvider campaignId="">
-                  <DashboardLayout />
-                </LeadsProvider>
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<OverviewPage />} />
-            <Route path="tasks" element={<MyTasksPage />} />
-            <Route path="leads" element={<LeadsPage />} />
-            <Route path="followups" element={<FollowupPage />} />
-            <Route path="power-dialer" element={<PowerDialerPage />} />
-            <Route path="auto-dialer" element={<AutoDialerPage />} />
-            <Route path="direct-dialer" element={<DirectDialerPage />} />
-            <Route path="earnings" element={<EarningsHistoryPage />} />
-            {/* <Route path="call-logs" element={<CallLogsPage />} /> */}
-          </Route>
+            <Route
+              path="/agent"
+              element={
+                <ProtectedRoute allowedRoles={[ROLES.CALLER_AGENT]}>
+                  <LeadsProvider campaignId="">
+                    <DashboardLayout />
+                  </LeadsProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<OverviewPage />} />
+              <Route path="tasks" element={<MyTasksPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="followups" element={<FollowupPage />} />
+              <Route path="power-dialer" element={<PowerDialerPage />} />
+              <Route path="auto-dialer" element={<AutoDialerPage />} />
+              <Route path="direct-dialer" element={<DirectDialerPage />} />
+              <Route path="earnings" element={<EarningsHistoryPage />} />
+              {/* <Route path="call-logs" element={<CallLogsPage />} /> */}
+            </Route>
 
-          <Route path="/dashboard" element={<RoleHomeRedirect />} />
+            <Route path="/dashboard" element={<RoleHomeRedirect />} />
 
-          <Route path="/" element={<RoleHomeRedirect />} />
+            <Route path="/" element={<RoleHomeRedirect />} />
 
-          <Route path="*" element={<RoleHomeRedirect />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            <Route path="*" element={<RoleHomeRedirect />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </MobileBlockWrapper>
   );
 }

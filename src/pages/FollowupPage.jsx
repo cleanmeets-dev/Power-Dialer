@@ -84,21 +84,22 @@ export default function FollowupPage() {
 
   // Fetch followup leads
   const loadFollowupLeads = useCallback(async () => {
-    if (!selectedCampaignId) {
-      setLeads([]);
-      setTotal(0);
-      setStats({
-        scopedTotal: 0,
-        interested: 0,
-        appointments: 0,
-        followupsScheduled: 0,
-      });
-      return;
-    }
+    // if (!selectedCampaignId) {
+    //   setLeads([]);
+    //   setTotal(0);
+    //   setStats({
+    //     scopedTotal: 0,
+    //     interested: 0,
+    //     appointments: 0,
+    //     followupsScheduled: 0,
+    //   });
+    //   return;
+    // }
 
+    const campaignId = selectedCampaignId || undefined;
     setIsLoading(true);
     try {
-      const response = await getLeads(selectedCampaignId, {
+      const response = await getLeads(campaignId || undefined, {
         page: currentPage,
         limit: pageSize,
         search: searchInput || null,
@@ -107,6 +108,8 @@ export default function FollowupPage() {
         appointmentStatus: selectedAppointmentStatus || null,
         agentId: selectedAgent || null,
       });
+
+      console.log(response);
 
       setLeads(Array.isArray(response?.leads) ? response.leads : []);
       setTotal(response?.pagination?.total || 0);
@@ -333,8 +336,12 @@ export default function FollowupPage() {
             <Layers3 className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Lead Followups</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Track call outcomes, assignments, and next actions in one place.</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Lead Followups
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              Track call outcomes, assignments, and next actions in one place.
+            </p>
           </div>
           <div className="ml-auto inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-200">
             <Layers3 className="h-4 w-4" />
@@ -350,10 +357,10 @@ export default function FollowupPage() {
         />
       </div>
 
-      {selectedCampaignId && (
-        <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {/* <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+      {/* {selectedCampaignId && (
+        <> */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {/* <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-300">Filters active</span>
                 <Filter className="h-4 w-4 text-slate-600 dark:text-slate-300" />
@@ -361,250 +368,248 @@ export default function FollowupPage() {
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">{activeFiltersCount}</p>
               <p className="text-xs text-slate-600 dark:text-slate-300">search + field filters</p>
             </div> */}
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="relative xl:col-span-2">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500 dark:text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name, phone..."
+              value={searchInput}
+              onChange={handleSearch}
+              className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-slate-900 placeholder-slate-500 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400"
+            />
           </div>
 
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <div className="relative xl:col-span-2">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500 dark:text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name, phone..."
-                  value={searchInput}
-                  onChange={handleSearch}
-                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-slate-900 placeholder-slate-500 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400"
-                />
-              </div>
+          <select
+            value={selectedDialerStatus}
+            onChange={(e) => {
+              setSelectedDialerStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">All Statuses</option>
+            {DIALER_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status.replace("_", " ").toUpperCase()}
+              </option>
+            ))}
+          </select>
 
-              <select
-                value={selectedDialerStatus}
-                onChange={(e) => {
-                  setSelectedDialerStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                <option value="">All Statuses</option>
-                {DIALER_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status.replace("_", " ").toUpperCase()}
-                  </option>
-                ))}
-              </select>
+          <select
+            value={selectedAppointmentStatus}
+            onChange={(e) => {
+              setSelectedAppointmentStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">All Appointment Statuses</option>
+            {APPOINTMENT_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status.replace("-", " ").toUpperCase()}
+              </option>
+            ))}
+          </select>
 
-              <select
-                value={selectedAppointmentStatus}
-                onChange={(e) => {
-                  setSelectedAppointmentStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                <option value="">All Appointment Statuses</option>
-                {APPOINTMENT_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status.replace("-", " ").toUpperCase()}
-                  </option>
-                ))}
-              </select>
+          <select
+            value={selectedDisposition}
+            onChange={(e) => {
+              setSelectedDisposition(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">All Dispositions</option>
+            {DISPOSITIONS.map((disposition) => (
+              <option key={disposition} value={disposition}>
+                {disposition.replace("-", " ").toUpperCase()}
+              </option>
+            ))}
+          </select>
 
-              <select
-                value={selectedDisposition}
-                onChange={(e) => {
-                  setSelectedDisposition(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                <option value="">All Dispositions</option>
-                {DISPOSITIONS.map((disposition) => (
-                  <option key={disposition} value={disposition}>
-                    {disposition.replace("-", " ").toUpperCase()}
-                  </option>
-                ))}
-              </select>
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+          >
+            <Filter className="h-4 w-4" />
+            {showAdvancedFilters ? "Hide" : "More"} Filters
+          </button>
+        </div>
 
+        {showAdvancedFilters && (
+          <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-[1fr_auto] dark:border-slate-700 dark:bg-slate-900/40">
+            <select
+              value={selectedAgent}
+              onChange={(e) => {
+                setSelectedAgent(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value="">All Agents</option>
+              {agents.map((agent) => (
+                <option key={agent._id} value={agent._id}>
+                  {agent.name || agent.email}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={clearAllFilters}
+              className="flex items-center justify-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-4 py-2.5 font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
+            >
+              <X className="h-4 w-4" />
+              Clear All
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Showing {leads.length > 0 ? startIndex : 0}-{endIndex} of {total}{" "}
+            followup leads
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(parseInt(e.target.value, 10));
+                setCurrentPage(1);
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value={10}>10 per page</option>
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+
+            {canExport && leads.length > 0 && (
               <button
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                onClick={handleExport}
+                className="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-secondary-700"
+                title="Export as CSV"
               >
-                <Filter className="h-4 w-4" />
-                {showAdvancedFilters ? "Hide" : "More"} Filters
+                <Download className="h-4 w-4" />
+                Export Leads
               </button>
-            </div>
-
-            {showAdvancedFilters && (
-              <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-[1fr_auto] dark:border-slate-700 dark:bg-slate-900/40">
-                <select
-                  value={selectedAgent}
-                  onChange={(e) => {
-                    setSelectedAgent(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
-                  <option value="">All Agents</option>
-                  {agents.map((agent) => (
-                    <option key={agent._id} value={agent._id}>
-                      {agent.name || agent.email}
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  onClick={clearAllFilters}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-4 py-2.5 font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
-                >
-                  <X className="h-4 w-4" />
-                  Clear All
-                </button>
-              </div>
             )}
-
-            <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Showing {leads.length > 0 ? startIndex : 0}-{endIndex} of{" "}
-                {total} followup leads
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(parseInt(e.target.value, 10));
-                    setCurrentPage(1);
-                  }}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
-                  <option value={10}>10 per page</option>
-                  <option value={20}>20 per page</option>
-                  <option value={50}>50 per page</option>
-                </select>
-
-                {canExport && leads.length > 0 && (
-                  <button
-                    onClick={handleExport}
-                    className="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-secondary-700"
-                    title="Export as CSV"
-                  >
-                    <Download className="h-4 w-4" />
-                    Export Leads
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
+        </div>
+      </div>
 
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            {isLoading ? (
-              <div className="flex items-center justify-center p-10">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-500"></div>
-              </div>
-            ) : leads.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/40">
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Lead
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Agent
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Disposition
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Appointment Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Address
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Last Dialed
-                      </th>
-                      {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        {isLoading ? (
+          <div className="flex items-center justify-center p-10">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-500"></div>
+          </div>
+        ) : leads.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/40">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Lead
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Agent
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Disposition
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Appointment Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Address
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Last Dialed
+                  </th>
+                  {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         Follow-Up Date (If any)
                       </th> */}
-                      <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leads.map((lead) => (
-                      <tr
-                        key={lead._id}
-                        className="border-b border-slate-200 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/20"
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead) => (
+                  <tr
+                    key={lead._id}
+                    className="border-b border-slate-200 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/20"
+                  >
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {lead.businessName || "N/A"}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {lead.phoneNumber}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <User className="h-4 w-4" />
+                        {getAssignedAgentLabel(lead)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                          lead.dialerStatus,
+                        )}`}
                       >
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-slate-900 dark:text-white">
-                              {lead.businessName || "N/A"}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {lead.phoneNumber}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                            <User className="h-4 w-4" />
-                            {getAssignedAgentLabel(lead)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                              lead.dialerStatus,
-                            )}`}
-                          >
-                            {lead.dialerStatus
-                              ?.replace("_", " ")
-                              .toUpperCase() || "—"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getDispositionColor(
-                              lead.disposition,
-                            )}`}
-                          >
-                            {lead.disposition
-                              ?.replace("-", " ")
-                              .toUpperCase() || "—"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getAppointmentColor(
-                              lead.appointmentStatus,
-                            )}`}
-                          >
-                            {lead.appointmentStatus
-                              ?.replace("-", " ")
-                              .toUpperCase() || "—"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                          <span className="line-clamp-2">
-                            {lead.businessAddress || lead.address || "—"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {formatDate(lead.lastDialedAt)}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {formatTime(lead.lastDialedAt)}
-                            </span>
-                          </div>
-                        </td>
-                        {/* <td className="px-4 py-3 text-sm">
+                        {lead.dialerStatus?.replace("_", " ").toUpperCase() ||
+                          "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getDispositionColor(
+                          lead.disposition,
+                        )}`}
+                      >
+                        {lead.disposition?.replace("-", " ").toUpperCase() ||
+                          "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getAppointmentColor(
+                          lead.appointmentStatus,
+                        )}`}
+                      >
+                        {lead.appointmentStatus
+                          ?.replace("-", " ")
+                          .toUpperCase() || "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                      <span className="line-clamp-2">
+                        {lead.businessAddress || lead.address || "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {formatDate(lead.lastDialedAt)}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatTime(lead.lastDialedAt)}
+                        </span>
+                      </div>
+                    </td>
+                    {/* <td className="px-4 py-3 text-sm">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-amber-500" />
                             <span className="text-slate-700 dark:text-slate-300">
@@ -614,73 +619,76 @@ export default function FollowupPage() {
                             </span>
                           </div>
                         </td> */}
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => handleViewLead(lead._id)}
-                            className="rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-12">
-                <FileText className="mb-3 h-12 w-12 text-slate-400 dark:text-slate-600" />
-                <p className="text-slate-600 dark:text-slate-400">
-                  No followup leads found for this campaign.
-                </p>
-              </div>
-            )}
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleViewLead(lead._id)}
+                        className="rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center p-12">
+            <FileText className="mb-3 h-12 w-12 text-slate-400 dark:text-slate-600" />
+            <p className="text-slate-600 dark:text-slate-400">
+              No followup leads found for this campaign.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-slate-800 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </button>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`h-8 w-8 rounded text-sm transition ${
+                  currentPage === page
+                    ? "bg-primary-600 text-white shadow"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-slate-800 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`h-8 w-8 rounded text-sm transition ${
-                        currentPage === page
-                          ? "bg-primary-600 text-white shadow"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-              </div>
-
-              <button
-                onClick={() =>
-                  setCurrentPage(Math.min(totalPages, currentPage + 1))
-                }
-                disabled={currentPage === totalPages}
-                className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-slate-800 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </>
+          <button
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
+            }
+            disabled={currentPage === totalPages}
+            className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-slate-800 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
+          >
+            Next
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       )}
+      {/* </>
+      )} */}
 
+      {!selectedCampaignId && (
+        <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg">
+          🌐 Showing followups across ALL campaigns
+        </div>
+      )}
       {!selectedCampaignId && <SelectCampaignMsg />}
 
       <LeadDetailModal

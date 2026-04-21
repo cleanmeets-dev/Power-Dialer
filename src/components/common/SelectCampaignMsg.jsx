@@ -9,7 +9,7 @@ const SelectCampaignMsg = () => {
         Select a Campaign to Begin
       </h2>
       <p className="mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">
-        Choose a campaign above to view leads
+        Choose a campaign above to view its leads
       </p>
     </div>
   );

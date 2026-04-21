@@ -92,6 +92,12 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
   const handleEditSave = (updated) => {
     updateLead(updated);
     showNotification("Lead updated successfully", "success");
+    console.log("Updated lead", updated);
+
+    if (user?.role != "manager" && updated?.disposition === "appointment") {
+      console.log("Celebration triggerred...");
+      triggerCelebration();
+    }
     setShowEditModal(false);
   };
 
@@ -127,9 +133,6 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
   const handleStatusUpdateSuccess = (updated) => {
     updateLead(updated);
     showNotification("Qualification updated successfully", "success");
-    if (user?.role != "manager" && updated?.disposition === "appointment") {
-      triggerCelebration();
-    }
     setShowStatusModal(false);
   };
 

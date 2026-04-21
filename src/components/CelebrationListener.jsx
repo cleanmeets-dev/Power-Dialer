@@ -5,6 +5,7 @@ export default function CelebrationListener() {
   useEffect(() => {
     const handler = () => {
       // burst confetti
+      console.log("Celebration triggerred here too...");
       confetti({
         particleCount: 120,
         spread: 80,

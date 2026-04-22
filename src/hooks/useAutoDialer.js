@@ -1,220 +1,191 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  getAgentAutoDialerStatus,
-  startAgentAutoDialing,
-  stopAgentAutoDialing,
-} from "../services/api";
-import websocketService from "../services/websocket";
-
-const matchesScope = (data, campaignId, agentId) => {
-  if (!data || !campaignId || !agentId) return false;
-  return (
-    String(data.campaignId || "") === String(campaignId) &&
-    String(data.agentId || "") === String(agentId)
-  );
-};
+import { useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 export function useAutoDialer(campaignId, agentId) {
+  const [leads, setLeads] = useState([]);
+  const [currentLeadIndex, setCurrentLeadIndex] = useState(0);
   const [isDialing, setIsDialing] = useState(false);
   const [callActive, setCallActive] = useState(false);
-  const [currentLead, setCurrentLead] = useState(null);
-  const [currentCallId, setCurrentCallId] = useState(null);
   const [callHistory, setCallHistory] = useState([]);
-  const [lastError, setLastError] = useState(null);
-  const callHistorySeenRef = useRef(new Set());
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const appendHistory = useCallback((item) => {
-    if (!item?.callLogId) return;
-    if (callHistorySeenRef.current.has(item.callLogId)) return;
-    callHistorySeenRef.current.add(item.callLogId);
-    setCallHistory((prev) => [
-      {
-        ...item,
-        timestamp: item.timestamp || new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-  }, []);
+  const stopRequestedRef = useRef(false);
 
-  const refreshStatus = useCallback(async () => {
-    if (!campaignId || !agentId) {
-      setIsDialing(false);
-      setCallActive(false);
-      setCurrentLead(null);
-      setCurrentCallId(null);
-      return null;
+  // Fetch leads
+  const fetchLeads = useCallback(async () => {
+    if (!campaignId || !agentId) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/zoom/fetch-leads?campaignId=${campaignId}&agentId=${agentId}`
+      );
+      const data = await res.json();
+      setLeads(data.leads || []);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load leads");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    const status = await getAgentAutoDialerStatus(campaignId, agentId);
-    setIsDialing(Boolean(status?.isRunning));
-    setCallActive(Boolean(status?.currentCallId));
-    setCurrentCallId(status?.currentCallId || null);
-    setCurrentLead(status?.currentLead || null);
-    return status;
   }, [campaignId, agentId]);
 
   useEffect(() => {
-    websocketService.connect();
+    fetchLeads();
+  }, [fetchLeads]);
+
+  // Dial one lead
+  const dialLead = useCallback(async (lead) => {
+    const phone = lead.phoneNumber || lead.phone;
+    const name = lead.businessName || lead.contactName || "Lead";
+
+    console.log(`📞 Dialing: ${name} (${phone})`);
+    setCallActive(true);
+
+    const startTime = Date.now();
+
+    try {
+      // 1. Request Zoom meeting from backend
+      const res = await fetch("/api/zoom/create-meeting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId,
+          leadId: lead._id,
+          agentId,
+          leadPhone: phone,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create meeting");
+      }
+
+      const meeting = await res.json();
+      console.log(`✅ Meeting created: ${meeting.joinUrl}`);
+
+      // 2. Open Zoom meeting in new window
+      window.open(meeting.joinUrl, "zoom-call", "width=800,height=600");
+
+      // 3. Wait for call to complete
+      // Agent will click "Next" or "Stop" when done
+      await waitForCallComplete(lead);
+
+      // 4. Log the call
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+      await fetch("/api/zoom/log-call-end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          campaignId,
+          leadId: lead._id,
+          duration,
+          status: "completed",
+        }),
+      });
+
+      setCallHistory((prev) => [
+        ...prev,
+        {
+          leadId: lead._id,
+          leadName: name,
+          phone,
+          duration,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err) {
+      setError(`Error calling ${name}: ${err.message}`);
+      console.error(err);
+    } finally {
+      setCallActive(false);
+    }
+  }, [campaignId, agentId]);
+
+  // Wait until agent is done with call
+  const waitForCallComplete = (lead) => {
+    return new Promise((resolve) => {
+      // Max 30 min per call
+      const timeout = setTimeout(() => {
+        console.log("⏱️ Call timeout (30 min)");
+        resolve();
+      }, 30 * 60 * 1000);
+
+      // Store resolver globally so buttons can call it
+      window.__currentCallResolver = {
+        resolve: () => {
+          clearTimeout(timeout);
+          resolve();
+        },
+        lead,
+      };
+    });
+  };
+
+  // Start auto dialer
+  const startAutoDialer = useCallback(async () => {
+    if (!campaignId || leads.length === 0) {
+      setError("No campaign or leads");
+      return;
+    }
+
+    stopRequestedRef.current = false;
+    setIsDialing(true);
+    setError(null);
+
+    for (let i = 0; i < leads.length; i++) {
+      if (stopRequestedRef.current) break;
+
+      setCurrentLeadIndex(i);
+      await dialLead(leads[i]);
+
+      // 2 second gap between calls
+      if (!stopRequestedRef.current && i < leads.length - 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+
+    setIsDialing(false);
+    console.log("✅ All leads dialed");
+  }, [campaignId, leads, dialLead]);
+
+  // Stop auto dialer
+  const stopAutoDialer = useCallback(() => {
+    stopRequestedRef.current = true;
+    setIsDialing(false);
+    setCallActive(false);
+
+    // Resolve current call if waiting
+    if (window.__currentCallResolver) {
+      window.__currentCallResolver.resolve();
+      window.__currentCallResolver = null;
+    }
   }, []);
 
-  useEffect(() => {
-    setLastError(null);
-    setCallHistory([]);
-    callHistorySeenRef.current = new Set();
-    void refreshStatus();
-  }, [campaignId, agentId, refreshStatus]);
-
-  useEffect(() => {
-    if (!campaignId || !agentId || !isDialing) return undefined;
-
-    const interval = setInterval(() => {
-      void refreshStatus();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [agentId, campaignId, isDialing, refreshStatus]);
-
-  useEffect(() => {
-    if (!campaignId || !agentId) return undefined;
-
-    const handleCallNext = (data) => {
-      if (!matchesScope(data, campaignId, agentId)) return;
-      setCurrentLead(data.lead || null);
-      setLastError(null);
-    };
-
-    const handleCallStarted = (data) => {
-      if (!matchesScope(data, campaignId, agentId)) return;
-      setIsDialing(true);
-      setCallActive(true);
-      setCurrentLead(data.lead || null);
-      setCurrentCallId(data.zoomCallId || null);
-      setLastError(null);
-    };
-
-    const handleCallEnded = (data) => {
-      if (!matchesScope(data, campaignId, agentId)) return;
-      setCallActive(false);
-      setCurrentCallId(null);
-      appendHistory({
-        callLogId: data.callLogId,
-        leadId: data.leadId,
-        zoomCallId: data.zoomCallId,
-        status: data.status || "completed",
-        reason: data.reason || null,
-        duration: data.duration || 0,
-      });
-    };
-
-    const handleCallFailed = (data) => {
-      if (!matchesScope(data, campaignId, agentId)) return;
-      setCallActive(false);
-      setCurrentCallId(null);
-      setLastError(data.reason || "Zoom call failed");
-      appendHistory({
-        callLogId: data.callLogId,
-        leadId: data.leadId,
-        status: "failed",
-        reason: data.reason || "Zoom call failed",
-      });
-    };
-
-    const handleCampaignStatus = (data) => {
-      if (
-        !data ||
-        data.mode !== "agent" ||
-        String(data.campaignId || "") !== String(campaignId) ||
-        String(data.agentId || "") !== String(agentId)
-      ) {
-        return;
-      }
-
-      setIsDialing(data.status === "active");
-      if (data.status !== "active") {
-        setCallActive(false);
-        setCurrentCallId(null);
-      }
-    };
-
-    const handleCampaignCompleted = (data) => {
-      if (
-        !data ||
-        data.mode !== "agent" ||
-        String(data.campaignId || "") !== String(campaignId) ||
-        String(data.agentId || "") !== String(agentId)
-      ) {
-        return;
-      }
-
-      setIsDialing(false);
-      setCallActive(false);
-      setCurrentCallId(null);
-      setCurrentLead(null);
-    };
-
-    websocketService.on("call:next", handleCallNext);
-    websocketService.on("call:started", handleCallStarted);
-    websocketService.on("call:ended", handleCallEnded);
-    websocketService.on("call:failed", handleCallFailed);
-    websocketService.on("campaign-status-updated", handleCampaignStatus);
-    websocketService.on("campaign-completed", handleCampaignCompleted);
-
-    return () => {
-      websocketService.off("call:next", handleCallNext);
-      websocketService.off("call:started", handleCallStarted);
-      websocketService.off("call:ended", handleCallEnded);
-      websocketService.off("call:failed", handleCallFailed);
-      websocketService.off("campaign-status-updated", handleCampaignStatus);
-      websocketService.off("campaign-completed", handleCampaignCompleted);
-    };
-  }, [agentId, appendHistory, campaignId]);
-
-  const startDialer = useCallback(async () => {
-    if (!campaignId || !agentId) {
-      throw new Error("Campaign and agent are required to start the auto dialer");
+  // Skip current call (move to next)
+  const skipCall = useCallback(() => {
+    if (window.__currentCallResolver) {
+      window.__currentCallResolver.resolve();
+      window.__currentCallResolver = null;
     }
+  }, []);
 
-    setLastError(null);
-    const response = await startAgentAutoDialing(campaignId, agentId);
-    await refreshStatus();
-    return response;
-  }, [agentId, campaignId, refreshStatus]);
+  const currentLead = leads[currentLeadIndex] || null;
 
-  const stopDialer = useCallback(async () => {
-    if (!campaignId || !agentId) {
-      throw new Error("Campaign and agent are required to stop the auto dialer");
-    }
-
-    const response = await stopAgentAutoDialing(campaignId, agentId);
-    await refreshStatus();
-    return response;
-  }, [agentId, campaignId, refreshStatus]);
-
-  return useMemo(
-    () => ({
-      isDialing,
-      callActive,
-      currentLead,
-      currentCallId,
-      callHistory,
-      lastError,
-      startDialer,
-      stopDialer,
-      refreshStatus,
-      setIsDialing,
-    }),
-    [
-      callActive,
-      callHistory,
-      currentCallId,
-      currentLead,
-      isDialing,
-      lastError,
-      refreshStatus,
-      startDialer,
-      stopDialer,
-    ],
-  );
+  return {
+    isDialing,
+    callActive,
+    currentLead,
+    currentLeadIndex,
+    leads,
+    callHistory,
+    error,
+    loading,
+    startAutoDialer,
+    stopAutoDialer,
+    skipCall,
+    fetchLeads,
+  };
 }
-
-export default useAutoDialer;

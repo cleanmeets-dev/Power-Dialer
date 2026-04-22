@@ -5,4 +5,18 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+<<<<<<< Updated upstream
 });
+=======
+  server: {
+    proxy: {
+      // forward frontend `/api/*` requests to the backend during development
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
+>>>>>>> Stashed changes

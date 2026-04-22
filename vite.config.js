@@ -5,9 +5,6 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-<<<<<<< Updated upstream
-});
-=======
   server: {
     proxy: {
       // forward frontend `/api/*` requests to the backend during development
@@ -19,4 +16,3 @@ export default defineConfig({
     },
   },
 });
->>>>>>> Stashed changes

@@ -9,12 +9,13 @@ import {
 import { FileDown, Calendar, ListFilter, Users } from "lucide-react";
 import MonthlySummaryTable from "../components/earnings/MonthlySummaryTable";
 import DetailedLogsTable from "../components/earnings/DetailedLogsTable";
+import Leaderboard from "../components/Leaderboard";
 
 export default function EarningsHistoryPage() {
   const { user } = useAuth();
   const isManagerUser = isManager(user?.role);
 
-  const [activeTab, setActiveTab] = useState("monthly"); // "monthly" | "detailed"
+  const [activeTab, setActiveTab] = useState("monthly"); // "monthly" | "detailed" | "leaderboard"
   const [agents, setAgents] = useState([]);
   const [selectedAgentId, setSelectedAgentId] = useState("");
   
@@ -178,26 +179,43 @@ export default function EarningsHistoryPage() {
             <ListFilter className="h-4 w-4" />
             Detailed Logs
           </button>
+          <button
+            onClick={() => handleTabChange("leaderboard")}
+            className={`flex items-center gap-2 border-b-2 py-4 text-sm font-medium ${
+              activeTab === "leaderboard"
+                ? "border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400"
+                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            Leaderboard
+          </button>
         </nav>
       </div>
 
       {/* Content */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        {isLoading ? (
-          <div className="flex h-40 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
-          </div>
-        ) : activeTab === "monthly" ? (
-          <MonthlySummaryTable monthlyData={monthlyData} />
-        ) : (
-          <DetailedLogsTable
-            detailedData={detailedData}
-            isManagerUser={isManagerUser}
-            pagination={pagination}
-            setPagination={setPagination}
-          />
-        )}
-      </div>
+      {activeTab === "leaderboard" ? (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <Leaderboard timeframe={activeTab} userId={user?._id} />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          {isLoading ? (
+            <div className="flex h-40 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
+            </div>
+          ) : activeTab === "monthly" ? (
+            <MonthlySummaryTable monthlyData={monthlyData} />
+          ) : (
+            <DetailedLogsTable
+              detailedData={detailedData}
+              isManagerUser={isManagerUser}
+              pagination={pagination}
+              setPagination={setPagination}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

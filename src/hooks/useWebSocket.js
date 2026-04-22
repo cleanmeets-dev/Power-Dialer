@@ -18,8 +18,11 @@ import websocketService from '../services/websocket';
  */
 export function useWebSocket({
   onCallInitiated = null,
+  onCallStarted = null,
   onCallFailed = null,
   onCallCompleted = null,
+  onCallEnded = null,
+  onCallNext = null,
   onCallConnectedToAgent = null,
   onCallDropped = null,
   onAgentAvailabilityChanged = null,
@@ -35,8 +38,11 @@ export function useWebSocket({
   // Use refs to store callbacks so they don't trigger re-subscriptions
   const callbacksRef = useRef({
     onCallInitiated,
+    onCallStarted,
     onCallFailed,
     onCallCompleted,
+    onCallEnded,
+    onCallNext,
     onCallConnectedToAgent,
     onCallDropped,
     onAgentAvailabilityChanged,
@@ -52,8 +58,11 @@ export function useWebSocket({
   useEffect(() => {
     callbacksRef.current = {
       onCallInitiated,
+      onCallStarted,
       onCallFailed,
       onCallCompleted,
+      onCallEnded,
+      onCallNext,
       onCallConnectedToAgent,
       onCallDropped,
       onAgentAvailabilityChanged,
@@ -64,7 +73,7 @@ export function useWebSocket({
       onCallbackScheduled,
       onCallbackCancelled,
     };
-  }, [onCallInitiated, onCallFailed, onCallCompleted, onCallConnectedToAgent, onCallDropped, onAgentAvailabilityChanged, onCampaignStatusUpdated, onAgentCallCompleted, onCampaignCompleted, onCallbackTriggered, onCallbackScheduled, onCallbackCancelled]);
+  }, [onCallInitiated, onCallStarted, onCallFailed, onCallCompleted, onCallEnded, onCallNext, onCallConnectedToAgent, onCallDropped, onAgentAvailabilityChanged, onCampaignStatusUpdated, onAgentCallCompleted, onCampaignCompleted, onCallbackTriggered, onCallbackScheduled, onCallbackCancelled]);
 
   useEffect(() => {
     // Connect to WebSocket server
@@ -75,8 +84,11 @@ export function useWebSocket({
     // 🔴 FIX #3: Updated event names to match what backend actually emits
     const wrappedHandlers = {
       'call:initiated': (data) => callbacksRef.current.onCallInitiated?.(data),
+      'call:started': (data) => callbacksRef.current.onCallStarted?.(data),
       'call:failed': (data) => callbacksRef.current.onCallFailed?.(data),
       'call:completed': (data) => callbacksRef.current.onCallCompleted?.(data),
+      'call:ended': (data) => callbacksRef.current.onCallEnded?.(data),
+      'call:next': (data) => callbacksRef.current.onCallNext?.(data),
       'call-connected-to-agent': (data) => callbacksRef.current.onCallConnectedToAgent?.(data),
       'call-dropped': (data) => callbacksRef.current.onCallDropped?.(data),
       'agent:availability-changed': (data) => callbacksRef.current.onAgentAvailabilityChanged?.(data),

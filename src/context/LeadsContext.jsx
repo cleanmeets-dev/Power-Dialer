@@ -1,5 +1,6 @@
 import { createContext, useCallback, useState, useEffect } from "react";
 import { getLeads } from "../services/api";
+import websocketService from "../services/websocket";
 
 export const LeadsContext = createContext();
 
@@ -77,6 +78,33 @@ export function LeadsProvider({ children, campaignId }) {
   useEffect(() => {
     loadLeads();
   }, [campaignId]);
+
+  useEffect(() => {
+    if (!campaignId) return undefined;
+
+    websocketService.connect();
+
+    const refreshForCampaign = (data) => {
+      if (!data || String(data.campaignId || "") !== String(campaignId)) return;
+      void loadLeads();
+    };
+
+    websocketService.on("call:started", refreshForCampaign);
+    websocketService.on("call:ended", refreshForCampaign);
+    websocketService.on("call:next", refreshForCampaign);
+    websocketService.on("call:failed", refreshForCampaign);
+    websocketService.on("call:initiated", refreshForCampaign);
+    websocketService.on("call:completed", refreshForCampaign);
+
+    return () => {
+      websocketService.off("call:started", refreshForCampaign);
+      websocketService.off("call:ended", refreshForCampaign);
+      websocketService.off("call:next", refreshForCampaign);
+      websocketService.off("call:failed", refreshForCampaign);
+      websocketService.off("call:initiated", refreshForCampaign);
+      websocketService.off("call:completed", refreshForCampaign);
+    };
+  }, [campaignId, loadLeads]);
 
   // Pagination
   const changePage = useCallback(

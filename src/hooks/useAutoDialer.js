@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
 
 export function useAutoDialer(campaignId, agentId) {

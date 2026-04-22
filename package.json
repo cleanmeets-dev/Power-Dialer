@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "@twilio/voice-sdk": "^2.18.1",
+    "@zoomus/websdk": "^2.18.3",
     "axios": "^1.13.6",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^0.577.0",

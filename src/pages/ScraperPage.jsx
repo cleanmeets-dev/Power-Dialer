@@ -12,6 +12,7 @@ import {
 } from "../utils/scraperUtils";
 import useScraperStats from "../hooks/useScraperStats";
 import { useOutletContext } from "react-router-dom";
+import LoadingSpinner from "../components/LoadingSpinner";
 import {
   deleteScrapeSession,
   getAllAgents,
@@ -83,8 +84,8 @@ export default function ScraperPage() {
       if (!silent) setIsLoadingSessions(true);
       const sessionList = await getScrapeSessions();
       setSessions(sessionList);
-      const nextSelected = preferredSessionId || selectedSessionId || sessionList[0]?._id || null;
-      if (nextSelected) setSelectedSessionId(nextSelected);
+      // const nextSelected = preferredSessionId || selectedSessionId || sessionList[0]?._id || null;
+      // if (nextSelected) setSelectedSessionId(nextSelected);
     } catch (error) {
       console.error("Failed to load scrape sessions:", error);
       showNotification?.("Failed to load scrape sessions", "error");
@@ -117,15 +118,12 @@ export default function ScraperPage() {
   useEffect(() => {
     void loadReferenceData();
     void loadSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void loadSessionResults(selectedSessionId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSessionId]);
 
-  // Interval 1: Refresh session list while any session is queued or running
   useEffect(() => {
     if (!hasActiveSession) return undefined;
 
@@ -138,10 +136,8 @@ export default function ScraperPage() {
     }, 2500);
 
     return () => window.clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasActiveSession, selectedSessionId]);
 
-  // Interval 2: Poll selected session detail while it's queued OR running
   useEffect(() => {
     const status = selectedSession?.status;
     if (!selectedSessionId || (status !== "running" && status !== "queued")) {
@@ -151,14 +147,13 @@ export default function ScraperPage() {
     const interval = window.setInterval(async () => {
       try {
         const latestSession = await getScrapeSession(selectedSessionId);
-        setSelectedSession(latestSession);
+        // setSelectedSession(latestSession);
         setSessions((prev) =>
           prev.map((s) =>
             s._id === latestSession._id ? { ...s, ...latestSession } : s,
           ),
         );
 
-        // Only fetch results while running (queued sessions have no results yet)
         if (latestSession.status === "running") {
           const latestResults = await getScrapeSessionResults(selectedSessionId);
           setResults(latestResults.results || []);
@@ -203,7 +198,7 @@ export default function ScraperPage() {
         strictLocation: Boolean(form.strictLocation),
       });
       setForm((prev) => ({ ...prev, businessType: "", location: "" }));
-      setSelectedSessionId(response.sessionId);
+      // setSelectedSessionId(response.sessionId);
       await loadSessions(response.sessionId);
       await loadSessionResults(response.sessionId);
       const msg = response.queuePosition > 1
@@ -331,7 +326,10 @@ export default function ScraperPage() {
             onSubmit={handleStartScrape}
           />
 
-          <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
+          <div
+            className="relative bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700"
+            aria-busy={isLoadingResults}
+          >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">Scrape Results</h2>
@@ -342,7 +340,7 @@ export default function ScraperPage() {
               <button
                 type="button"
                 onClick={handleExportCsv}
-                disabled={!results.length}
+                disabled={isLoadingResults || !results.length}
                 className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2 cursor-pointer"
               >
                 Export CSV
@@ -438,6 +436,12 @@ export default function ScraperPage() {
               </div>
             )}
 
+            {isLoadingResults && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/60 dark:bg-black/50">
+                <LoadingSpinner />
+              </div>
+            )}
+
             <ScrapeResultsTable results={results} isLoadingResults={isLoadingResults} />
           </div>
         </div>
@@ -462,6 +466,7 @@ export default function ScraperPage() {
             handleDeleteSession={handleDeleteSession}
             handleCancelSession={handleCancelSession}
             isLoadingSessions={isLoadingSessions}
+            isLoadingResults={isLoadingResults}
           />
         </div>
       </div>

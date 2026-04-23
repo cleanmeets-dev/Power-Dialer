@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function ScrapeResultsTable({ results, isLoadingResults }) {
   return (
@@ -14,13 +15,17 @@ export default function ScrapeResultsTable({ results, isLoadingResults }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-            {isLoadingResults ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
-                  Loading scrape results...
-                </td>
-              </tr>
-            ) : results.length === 0 ? (
+            {
+            // isLoadingResults ? (
+            //   <tr>
+            //     <td colSpan={4} className="px-4 py-8 text-center">
+            //       <div className="flex items-center justify-center">
+            //         <LoadingSpinner />
+            //       </div>
+            //     </td>
+            //   </tr>
+            // ) : 
+            results.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
                   Select a session to review results.

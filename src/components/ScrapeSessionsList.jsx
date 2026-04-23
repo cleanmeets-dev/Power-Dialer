@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { formatSessionLabel, getProgressValue } from "../utils/scraperUtils";
 
 const STATUS_STYLES = {
@@ -15,6 +15,7 @@ export default function ScrapeSessionsList({
   handleDeleteSession,
   handleCancelSession,
   isLoadingSessions,
+  isLoadingResults,
 }) {
   return (
     <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
@@ -44,17 +45,29 @@ export default function ScrapeSessionsList({
                 onClick={() => setSelectedSessionId(session._id)}
                 className="w-full text-left"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">{formatSessionLabel(session)}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {new Date(session.createdAt).toLocaleString()}
-                    </p>
+                {selectedSessionId === session._id && isLoadingResults ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
+                      <p className="font-semibold text-slate-900 dark:text-white">Loading...</p>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[session.status] || STATUS_STYLES.running}`}>
+                      {session.status}
+                    </span>
                   </div>
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[session.status] || STATUS_STYLES.running}`}>
-                    {session.status}
-                  </span>
-                </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white">{formatSessionLabel(session)}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {new Date(session.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[session.status] || STATUS_STYLES.running}`}>
+                      {session.status}
+                    </span>
+                  </div>
+                )}
                 <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
                   Requested {session.maxResults} | Skipped {session.skipResults || 0} | Found {session.totalFound || 0} | Imported {session.importedCount || 0}
                 </p>

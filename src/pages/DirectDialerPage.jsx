@@ -1,34 +1,37 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Phone, PhoneOff, Delete } from "lucide-react";
-import { setMyDirectCallStatus } from "../services/api";
+import { logAgentCallAttempt, setMyDirectCallStatus } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
 // DTMF frequency pairs (Hz)
 const DTMF_FREQUENCIES = {
-  "1": [697, 1209],
-  "2": [697, 1336],
-  "3": [697, 1477],
-  "4": [770, 1209],
-  "5": [770, 1336],
-  "6": [770, 1477],
-  "7": [852, 1209],
-  "8": [852, 1336],
-  "9": [852, 1477],
+  1: [697, 1209],
+  2: [697, 1336],
+  3: [697, 1477],
+  4: [770, 1209],
+  5: [770, 1336],
+  6: [770, 1477],
+  7: [852, 1209],
+  8: [852, 1336],
+  9: [852, 1477],
   "*": [941, 1209],
-  "0": [941, 1336],
+  0: [941, 1336],
   "#": [941, 1477],
 };
 
 // Utility: Create audio context and generate DTMF tone
 const generateDTMFTone = (frequencies, duration = 100) => {
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
     const gainNode = audioContext.createGain();
     gainNode.connect(audioContext.destination);
     gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.01,
-      audioContext.currentTime + duration / 1000
+      audioContext.currentTime + duration / 1000,
     );
 
     frequencies.forEach((freq) => {
@@ -48,7 +51,9 @@ const generateDTMFTone = (frequencies, duration = 100) => {
 // Sound effect generators
 const playDialTone = () => {
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
     const gainNode = audioContext.createGain();
     gainNode.connect(audioContext.destination);
 
@@ -72,7 +77,9 @@ const playDialTone = () => {
 
 const playBusyTone = () => {
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
     const gainNode = audioContext.createGain();
     gainNode.connect(audioContext.destination);
 
@@ -96,7 +103,9 @@ const playBusyTone = () => {
 
 const playDisconnectTone = () => {
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
     const gainNode = audioContext.createGain();
     gainNode.connect(audioContext.destination);
 
@@ -107,7 +116,7 @@ const playDisconnectTone = () => {
     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.001,
-      audioContext.currentTime + 0.3
+      audioContext.currentTime + 0.3,
     );
 
     osc.start(audioContext.currentTime);
@@ -117,7 +126,8 @@ const playDisconnectTone = () => {
   }
 };
 
-const formatDisplayNumber = (value) => String(value || "").replace(/[^\d+]/g, "");
+const formatDisplayNumber = (value) =>
+  String(value || "").replace(/[^\d+]/g, "");
 
 export default function DirectDialerPage() {
   const { showNotification, twilioDialer } = useOutletContext();
@@ -127,6 +137,7 @@ export default function DirectDialerPage() {
   const [isZoomCallActive, setIsZoomCallActive] = useState(false);
   const inputRef = useRef(null);
   const pressedKeysRef = useRef(new Set());
+  const { user } = useAuth();
 
   const isDialing =
     twilioDialer?.callStatus === "ringing" ||
@@ -246,6 +257,14 @@ export default function DirectDialerPage() {
     if (!phoneNumber) return;
     try {
       playDialTone();
+
+      if (isDialing) return;
+
+      await logAgentCallAttempt({
+        phoneNumber,
+        platform: callMethod,
+        outcome: "attempted",
+      });
 
       if (callMethod === "zoom") {
         await setMyDirectCallStatus(true, "zoom");
@@ -403,7 +422,7 @@ export default function DirectDialerPage() {
               >
                 {digit}
               </button>
-            )
+            ),
           )}
         </div>
 

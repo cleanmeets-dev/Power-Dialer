@@ -2,10 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { getDialerStatus, getAgentAutoDialerStatus } from '../services/api';
 import { useWebSocket } from './useWebSocket';
 
-/**
- * useDialer - Manages dialer state using WebSocket for real-time updates
- * Handles parallel calling with multiple agents
- */
 export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
   const mode = options.mode || 'power';
   const agentId = options.agentId || null;
@@ -16,13 +12,10 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
   const [callsInProgress, setCallsInProgress] = useState(0);
   const [activeCalls, setActiveCalls] = useState([]);
 
-  // Handle real-time call events via WebSocket
   const handleCallInitiated = useCallback((data) => {
-    // Add campaign filter
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
 
     setActiveCalls((prev) => {
-      // Prevent duplicates in case the event fires twice or socket reconnects
       if (prev.some(call => call.callSid === data.callSid)) return prev;
 
       setCallsInProgress((prevCount) => prevCount + 1);
@@ -54,7 +47,6 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
     setCallsInProgress((prev) => Math.max(0, prev - 1));
     setDialedCount((prev) => prev + 1);
     
-    // Keep active calls list truly active by removing terminal calls.
     setActiveCalls((prev) => prev.filter((call) => call.callSid !== data.callSid));
   }, [selectedCampaignId]);
 
@@ -64,11 +56,9 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
     setCallsInProgress((prev) => Math.max(0, prev - 1));
     setDialedCount((prev) => prev + 1);
     
-    // Keep active calls list truly active by removing terminal calls.
     setActiveCalls((prev) => prev.filter((call) => call.callSid !== data.callSid));
   }, [selectedCampaignId]);
 
-  // 🔴 FIX #4: Handle call connected to agent event
   const handleCallConnectedToAgent = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
     
@@ -87,7 +77,6 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
     );
   }, [selectedCampaignId]);
 
-  // 🔴 FIX #4: Handle call dropped event
   const handleCallDropped = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
     
@@ -98,17 +87,14 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
     );
   }, [selectedCampaignId]);
 
-  // 🔴 FIX #3: Handle campaign status updated event
   const handleCampaignStatusUpdated = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
     if (isAgentMode && data.mode === 'agent' && data.agentId && data.agentId !== agentId) return;
     if (!isAgentMode && data.mode === 'agent') return;
     
-    // Update dialer state based on campaign status
     setIsDialing(data.status === 'active');
   }, [selectedCampaignId, isAgentMode, agentId]);
 
-  // 🔴 FIX #3: Handle campaign completed event
   const handleCampaignCompleted = useCallback((data) => {
     if (selectedCampaignId && data.campaignId !== selectedCampaignId) return;
     if (isAgentMode && data.mode === 'agent' && data.agentId && data.agentId !== agentId) return;
@@ -118,7 +104,6 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
     onStatusUpdate?.('Campaign completed!', 'success');
   }, [selectedCampaignId, onStatusUpdate, isAgentMode, agentId]);
 
-  // Subscribe to WebSocket events
   useWebSocket({
     onCallInitiated: handleCallInitiated,
     onCallCompleted: handleCallCompleted,
@@ -129,7 +114,6 @@ export const useDialer = (selectedCampaignId, onStatusUpdate, options = {}) => {
     onCampaignCompleted: handleCampaignCompleted,
   });
 
-  // Fetch initial status when dialing starts
   useEffect(() => {
     if (!isDialing || !selectedCampaignId) return;
     if (isAgentMode && !agentId) return;

@@ -369,15 +369,42 @@ export const getCallLogs = async (campaignId) => {
   return response.data.data;
 };
 
-export const logAgentCallAttempt = async (campaignId, leadId, outcome = 'no-answer') => {
-  const response = await api.post('/dialer/calls/agent-attempt', {
+export const logAgentCallAttempt = async ({
+  campaignId = null,
+  leadId = null,
+  phoneNumber = null,
+  platform = "zoom",
+  outcome = "no-answer",
+}) => {
+  const response = await api.post("/dialer/calls/agent-attempt", {
     campaignId,
     leadId,
+    phoneNumber,
+    platform,
     outcome,
   });
 
   return response.data.data;
 };
+
+// export const logDirectCall = async ({
+//   phoneNumber,
+//   agentId,
+//   campaignId = null,
+//   provider = "zoom",
+//   outcome = "no-answer",
+// }) => {
+//   const response = await api.post("/call-logs", {
+//     phoneNumber,
+//     agentId,
+//     campaignId,
+//     provider,
+//     mode: "direct",
+//     outcome,
+//   });
+
+//   return response.data.data;
+// };
 
 export const getDailyAgentCallCounts = async (hours = 12, date = null) => {
   const sanitizedHours = Number.isFinite(Number(hours))

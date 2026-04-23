@@ -2,9 +2,10 @@ import { Trash2 } from "lucide-react";
 import { formatSessionLabel, getProgressValue } from "../utils/scraperUtils";
 
 const STATUS_STYLES = {
+  queued:  "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300",
   running: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  done: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  error: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  done:    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  error:   "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
 };
 
 export default function ScrapeSessionsList({

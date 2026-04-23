@@ -600,6 +600,11 @@ export const deleteScrapeSession = async (sessionId) => {
   return response.data;
 };
 
+export const cancelScrapeSession = async (sessionId) => {
+  const response = await api.post(`/scraper/sessions/${sessionId}/cancel`);
+  return response.data;
+};
+
 // ==================== Earnings ====================
 
 /**

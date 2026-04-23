@@ -13,6 +13,7 @@ export default function ScrapeSessionsList({
   selectedSessionId,
   setSelectedSessionId,
   handleDeleteSession,
+  handleCancelSession,
   isLoadingSessions,
 }) {
   return (
@@ -76,14 +77,26 @@ export default function ScrapeSessionsList({
                 ) : null}
               </button>
               <div className="mt-3 flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteSession(session._id)}
-                  className="inline-flex items-center gap-2 text-rose-700 dark:text-rose-300 hover:underline text-sm"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
+                <div className="flex items-center gap-3">
+                  {session.status === "running" && (
+                    <button
+                      type="button"
+                      onClick={() => handleCancelSession?.(session._id)}
+                      className="inline-flex items-center gap-2 text-amber-700 dark:text-amber-300 hover:underline text-sm"
+                    >
+                      Stop
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSession(session._id)}
+                    className="inline-flex items-center gap-2 text-rose-700 dark:text-rose-300 hover:underline text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))

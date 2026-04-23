@@ -21,6 +21,7 @@ import {
   getScrapeSessions,
   importScrapeSessionResults,
   startScrapeSession,
+  cancelScrapeSession,
 } from "../services/api";
 
 const DEFAULT_FORM = {
@@ -257,6 +258,24 @@ export default function ScraperPage() {
     }
   };
 
+  const handleCancelSession = async (sessionId) => {
+    const confirmed = window.confirm("Cancel this running scrape session?");
+    if (!confirmed) return;
+    try {
+      await cancelScrapeSession(sessionId);
+      if (sessionId === selectedSessionId) {
+        setSelectedSessionId(null);
+        setSelectedSession(null);
+        setResults([]);
+      }
+      await loadSessions(null);
+      showNotification?.("Scrape session canceled", "success");
+    } catch (error) {
+      console.error("Failed to cancel scrape session:", error);
+      showNotification?.(error.response?.data?.error || "Failed to cancel scrape session", "error");
+    }
+  };
+
   const handleExportCsv = () => {
     if (!results.length) return;
     const headers = ["name", "phone", "address", "website", "mapUrl"];
@@ -441,6 +460,7 @@ export default function ScraperPage() {
             selectedSessionId={selectedSessionId}
             setSelectedSessionId={setSelectedSessionId}
             handleDeleteSession={handleDeleteSession}
+            handleCancelSession={handleCancelSession}
             isLoadingSessions={isLoadingSessions}
           />
         </div>

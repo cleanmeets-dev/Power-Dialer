@@ -1,3 +1,4 @@
+import React, { useState, useMemo, useEffect } from "react";
 import { Trash2, Loader2 } from "lucide-react";
 import { formatSessionLabel, getProgressValue } from "../utils/scraperUtils";
 
@@ -17,12 +18,106 @@ export default function ScrapeSessionsList({
   isLoadingSessions,
   isLoadingResults,
 }) {
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filteredSessions = useMemo(() => {
+    if (!sessions || sessions.length === 0) return [];
+
+    return sessions.filter((s) => {
+      const created = new Date(s.createdAt);
+
+      // SEARCH
+      if (debouncedSearch) {
+        const q = debouncedSearch;
+        const label = (formatSessionLabel(s) || "").toLowerCase();
+        const status = (s.status || "").toLowerCase();
+        if (!label.includes(q) && !status.includes(q)) return false;
+      }
+
+      // DATE PRESET
+      if (datePreset !== "all") {
+        const now = new Date();
+
+        if (datePreset === "today") {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
+          if (created < start) return false;
+        }
+
+        if (datePreset === "7d") {
+          const past = new Date();
+          past.setDate(now.getDate() - 7);
+          if (created < past) return false;
+        }
+
+        if (datePreset === "30d") {
+          const past = new Date();
+          past.setDate(now.getDate() - 30);
+          if (created < past) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [sessions, debouncedSearch, datePreset]);
+
+  useEffect(() => {
+    if (selectedSessionId && !filteredSessions.some((s) => s._id === selectedSessionId)) {
+      setSelectedSessionId?.(null);
+    }
+  }, [filteredSessions, selectedSessionId, setSelectedSessionId]);
   return (
     <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="mb-4 space-y-3">
+
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Recent Sessions</h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">Newest scrape jobs appear here.</p>
+        </div>
+
+        {/* FILTER BAR */}
+        <div className="flex flex-wrap items-center gap-2">
+
+          {/* Search */}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search sessions..."
+            className="flex-1 min-w-[180px] text-sm px-3 py-2 border rounded-md bg-white dark:bg-slate-900/20 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:border-primary-400 outline-none"
+          />
+
+          {/* Date Preset Dropdown */}
+          <select
+            value={datePreset}
+            onChange={(e) => setDatePreset(e.target.value)}
+            className="text-sm px-3 py-2 border rounded-md bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-200 dark:focus:ring-cyan-600"
+          >
+            <option value="all">All time</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+          </select>
+
+          {/* Clear */}
+          {(search || datePreset !== "all") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setDatePreset("all");
+              }}
+              className="text-sm text-slate-500 hover:underline cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
+
         </div>
       </div>
       <div className="space-y-3 max-h-[42rem] overflow-auto pr-1">
@@ -30,8 +125,12 @@ export default function ScrapeSessionsList({
           <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center text-slate-600 dark:text-slate-400">
             {isLoadingSessions ? "Loading sessions..." : "No scraper sessions yet."}
           </div>
+        ) : filteredSessions.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center text-slate-600 dark:text-slate-400">
+            No sessions match the current filters.
+          </div>
         ) : (
-          sessions.map((session) => (
+          filteredSessions.map((session) => (
             <div
               key={session._id}
               className={`rounded-lg border p-4 transition ${

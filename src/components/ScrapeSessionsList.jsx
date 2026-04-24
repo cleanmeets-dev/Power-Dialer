@@ -17,10 +17,12 @@ export default function ScrapeSessionsList({
   handleCancelSession,
   isLoadingSessions,
   isLoadingResults,
+  agents = [],
 }) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [datePreset, setDatePreset] = useState("all");
+  const [creatorFilter, setCreatorFilter] = useState("all");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300);
@@ -64,15 +66,51 @@ export default function ScrapeSessionsList({
         }
       }
 
+      // CREATED BY (manager) filter
+      if (creatorFilter && creatorFilter !== "all") {
+        const creatorId = creatorFilter;
+        const sessionCreatorId = s?.createdBy?._id || s?.createdBy;
+        if (!sessionCreatorId) return false;
+        if (String(sessionCreatorId) !== String(creatorId)) return false;
+      }
+
       return true;
     });
-  }, [sessions, debouncedSearch, datePreset]);
+  }, [sessions, debouncedSearch, datePreset, creatorFilter]);
 
-  useEffect(() => {
+  const managers = useMemo(() => {
+    const found = agents.filter((a) => (a?.role || "").toString().toLowerCase() === "manager");
+    return found.length ? found : agents;
+  }, [agents]);
+
+  useEffect(() => {    
     if (selectedSessionId && !filteredSessions.some((s) => s._id === selectedSessionId)) {
       setSelectedSessionId?.(null);
     }
   }, [filteredSessions, selectedSessionId, setSelectedSessionId]);
+
+  const formatAgentLabel = (a) => {
+    if (!a) return "";
+    // common string fields
+    if (typeof a.name === "string") return a.name;
+    if (typeof a.fullName === "string") return a.fullName;
+    // name may be an object with parts
+    if (a.name && typeof a.name === "object") {
+      const n = a.name;
+      const parts = [n.first, n.firstName, n.givenName, n.last, n.lastName, n.familyName].filter(Boolean);
+      if (parts.length) return parts.join(" ");
+      try {
+        return JSON.stringify(n);
+      } catch (e) {
+        return String(a._id || a.id || a.email || "");
+      }
+    }
+    // fallback to other common fields
+    if (a.firstName || a.lastName) return `${a.firstName || ""} ${a.lastName || ""}`.trim();
+    if (a.email) return a.email;
+    return String(a._id || a.id || "");
+  };
+
   return (
     <div className="bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
       <div className="mb-4 space-y-3">
@@ -108,12 +146,28 @@ export default function ScrapeSessionsList({
             <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
           </div>
 
+            {/* Created By (Managers) Dropdown */}
+            <div className="relative inline-block">
+              <select
+                value={creatorFilter}
+                onChange={(e) => setCreatorFilter(e.target.value)}
+                className="text-sm pr-8 pl-3 py-2 border rounded-md bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-200 dark:focus:ring-cyan-600 appearance-none"
+              >
+                <option value="all">All creators</option>
+                {managers.map((m) => (
+                  <option key={m._id || m.id} value={m._id || m.id}>{formatAgentLabel(m)}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+            </div>
+
           {/* Clear */}
-          {(search || datePreset !== "all") && (
+          {(search || datePreset !== "all" || creatorFilter !== "all") && (
             <button
               onClick={() => {
                 setSearch("");
                 setDatePreset("all");
+                setCreatorFilter("all");
               }}
               className="text-sm text-slate-500 hover:underline cursor-pointer"
             >
@@ -164,6 +218,7 @@ export default function ScrapeSessionsList({
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {new Date(session.createdAt).toLocaleString()}
                       </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">By {session?.createdBy.name}</p>
                     </div>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[session.status] || STATUS_STYLES.running}`}>
                       {session.status}

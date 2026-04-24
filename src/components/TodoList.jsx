@@ -1,7 +1,73 @@
-import React from "react";
-import { CheckCircle2, Circle, Trash2 } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { CheckCircle2, Circle, Trash2, Edit2 } from "lucide-react";
 
-export default function TodoList({ todos, toggleTodo, deleteTodo }) {
+function EditableTodoText({ todo, editTodo, isEditing, startEditing, stopEditing }) {
+  const [value, setValue] = useState(todo.text);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setValue(todo.text);
+  }, [todo.text]);
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.focus();
+  }, [isEditing]);
+
+  const cancel = () => {
+    setValue(todo.text);
+    stopEditing?.();
+  };
+
+  const save = () => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      cancel();
+      return;
+    }
+    if (trimmed !== todo.text) {
+      editTodo?.(todo.id, trimmed);
+    }
+    stopEditing?.();
+  };
+
+  return (
+    <>
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          className="w-full bg-transparent outline-none text-slate-900 dark:text-slate-100"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              save();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              cancel();
+            }
+          }}
+          onBlur={save}
+        />
+      ) : (
+        <p
+          className={`truncate ${
+            todo.completed
+              ? 'text-slate-500 dark:text-slate-400 line-through'
+              : 'text-slate-900 dark:text-slate-100'
+          }`}
+          onDoubleClick={startEditing}
+          title="Double-click to edit"
+        >
+          {todo.text}
+        </p>
+      )}
+    </>
+  );
+}
+
+export default function TodoList({ todos, toggleTodo, deleteTodo, editTodo }) {
+  const [editingId, setEditingId] = useState(null);
   if (todos.length === 0) {
     return (
       <div className="py-12 text-center rounded-lg bg-slate-100 dark:bg-slate-900/30 border border-dashed border-slate-300 dark:border-slate-700">
@@ -29,16 +95,21 @@ export default function TodoList({ todos, toggleTodo, deleteTodo }) {
             )}
           </button>
           <div className="flex-1 min-w-0">
-            <p
-              className={`truncate ${
-                todo.completed
-                  ? 'text-slate-500 dark:text-slate-400 line-through'
-                  : 'text-slate-900 dark:text-slate-100'
-              }`}
-            >
-              {todo.text}
-            </p>
+            <EditableTodoText
+              todo={todo}
+              editTodo={editTodo}
+              isEditing={editingId === todo.id}
+              startEditing={() => setEditingId(todo.id)}
+              stopEditing={() => setEditingId(null)}
+            />
           </div>
+          <button
+            onClick={() => setEditingId(todo.id)}
+            className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800/20 text-slate-600 dark:text-slate-300 transition"
+            title="Edit task"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
           <button
             onClick={() => deleteTodo(todo.id)}
             className="p-2 rounded hover:bg-rose-100 dark:hover:bg-rose-900/20 text-rose-700 dark:text-rose-400 transition"

@@ -467,6 +467,7 @@ export default function ScraperPage() {
             handleCancelSession={handleCancelSession}
             isLoadingSessions={isLoadingSessions}
             isLoadingResults={isLoadingResults}
+            agents={agents}
           />
         </div>
       </div>

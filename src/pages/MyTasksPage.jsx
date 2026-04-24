@@ -94,6 +94,14 @@ export default function MyTasksPage() {
     showNotification?.("Task deleted", "success");
   };
 
+  // 5.1️⃣ EDIT TODO
+  const editTodo = (id, newText) => {
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, text: newText } : t))
+    );
+    showNotification?.("Task updated", "success");
+  };
+
   // 6️⃣ CLEAR COMPLETED
   const clearCompleted = () => {
     setTodos((prev) => prev.filter((t) => !t.completed));
@@ -137,6 +145,7 @@ export default function MyTasksPage() {
           todos={todos}
           toggleTodo={toggleTodo}
           deleteTodo={deleteTodo}
+          editTodo={editTodo}
         />
       </div>
     </div>

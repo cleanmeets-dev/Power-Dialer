@@ -468,6 +468,7 @@ export default function ScraperPage() {
             isLoadingSessions={isLoadingSessions}
             isLoadingResults={isLoadingResults}
             agents={agents}
+            refreshSessions={() => void loadSessions()}
           />
         </div>
       </div>

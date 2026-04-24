@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Trash2, Loader2, ChevronDown } from "lucide-react";
 import { formatSessionLabel, getProgressValue } from "../utils/scraperUtils";
 
@@ -18,6 +18,7 @@ export default function ScrapeSessionsList({
   isLoadingSessions,
   isLoadingResults,
   agents = [],
+  refreshSessions,
 }) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -82,6 +83,71 @@ export default function ScrapeSessionsList({
     const found = agents.filter((a) => (a?.role || "").toString().toLowerCase() === "manager");
     return found.length ? found : agents;
   }, [agents]);
+
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const selectAllRef = useRef(null);
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Keep the select-all checkbox state (checked / indeterminate) in sync
+  useEffect(() => {
+    const totalVisible = filteredSessions.length;
+    const selectedCount = selectedIds.size;
+    const el = selectAllRef.current;
+    if (!el) return;
+    if (selectedCount === 0) {
+      el.indeterminate = false;
+      el.checked = false;
+    } else if (selectedCount > 0 && selectedCount < totalVisible) {
+      el.indeterminate = true;
+      el.checked = false;
+    } else if (selectedCount === totalVisible && totalVisible > 0) {
+      el.indeterminate = false;
+      el.checked = true;
+    } else {
+      el.indeterminate = false;
+      el.checked = false;
+    }
+  }, [selectedIds, filteredSessions]);
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.size) return;
+    const confirmed = window.confirm(`Delete ${selectedIds.size} sessions and their imported leads?`);
+    if (!confirmed) return;
+    try {
+      const resp = await fetch(`/api/scraper/sessions/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      // Defensive parsing: handle empty or non-JSON responses
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || resp.statusText || 'Bulk delete failed');
+      }
+
+      const ct = resp.headers.get("content-type") || "";
+      const data = ct.includes("application/json") ? await resp.json() : { message: await resp.text() };
+
+      clearSelection();
+      setSelectedSessionId?.(null);
+      refreshSessions?.();
+      // prefer app notifications if available, otherwise fallback to alert
+      if (window.showNotification) window.showNotification(data.message || 'Deleted'); else window.alert(data.message || 'Deleted');
+    } catch (err) {
+      console.error('Bulk delete failed', err);
+      if (window.showNotification) window.showNotification(err.message || 'Bulk delete failed', 'error'); else window.alert(err.message || 'Bulk delete failed');
+    }
+  };
 
   useEffect(() => {    
     if (selectedSessionId && !filteredSessions.some((s) => s._id === selectedSessionId)) {
@@ -161,6 +227,36 @@ export default function ScrapeSessionsList({
               <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
             </div>
 
+          {/* Bulk actions */}
+          <div className="ml-2 flex items-center gap-3">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedIds(new Set(filteredSessions.map((s) => s._id)));
+                  } else {
+                    clearSelection();
+                  }
+                }}
+                className="w-4 h-4"
+                aria-label="Select all visible sessions"
+              />
+              <span className="text-slate-700 dark:text-slate-300">Select all</span>
+            </label>
+
+            
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={selectedIds.size === 0}
+              className="px-3 py-2 rounded-md bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-700 text-rose-700 dark:text-rose-300 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              Delete selected ({selectedIds.size})
+            </button>
+          </div>
+
           {/* Clear */}
           {(search || datePreset !== "all" || creatorFilter !== "all") && (
             <button
@@ -190,7 +286,7 @@ export default function ScrapeSessionsList({
           filteredSessions.map((session) => (
             <div
               key={session._id}
-              className={`rounded-lg border p-4 transition ${
+              className={`relative rounded-lg border p-4 transition ${
                 selectedSessionId === session._id
                   ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-950/20"
                   : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/20"
@@ -246,6 +342,14 @@ export default function ScrapeSessionsList({
                   </div>
                 ) : null}
               </button>
+              <div className="absolute top-3 right-3 z-20">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(session._id)}
+                  onChange={() => toggleSelect(session._id)}
+                  className="w-4 h-4"
+                />
+              </div>
               <div className="mt-3 flex items-center justify-end">
                 <div className="flex items-center gap-3">
                   {session.status === "running" && (

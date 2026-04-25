@@ -23,6 +23,7 @@ import {
   importScrapeSessionResults,
   startScrapeSession,
   cancelScrapeSession,
+  getDailyScrapeLeads,
 } from "../services/api";
 
 const DEFAULT_FORM = {
@@ -39,6 +40,51 @@ const STATUS_STYLES = {
   done:    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
   error:   "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
 };
+
+function DailyLeadsChart({ series }) {
+  if (!series?.length) return null;
+
+  const max = Math.max(...series.map((d) => d.count), 1);
+
+  return (
+    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
+        Leads Scraped — Last {series.length} Days&nbsp;
+        <span className="normal-case font-normal">(12:00 noon → 12:00 noon PKT)</span>
+      </p>
+      <div className="flex items-end gap-1.5 h-20">
+        {series.map((d, i) => {
+          const heightPct = Math.max((d.count / max) * 100, d.count ? 5 : 0);
+          const isToday = i === series.length - 1;
+          return (
+            <div
+              key={i}
+              className="flex-1 flex flex-col items-center gap-1 h-full justify-end"
+            >
+              {d.count > 0 && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none">
+                  {d.count}
+                </span>
+              )}
+              <div
+                title={`${d.label}: ${d.count} lead${d.count !== 1 ? "s" : ""}`}
+                className={`w-full rounded-t transition-all duration-500 min-h-[2px] ${
+                  isToday
+                    ? "bg-violet-500 dark:bg-violet-400"
+                    : "bg-violet-200 dark:bg-violet-800/60"
+                }`}
+                style={{ height: `${heightPct}%` }}
+              />
+              <span className="text-[9px] text-slate-400 dark:text-slate-500 leading-none whitespace-nowrap">
+                {d.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function ScraperPage() {
   const { showNotification } = useOutletContext();
@@ -57,19 +103,31 @@ export default function ScraperPage() {
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [isImporting, setIsImporting] = useState(false);
 
-  const canImport = Boolean(selectedSessionId) && results.length > 0 && selectedCampaignId;
+  // Daily leads state: { count: number, series: Array<{ label, count }> }
+  const [dailyLeads, setDailyLeads] = useState({ count: 0, series: [] });
 
-  // Poll whenever ANY session is queued or running — not just running
+  const canImport =
+    Boolean(selectedSessionId) && results.length > 0 && selectedCampaignId;
+
   const hasActiveSession = sessions.some(
     (s) => s.status === "running" || s.status === "queued",
   );
 
   const stats = useScraperStats(results);
 
+  // -------------------------------------------------------------------------
+  // Loaders
+  // -------------------------------------------------------------------------
+
   const loadReferenceData = async () => {
     try {
-      const [campaignData, agentData] = await Promise.all([getCampaigns(), getAllAgents()]);
-      const normalizedCampaigns = Array.isArray(campaignData) ? campaignData : campaignData?.data || [];
+      const [campaignData, agentData] = await Promise.all([
+        getCampaigns(),
+        getAllAgents(),
+      ]);
+      const normalizedCampaigns = Array.isArray(campaignData)
+        ? campaignData
+        : campaignData?.data || [];
       setCampaigns(normalizedCampaigns);
       setAgents(agentData || []);
     } catch (error) {
@@ -84,8 +142,6 @@ export default function ScraperPage() {
       if (!silent) setIsLoadingSessions(true);
       const sessionList = await getScrapeSessions();
       setSessions(sessionList);
-      // const nextSelected = preferredSessionId || selectedSessionId || sessionList[0]?._id || null;
-      // if (nextSelected) setSelectedSessionId(nextSelected);
     } catch (error) {
       console.error("Failed to load scrape sessions:", error);
       showNotification?.("Failed to load scrape sessions", "error");
@@ -115,15 +171,37 @@ export default function ScraperPage() {
     }
   };
 
+  const loadDailyLeads = async () => {
+    try {
+      const data = await getDailyScrapeLeads(7);
+      if (!data) return;
+      setDailyLeads({
+        // "today" count = last item in series (current noon→noon window)
+        count: data.series?.length
+          ? (data.series[data.series.length - 1]?.count ?? 0)
+          : (data.count ?? 0),
+        series: data.series || [],
+      });
+    } catch (err) {
+      console.error("Failed to load daily leads:", err);
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // Effects
+  // -------------------------------------------------------------------------
+
   useEffect(() => {
     void loadReferenceData();
     void loadSessions();
+    void loadDailyLeads();
   }, []);
 
   useEffect(() => {
     void loadSessionResults(selectedSessionId);
   }, [selectedSessionId]);
 
+  // Poll sessions list while any job is active
   useEffect(() => {
     if (!hasActiveSession) return undefined;
 
@@ -138,6 +216,7 @@ export default function ScraperPage() {
     return () => window.clearInterval(interval);
   }, [hasActiveSession, selectedSessionId]);
 
+  // Poll selected session's results while it is running/queued
   useEffect(() => {
     const status = selectedSession?.status;
     if (!selectedSessionId || (status !== "running" && status !== "queued")) {
@@ -147,7 +226,6 @@ export default function ScraperPage() {
     const interval = window.setInterval(async () => {
       try {
         const latestSession = await getScrapeSession(selectedSessionId);
-        // setSelectedSession(latestSession);
         setSessions((prev) =>
           prev.map((s) =>
             s._id === latestSession._id ? { ...s, ...latestSession } : s,
@@ -159,15 +237,21 @@ export default function ScraperPage() {
           setResults(latestResults.results || []);
         }
 
-        if (latestSession.status !== "running" && latestSession.status !== "queued") {
+        if (
+          latestSession.status !== "running" &&
+          latestSession.status !== "queued"
+        ) {
           window.clearInterval(interval);
           await loadSessions(selectedSessionId);
           await loadSessionResults(selectedSessionId);
+
           if (latestSession.status === "done") {
             showNotification?.(
               `Scrape complete. ${latestSession.totalFound || 0} results collected.`,
               "success",
             );
+            // Refresh daily leads count when a job finishes
+            void loadDailyLeads();
           } else if (latestSession.status === "error") {
             showNotification?.(latestSession.error || "Scrape failed", "error");
           }
@@ -179,6 +263,10 @@ export default function ScraperPage() {
 
     return () => window.clearInterval(interval);
   }, [selectedSession?.status, selectedSessionId, showNotification]);
+
+  // -------------------------------------------------------------------------
+  // Handlers
+  // -------------------------------------------------------------------------
 
   const handleStartScrape = async (event) => {
     event.preventDefault();
@@ -198,16 +286,19 @@ export default function ScraperPage() {
         strictLocation: Boolean(form.strictLocation),
       });
       setForm((prev) => ({ ...prev, businessType: "", location: "" }));
-      // setSelectedSessionId(response.sessionId);
       await loadSessions(response.sessionId);
       await loadSessionResults(response.sessionId);
-      const msg = response.queuePosition > 1
-        ? `Queued at position ${response.queuePosition}`
-        : "Scrape job started";
+      const msg =
+        response.queuePosition > 1
+          ? `Queued at position ${response.queuePosition}`
+          : "Scrape job started";
       showNotification?.(msg, "success");
     } catch (error) {
       console.error("Failed to start scrape:", error);
-      showNotification?.(error.response?.data?.error || "Failed to start scrape job", "error");
+      showNotification?.(
+        error.response?.data?.error || "Failed to start scrape job",
+        "error",
+      );
     } finally {
       setIsStarting(false);
     }
@@ -222,24 +313,36 @@ export default function ScraperPage() {
       setIsImporting(true);
       const payload = { campaignId: selectedCampaignId };
       if (selectedAgentId) payload.agentId = selectedAgentId;
-      const response = await importScrapeSessionResults(selectedSessionId, payload);
-      showNotification?.(response.message || "Results imported successfully", "success");
+      const response = await importScrapeSessionResults(
+        selectedSessionId,
+        payload,
+      );
+      showNotification?.(
+        response.message || "Results imported successfully",
+        "success",
+      );
       await loadSessions(selectedSessionId);
       await loadSessionResults(selectedSessionId);
     } catch (error) {
       console.error("Failed to import scrape results:", error);
-      showNotification?.(error.response?.data?.error || "Failed to import scrape results", "error");
+      showNotification?.(
+        error.response?.data?.error || "Failed to import scrape results",
+        "error",
+      );
     } finally {
       setIsImporting(false);
     }
   };
 
   const handleDeleteSession = async (sessionId) => {
-    const confirmed = window.confirm("Delete this scrape session and its stored results?");
+    const confirmed = window.confirm(
+      "Delete this scrape session and its stored results?",
+    );
     if (!confirmed) return;
     try {
       await deleteScrapeSession(sessionId);
-      const fallbackSessionId = sessionId === selectedSessionId ? null : selectedSessionId;
+      const fallbackSessionId =
+        sessionId === selectedSessionId ? null : selectedSessionId;
       if (sessionId === selectedSessionId) {
         setSelectedSessionId(null);
         setSelectedSession(null);
@@ -249,7 +352,10 @@ export default function ScraperPage() {
       showNotification?.("Scrape session deleted", "success");
     } catch (error) {
       console.error("Failed to delete scrape session:", error);
-      showNotification?.(error.response?.data?.error || "Failed to delete scrape session", "error");
+      showNotification?.(
+        error.response?.data?.error || "Failed to delete scrape session",
+        "error",
+      );
     }
   };
 
@@ -267,7 +373,10 @@ export default function ScraperPage() {
       showNotification?.("Scrape session canceled", "success");
     } catch (error) {
       console.error("Failed to cancel scrape session:", error);
-      showNotification?.(error.response?.data?.error || "Failed to cancel scrape session", "error");
+      showNotification?.(
+        error.response?.data?.error || "Failed to cancel scrape session",
+        "error",
+      );
     }
   };
 
@@ -278,11 +387,17 @@ export default function ScraperPage() {
       headers.join(","),
       ...results.map((row) =>
         headers
-          .map((h) => (h === "phone" ? csvEscape(normalizeExportPhone(row.phone)) : csvEscape(row[h])))
+          .map((h) =>
+            h === "phone"
+              ? csvEscape(normalizeExportPhone(row.phone))
+              : csvEscape(row[h]),
+          )
           .join(","),
       ),
     ];
-    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([rows.join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -291,8 +406,13 @@ export default function ScraperPage() {
     URL.revokeObjectURL(url);
   };
 
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="bg-linear-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -300,18 +420,27 @@ export default function ScraperPage() {
               <MapPinned className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Google Maps Scraper</h1>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                Google Maps Scraper
+              </h1>
               <p className="text-slate-600 dark:text-slate-400 mt-1">
-                Run Google Maps scraper, review the results, then import into CRM campaign.
+                Run Google Maps scraper, review the results, then import into
+                CRM campaign.
               </p>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => { void loadReferenceData(); void loadSessions(selectedSessionId); }}
+            onClick={() => {
+              void loadReferenceData();
+              void loadSessions(selectedSessionId);
+              void loadDailyLeads();
+            }}
             className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoadingSessions ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoadingSessions ? "animate-spin" : ""}`}
+            />
             Refresh Data
           </button>
         </div>
@@ -326,15 +455,19 @@ export default function ScraperPage() {
             onSubmit={handleStartScrape}
           />
 
+          {/* Results panel */}
           <div
             className="relative bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-xl dark:shadow-slate-900/30 p-6 border border-slate-200 dark:border-slate-700"
             aria-busy={isLoadingResults}
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Scrape Results</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Scrape Results
+                </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Review what the scraper found before importing anything into the lead queue.
+                  Review what the scraper found before importing anything into
+                  the lead queue.
                 </p>
               </div>
               <button
@@ -347,69 +480,129 @@ export default function ScraperPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+            {/* ── Stat cards (5) ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Results</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalResults}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Total Results
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {stats.totalResults}
+                </p>
               </div>
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">With Phone</p>
-                <p className="text-2xl font-bold text-cyan-700 dark:text-cyan-300">{stats.withPhone}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  With Phone
+                </p>
+                <p className="text-2xl font-bold text-cyan-700 dark:text-cyan-300">
+                  {stats.withPhone}
+                </p>
               </div>
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">With Website</p>
-                <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">{stats.withWebsite}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  With Website
+                </p>
+                <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
+                  {stats.withWebsite}
+                </p>
               </div>
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Rated</p>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{stats.rated}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Rated
+                </p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                  {stats.rated}
+                </p>
+              </div>
+
+              {/* ── Today's Leads card (noon→noon PKT) ── */}
+              <div className="rounded-lg border border-violet-200 dark:border-violet-800/50 bg-violet-50 dark:bg-violet-900/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-violet-500 dark:text-violet-400">
+                  Today's Leads
+                </p>
+                <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">
+                  {dailyLeads.count}
+                </p>
+                <p className="text-[10px] text-violet-400 dark:text-violet-500 mt-0.5 leading-none">
+                  noon → noon PKT
+                </p>
               </div>
             </div>
 
+            {/* ── 7-day bar chart ── */}
+            <div className="mb-5">
+              <DailyLeadsChart series={dailyLeads.series} />
+            </div>
+
+            {/* Selected session info */}
             {selectedSession && (
               <div className="mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-semibold text-slate-900 dark:text-white">
                     {selectedSession.businessType} in {selectedSession.location}
                   </p>
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[selectedSession.status] || STATUS_STYLES.queued}`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[selectedSession.status] || STATUS_STYLES.queued}`}
+                  >
                     {selectedSession.status}
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Created {new Date(selectedSession.createdAt).toLocaleString()} | Requested {selectedSession.maxResults} | Skipped {selectedSession.skipResults || 0} | Found {selectedSession.totalFound || 0} | Imported {selectedSession.importedCount || 0}
+                  Created{" "}
+                  {new Date(selectedSession.createdAt).toLocaleString()} |
+                  Requested {selectedSession.maxResults} | Skipped{" "}
+                  {selectedSession.skipResults || 0} | Found{" "}
+                  {selectedSession.totalFound || 0} | Imported{" "}
+                  {selectedSession.importedCount || 0}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Mode: {selectedSession.strictLocation === false ? "Nearby areas allowed" : "Strict city match"}
+                  Mode:{" "}
+                  {selectedSession.strictLocation === false
+                    ? "Nearby areas allowed"
+                    : "Strict city match"}
                 </p>
 
                 {selectedSession.status === "done" && (
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Completed at {selectedSession.completedAt
-                      ? new Date(selectedSession.completedAt).toLocaleString()
+                    Completed at{" "}
+                    {selectedSession.completedAt
+                      ? new Date(
+                          selectedSession.completedAt,
+                        ).toLocaleString()
                       : selectedSession.updatedAt
-                      ? new Date(selectedSession.updatedAt).toLocaleString()
-                      : "-"}
-                    {selectedSession.createdAt && (selectedSession.completedAt || selectedSession.updatedAt) && (() => {
-                      const start = new Date(selectedSession.createdAt);
-                      const end = new Date(selectedSession.completedAt || selectedSession.updatedAt);
-                      const ms = end - start;
-                      if (ms > 0) {
-                        const sec = Math.floor(ms / 1000) % 60;
-                        const min = Math.floor(ms / 60000) % 60;
-                        const hr = Math.floor(ms / 3600000);
-                        return ` | Duration: ${hr ? hr + "h " : ""}${min ? min + "m " : ""}${sec}s`;
-                      }
-                      return "";
-                    })()}
+                        ? new Date(
+                            selectedSession.updatedAt,
+                          ).toLocaleString()
+                        : "-"}
+                    {selectedSession.createdAt &&
+                      (selectedSession.completedAt ||
+                        selectedSession.updatedAt) &&
+                      (() => {
+                        const start = new Date(selectedSession.createdAt);
+                        const end = new Date(
+                          selectedSession.completedAt ||
+                            selectedSession.updatedAt,
+                        );
+                        const ms = end - start;
+                        if (ms > 0) {
+                          const sec = Math.floor(ms / 1000) % 60;
+                          const min = Math.floor(ms / 60000) % 60;
+                          const hr = Math.floor(ms / 3600000);
+                          return ` | Duration: ${hr ? hr + "h " : ""}${min ? min + "m " : ""}${sec}s`;
+                        }
+                        return "";
+                      })()}
                   </p>
                 )}
 
-                {/* Show progress bar for both queued and running */}
-                {(selectedSession.status === "running" || selectedSession.status === "queued") && (
+                {(selectedSession.status === "running" ||
+                  selectedSession.status === "queued") && (
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
-                      <span>{selectedSession.progressMessage || "Waiting in queue..."}</span>
+                      <span>
+                        {selectedSession.progressMessage ||
+                          "Waiting in queue..."}
+                      </span>
                       {selectedSession.status === "running" && (
                         <span>{getProgressValue(selectedSession)}%</span>
                       )}
@@ -419,11 +612,16 @@ export default function ScraperPage() {
                         <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                           <div
                             className="h-full rounded-full bg-linear-to-r from-cyan-500 to-blue-500 transition-all duration-500"
-                            style={{ width: `${getProgressValue(selectedSession)}%` }}
+                            style={{
+                              width: `${getProgressValue(selectedSession)}%`,
+                            }}
                           />
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Processed {selectedSession.processedCount || 0} / {selectedSession.maxResults || 0} | Successful {selectedSession.successCount || 0} | Discovered {selectedSession.discoveredCount || 0}
+                          Processed {selectedSession.processedCount || 0} /{" "}
+                          {selectedSession.maxResults || 0} | Successful{" "}
+                          {selectedSession.successCount || 0} | Discovered{" "}
+                          {selectedSession.discoveredCount || 0}
                         </p>
                       </>
                     )}
@@ -431,7 +629,9 @@ export default function ScraperPage() {
                 )}
 
                 {selectedSession.error && (
-                  <p className="text-sm text-rose-600 dark:text-rose-300 mt-2">{selectedSession.error}</p>
+                  <p className="text-sm text-rose-600 dark:text-rose-300 mt-2">
+                    {selectedSession.error}
+                  </p>
                 )}
               </div>
             )}
@@ -442,7 +642,10 @@ export default function ScraperPage() {
               </div>
             )}
 
-            <ScrapeResultsTable results={results} isLoadingResults={isLoadingResults} />
+            <ScrapeResultsTable
+              results={results}
+              isLoadingResults={isLoadingResults}
+            />
           </div>
         </div>
 
@@ -469,6 +672,7 @@ export default function ScraperPage() {
             isLoadingResults={isLoadingResults}
             agents={agents}
             refreshSessions={() => void loadSessions()}
+            showNotification={showNotification}
           />
         </div>
       </div>

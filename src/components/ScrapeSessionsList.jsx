@@ -19,6 +19,7 @@ export default function ScrapeSessionsList({
   isLoadingResults,
   agents = [],
   refreshSessions,
+  showNotification,
 }) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -141,11 +142,28 @@ export default function ScrapeSessionsList({
       clearSelection();
       setSelectedSessionId?.(null);
       refreshSessions?.();
-      // prefer app notifications if available, otherwise fallback to alert
-      if (window.showNotification) window.showNotification(data.message || 'Deleted'); else window.alert(data.message || 'Deleted');
+
+      // Build a friendly summary from returned JSON
+      let msg = data?.message || 'Deleted selected sessions.';
+      if (data?.data && typeof data.data === 'object') {
+        const parts = [];
+        const d = data.data;
+        if (d.deletedSessions != null) parts.push(`sessions:${d.deletedSessions}`);
+        if (d.deletedResults != null) parts.push(`results:${d.deletedResults}`);
+        if (d.attempted != null) parts.push(`attempted:${d.attempted}`);
+        if (d.failed != null) parts.push(`failed:${d.failed}`);
+        if (parts.length) msg = `${msg} (${parts.join(' | ')})`;
+      }
+
+      if (showNotification) showNotification(msg, 'success');
+      else if (window.showNotification) window.showNotification(msg, 'success');
+      else window.alert(msg);
     } catch (err) {
       console.error('Bulk delete failed', err);
-      if (window.showNotification) window.showNotification(err.message || 'Bulk delete failed', 'error'); else window.alert(err.message || 'Bulk delete failed');
+      const em = err?.message || 'Bulk delete failed';
+      if (showNotification) showNotification(em, 'error');
+      else if (window.showNotification) window.showNotification(em, 'error');
+      else window.alert(em);
     }
   };
 

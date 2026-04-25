@@ -617,6 +617,12 @@ export const getScrapeSessionResults = async (sessionId) => {
   return response.data.data;
 };
 
+export const getDailyScrapeLeads = async (days = 1) => {
+  const params = days && days > 1 ? `?days=${days}` : "";
+  const response = await api.get(`/scraper/sessions/daily-leads${params}`);
+  return response.data.data;
+};
+
 export const importScrapeSessionResults = async (sessionId, payload) => {
   const response = await api.post(`/scraper/sessions/${sessionId}/import`, payload);
   return response.data;

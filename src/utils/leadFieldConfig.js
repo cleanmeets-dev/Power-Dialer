@@ -48,6 +48,11 @@ export const LEAD_FIELD_CONFIG = {
 
   // Manager sees all fields
   manager: 'all', // Special flag indicating managers see all fields
+  // Manager-only fields
+  managerOnly: [
+    { key: 'managerNotes', label: 'Manager Notes', type: 'textarea', readOnly: false },
+    { key: 'recordingLink', label: 'Recording Link', type: 'url', readOnly: false },
+  ],
 };
 
 export const LEAD_WORKFLOW_FIELDS = [
@@ -59,25 +64,43 @@ export const LEAD_WORKFLOW_FIELDS = [
   { key: 'lastDialedAt', label: 'Last Dialed', type: 'datetime-local', readOnly: true },
 ];
 
-/**
- * Get fields visible to a specific role
- * @param {string} role - User role (manager, caller-agent, closer-agent)
- * @returns {array} Array of field configurations
- */
-export const getVisibleFields = (role) => {
-  if (role === 'manager') {
+export const getCallerVisibleFields = (role, edit = false) => {
+  if ((role === 'manager' || role == 'admin') && edit) {
     // Managers see all fields
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
-      ...LEAD_FIELD_CONFIG['closer-agent'],
       ...LEAD_WORKFLOW_FIELDS,
+      // ...LEAD_FIELD_CONFIG.managerOnly,
+    ];
+  }
+  else if (role === 'manager' || role == 'admin') {
+    // Managers see all fields
+    return [
+      ...LEAD_FIELD_CONFIG.common,
+      ...LEAD_FIELD_CONFIG['caller-agent'],
+      ...LEAD_WORKFLOW_FIELDS,
+      ...LEAD_FIELD_CONFIG.managerOnly,
     ];
   } else if (role === 'caller-agent') {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
       ...LEAD_WORKFLOW_FIELDS,
+      ...LEAD_FIELD_CONFIG.managerOnly,
+    ];
+  }
+  return LEAD_FIELD_CONFIG.common;
+};
+
+export const getCloserVisibleFields = (role) => {
+  if (role === 'manager' || role == 'admin') {
+    // Managers see all fields
+    return [
+      ...LEAD_FIELD_CONFIG.common,
+      ...LEAD_FIELD_CONFIG['closer-agent'],
+      ...LEAD_WORKFLOW_FIELDS,
+      ...LEAD_FIELD_CONFIG.managerOnly,
     ];
   } else if (role === 'closer-agent') {
     return [
@@ -99,13 +122,19 @@ export const getTableColumns = (role) => {
     { key: 'businessName', label: 'Business Name', width: 'w-48' },
     { key: 'businessAddress', label: 'Address', width: 'w-56' },
     { key: 'phoneNumber', label: 'Phone', width: 'w-28' },
-    { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
   ];
 
-  if (role === 'manager') {
+  if (role === 'manager' || role == 'admin') {
     return [
       ...baseColumns,
       { key: 'assignedAgentName', label: 'Assigned Agent', width: 'w-32' },
+    ];
+  }
+
+  if (role !== 'manager' || role != 'admin') {
+    return [
+      ...baseColumns,
+    { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
     ];
   }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getVisibleFields } from '../../utils/leadFieldConfig.js';
+import { getCallerVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
 import { getLead } from '../../services/api.js';
 import { Edit3, ListChecks, User2 } from 'lucide-react';
@@ -35,7 +35,7 @@ const DISPOSITION_COLORS = {
 
 export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdate, onEditLead }) {
   const { user } = useAuth();
-  const visibleFields = getVisibleFields(user?.role);
+  const visibleFields = getCallerVisibleFields(user?.role);
   const [lead, setLead] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,6 +78,18 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
     }
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
+    }
+    if (key === 'recordingLink') {
+      try {
+        const url = String(value).trim();
+        return (
+          <a href={url} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline">
+            {url}
+          </a>
+        );
+      } catch (e) {
+        return String(value);
+      }
     }
     return String(value);
   };
@@ -134,8 +146,12 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
       {/* Fields Grid - Role-based */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pr-1 mb-8">
         {visibleFields.map((field, idx) => {
+          // Always show manager-only fields for managers even if empty
           const value = lead[field.key];
-          if (!value || (typeof value === 'string' && value.trim() === '')) return null;
+          if (
+            user?.role !== 'manager' &&
+            (!value || (typeof value === 'string' && value.trim() === ''))
+          ) return null;
           return (
             <div key={field.key} className="space-y-1 bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-100 dark:border-slate-700 shadow-sm">
               <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-1">{field.label}</p>

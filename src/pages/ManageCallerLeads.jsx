@@ -109,9 +109,8 @@ export default function ManageCallerLeads() {
         disposition: selectedDisposition || null,
         appointmentStatus: selectedAppointmentStatus || null,
         agentId: selectedAgent || null,
+        assignedOnly: true,
       });
-
-      console.log(response);
 
       setLeads(Array.isArray(response?.leads) ? response.leads : []);
       setTotal(response?.pagination?.total || 0);
@@ -157,32 +156,32 @@ export default function ManageCallerLeads() {
     }
   }, [total, pageSize, currentPage]);
 
- useEffect(() => {
-  const scrollToTarget = () => {
-    if (currentPage === 1) {
+  useEffect(() => {
+    const scrollToTarget = () => {
+      if (currentPage === 1) {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: "smooth",
+        });
+        return;
+      }
+
+      if (!tableRef.current) return;
+
+      const rect = tableRef.current.getBoundingClientRect();
+      const offset = 300;
+
+      const targetY = window.scrollY + rect.top - offset;
+
       window.scrollTo({
-        top: 0,
-        left: 0,
+        top: Math.max(0, targetY),
         behavior: "smooth",
       });
-      return;
-    }
+    };
 
-    if (!tableRef.current) return;
-
-    const rect = tableRef.current.getBoundingClientRect();
-    const offset = 300;
-
-    const targetY = window.scrollY + rect.top - offset;
-
-    window.scrollTo({
-      top: Math.max(0, targetY),
-      behavior: "smooth",
-    });
-  };
-
-  requestAnimationFrame(scrollToTarget);
-}, [currentPage]);
+    requestAnimationFrame(scrollToTarget);
+  }, [currentPage]);
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -449,8 +448,12 @@ export default function ManageCallerLeads() {
         />
       </div>
 
-      {/* {selectedCampaignId && (
-        <> */}
+      {(user?.role === "admin" || user?.role === "manager") && (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+          Only assigned leads will display here
+        </div>
+      )}
+    
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
@@ -487,7 +490,7 @@ export default function ManageCallerLeads() {
                 potential clients
               </p>
             </div>
-             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/10">
               <Clock3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
@@ -507,7 +510,7 @@ export default function ManageCallerLeads() {
                 approved
               </p>
             </div>
-           
+
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/10">
               <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
             </div>

@@ -489,54 +489,7 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
             />
           </div>
 
-          <div className="relative">
-            <Filter className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-            <select
-              value={filters.dialerStatus || ""}
-              onChange={(e) => setStatus(e.target.value)}
-              disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
-            >
-              <option value="">All Status</option>
-              {STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={filters.disposition || ""}
-              onChange={(e) => setDisposition(e.target.value)}
-              disabled={isLoading}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
-            >
-              <option value="">All Dispositions</option>
-              <option value="voicemail">Voicemail</option>
-              <option value="followup">Follow Up</option>
-              <option value="appointment">Appointment</option>
-              <option value="not-interested">Not Interested</option>
-              <option value="wrong-number">Wrong Number</option>
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={filters.interestLevel || ""}
-              onChange={(e) => setInterestLevel(e.target.value)}
-              disabled={isLoading}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-100 dark:disabled:bg-slate-700/50 appearance-none cursor-pointer text-xs md:text-sm"
-            >
-              <option value="">All Interest Levels</option>
-              <option value="cold">Cold</option>
-              <option value="warm">Warm</option>
-              <option value="hot">Hot</option>
-            </select>
-          </div>
-
-          {user?.role === "manager" && (
+          {user?.role === "manager" || user?.role == "admin" && (
             <div>
               <select
                 value={filters.agentId || ""}
@@ -683,29 +636,23 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
                           >
                             <Phone className="w-4 h-4" />
                           </button>
-                          {(canEditDisposition || canUpdateQualification) && (
-                            <button
-                              onClick={() => {
-                                if (canUpdateQualification) {
-                                  handleUpdateStatus(lead._id);
-                                } else {
-                                  handleEditLead(lead);
-                                }
-                              }}
-                              disabled={isLoading}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 text-[11px]"
-                              title={
-                                canUpdateQualification
-                                  ? "Edit qualification"
-                                  : "Edit disposition"
-                              }
-                            >
-                              <Edit3 className="w-3 h-3" />
-                              {canUpdateQualification
-                                ? "Edit Qualification"
-                                : "Edit Disposition"}
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              handleEditLead(lead);
+                            }}
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 text-[11px]"
+                            title={
+                              user?.role == "manager" || user?.role == "admin"
+                                ? "Edit details"
+                                : "Edit disposition"
+                            }
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            {user?.role == "manager" || user?.role == "admin"
+                              ? "Edit Details"
+                              : "Edit Disposition"}
+                          </button>
                           <button
                             onClick={() => handleDeleteClick(lead)}
                             disabled={isLoading}
@@ -812,18 +759,6 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
           setSelectedLeadForEdit(null);
         }}
       />
-
-      <UpdateQualificationModal
-        isOpen={showStatusModal}
-        lead={selectedLeadForStatus}
-        onClose={() => {
-          setShowStatusModal(false);
-          setSelectedLeadForStatus(null);
-        }}
-        onSuccess={handleStatusUpdateSuccess}
-        onError={(error) => showNotification(error, "error")}
-      />
-
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title={leadToDelete?._id === "bulk" ? "Delete Leads" : "Delete Lead"}

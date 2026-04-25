@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Modal from "../common/Modal.jsx";
-import { updateQualificationStatus, getAllowedQualifications } from "../../services/api.js";
+import { updateQualification, getAllowedQualifications } from "../../services/api.js";
 import { Loader, AlertCircle, CheckCircle } from "lucide-react";
 
 const ALL_QUALIFICATION_OPTIONS = [
@@ -25,6 +25,8 @@ export default function UpdateQualificationModal({
   const [allowedStatuses, setAllowedStatuses] = useState([]);
   const [currentLevel, setCurrentLevel] = useState(null);
   const [validationError, setValidationError] = useState(null);
+  const [managerNotes, setManagerNotes] = useState(lead?.managerNotes || "");
+  const [recordingLink, setRecordingLink] = useState(lead?.recordingLink || "");
 
   useEffect(() => {
     const fetchAllowedStatuses = async () => {
@@ -45,6 +47,8 @@ export default function UpdateQualificationModal({
     if (isOpen && lead) {
       // setStatus(lead.appointmentStatus || "qualified-level-1");
       setStatus(currentLevel);
+      setManagerNotes(lead?.managerNotes || "");
+      setRecordingLink(lead?.recordingLink || "");
       setValidationError(null);
       fetchAllowedStatuses();
     }
@@ -79,7 +83,10 @@ export default function UpdateQualificationModal({
 
     setIsLoading(true);
     try {
-      const updated = await updateQualificationStatus(lead._id, status);
+      const payload = { appointmentStatus: status };
+      if (managerNotes !== undefined) payload.managerNotes = managerNotes;
+      if (recordingLink !== undefined) payload.recordingLink = recordingLink;
+      const updated = await updateQualification(lead._id, payload);
       onSuccess?.(updated);
       onClose();
     } catch (error) {
@@ -239,6 +246,26 @@ export default function UpdateQualificationModal({
         )}
 
         {/* Buttons */}
+        {/* Manager notes + recording link (admin/manager only) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">Manager Notes</label>
+          <textarea
+            value={managerNotes}
+            onChange={(e) => setManagerNotes(e.target.value)}
+            placeholder="Internal notes for this qualification"
+            className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:ring-2"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">Recording Link</label>
+          <input
+            value={recordingLink}
+            onChange={(e) => setRecordingLink(e.target.value)}
+            placeholder="https://..."
+            className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:ring-2"
+          />
+        </div>
         <div className="flex gap-3 justify-end mt-6">
           <button
             type="button"

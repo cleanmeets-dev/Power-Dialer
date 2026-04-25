@@ -240,8 +240,17 @@ export const uploadLeads = async (file, campaignId, agentId) => {
 };
 
 export const getLeads = async (campaignId, options = {}) => {
-  const { status = null, page = 1, limit = 20, search = null, disposition = null, appointmentStatus = null, agentId = null } = options;
-  
+  const {
+    status = null,
+    page = 1,
+    limit = 20,
+    search = null,
+    disposition = null,
+    appointmentStatus = null,
+    agentId = null,
+    assignedOnly = false,
+  } = options;
+
   let url = `/caller-leads?page=${page}&limit=${limit}`;
   if (campaignId) url = `/caller-leads?campaignId=${campaignId}&page=${page}&limit=${limit}`;
   if (status) url += `&dialerStatus=${encodeURIComponent(status)}`;
@@ -249,7 +258,8 @@ export const getLeads = async (campaignId, options = {}) => {
   if (disposition) url += `&disposition=${encodeURIComponent(disposition)}`;
   if (appointmentStatus) url += `&appointmentStatus=${encodeURIComponent(appointmentStatus)}`;
   if (agentId) url += `&agentId=${encodeURIComponent(agentId)}`;
-  
+  if (assignedOnly) url += `&assignedOnly=true`;
+
   const response = await api.get(url);
   return {
     leads: response.data.data || [],

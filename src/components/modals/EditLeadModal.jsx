@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getVisibleFields } from '../../utils/leadFieldConfig.js';
+import { getCallerVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
 import FormInput from '../common/FormInput.jsx';
 import FormSelect from '../common/FormSelect.jsx';
@@ -9,7 +9,7 @@ import { Save, X, AlertCircle } from 'lucide-react';
 
 export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
   const { user } = useAuth();
-  const visibleFields = useMemo(() => getVisibleFields(user?.role), [user?.role]);
+  const visibleFields = useMemo(() => getCallerVisibleFields(user?.role, true), [user?.role]);
   
   const [formData, setFormData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +63,8 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
   if (!lead) return null;
 
   const editableFields = visibleFields.filter((f) => {
+    // Managers can edit all fields
+    if (user?.role === 'manager' || user?.role == 'admin') return true;
     if (f.readOnly) return false;
     if (user?.role === 'caller-agent' && f.key === 'appointmentStatus') return false;
     return true;

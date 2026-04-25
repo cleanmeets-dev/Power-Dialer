@@ -6,7 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./pages/DashboardLayout";
 import OverviewPage from "./pages/OverviewPage";
 import LeadsPage from "./pages/LeadsPage";
-import FollowupPage from "./pages/FollowupPage";
+import ManageCallerLeads from "./pages/ManageCallerLeads";
 import CallLogsPage from "./pages/CallLogsPage";
 import CampaignsPage from "./pages/CampaignsPage";
 import AgentAvailabilityPage from "./pages/AgentAvailabilityPage";
@@ -23,6 +23,7 @@ import EarningsHistoryPage from "./pages/EarningsHistoryPage";
 import React from "react";
 import MobileBlockWrapper from "./components/MobileBlockWrapper";
 import CelebrationListener from "./components/CelebrationListener";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
       <AuthProvider>
         <CelebrationListener />
         <Router>
+          <ScrollToTop />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
@@ -47,7 +49,8 @@ function App() {
               <Route path="tasks" element={<MyTasksPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="scraper" element={<ScraperPage />} />
-              <Route path="followups" element={<FollowupPage />} />
+              <Route path="caller-leads" element={<ManageCallerLeads />} />
+              {/* <Route path="closer-leads" element={<ManageCallerLeads />} /> */}
               <Route path="call-logs" element={<CallLogsPage />} />
               <Route path="campaigns" element={<CampaignsPage />} />
               <Route path="agents" element={<AgentAvailabilityPage />} />
@@ -70,7 +73,7 @@ function App() {
               <Route index element={<OverviewPage />} />
               <Route path="tasks" element={<MyTasksPage />} />
               <Route path="leads" element={<LeadsPage />} />
-              <Route path="followups" element={<FollowupPage />} />
+              <Route path="followups" element={<ManageCallerLeads />} />
               <Route path="power-dialer" element={<PowerDialerPage />} />
               <Route path="auto-dialer" element={<AutoDialerPage />} />
               <Route path="direct-dialer" element={<DirectDialerPage />} />

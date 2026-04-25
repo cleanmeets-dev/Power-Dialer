@@ -36,10 +36,16 @@ function getSidebarItems(role) {
       },
       // { id: 'leads', label: 'Leads', icon: FileText, path: '/manager/leads' },
       {
-        id: "followups",
-        label: "Lead Status/Followups",
+        id: "caller-leads",
+        label: "Manage Caller Leads",
         icon: Repeat2,
-        path: "/manager/followups",
+        path: "/manager/caller-leads",
+      },
+      {
+        id: "closer-leads",
+        label: "Manage Closer Leads (TBC)",
+        icon: Repeat2,
+        path: "/manager/closer-leads",
       },
       {
         id: "scraper",

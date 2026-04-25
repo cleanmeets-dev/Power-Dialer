@@ -1,0 +1,954 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  User,
+  FileText,
+  X,
+  Download,
+  Clock3,
+  Layers3,
+  Users,
+  CheckCircle2,
+  TrendingUp,
+} from "lucide-react";
+import { getAllAgents, getLeads } from "../services/api";
+import SmartCampaignSelector from "../components/SmartCampaignSelector";
+import LeadDetailModal from "../components/modals/LeadDetailModal";
+import EditLeadModal from "../components/modals/EditLeadModal";
+import UpdateQualificationModal from "../components/modals/UpdateQualificationModal";
+import SelectCampaignMsg from "../components/common/SelectCampaignMsg";
+
+const DIALER_STATUSES = [
+  "pending",
+  "dialing",
+  "connected",
+  "failed",
+  "completed",
+];
+
+const DISPOSITIONS = [
+  "voicemail",
+  "followup",
+  "not-interested",
+  "appointment",
+  "wrong-number",
+];
+
+const APPOINTMENT_STATUSES = [
+  "qualified-level-1",
+  "qualified-level-2",
+  "qualified-level-3",
+  "disqualified",
+  "in-process",
+  "reschedule",
+  "onhold",
+];
+
+export default function ManageCallerLeads() {
+  const { showNotification } = useOutletContext();
+  const { user } = useAuth();
+  const canExport = ["admin", "manager"].includes(user?.role);
+  const canManageLeads = ["admin", "manager"].includes(user?.role);
+
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
+  const [leads, setLeads] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedDialerStatus, setSelectedDialerStatus] = useState("");
+  const [selectedDisposition, setSelectedDisposition] = useState("");
+  const [selectedAppointmentStatus, setSelectedAppointmentStatus] =
+    useState("");
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [selectedLeadForEdit, setSelectedLeadForEdit] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedLeadForStatus, setSelectedLeadForStatus] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [agents, setAgents] = useState([]);
+  const [stats, setStats] = useState({
+    total: null,
+    inProcess: null,
+    qa1: null,
+    qa2: null,
+    qa3: null,
+  });
+  const tableRef = useRef(null);
+
+  // Fetch followup leads
+  const loadFollowupLeads = useCallback(async () => {
+    // if (!selectedCampaignId) {
+    //   setLeads([]);
+    //   setTotal(0);
+    //   setStats({
+    //     scopedTotal: 0,
+    //     interested: 0,
+    //     appointments: 0,
+    //     followupsScheduled: 0,
+    //   });
+    //   return;
+    // }
+
+    const campaignId = selectedCampaignId || undefined;
+    setIsLoading(true);
+    try {
+      const response = await getLeads(campaignId || undefined, {
+        page: currentPage,
+        limit: pageSize,
+        search: searchInput || null,
+        status: selectedDialerStatus || null,
+        disposition: selectedDisposition || null,
+        appointmentStatus: selectedAppointmentStatus || null,
+        agentId: selectedAgent || null,
+      });
+
+      console.log(response);
+
+      setLeads(Array.isArray(response?.leads) ? response.leads : []);
+      setTotal(response?.pagination?.total || 0);
+      setStats({
+        total: response?.stats?.total || 0,
+        inProcess: response?.stats?.inProcess || 0,
+        qa1: response?.stats?.qa1 || 0,
+        qa2: response?.stats?.qa2 || 0,
+        qa3: response?.stats?.qa3 || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching followup leads:", error);
+      showNotification("Error fetching followup leads", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    selectedCampaignId,
+    currentPage,
+    pageSize,
+    searchInput,
+    selectedDialerStatus,
+    selectedDisposition,
+    selectedAppointmentStatus,
+    selectedAgent,
+    showNotification,
+  ]);
+
+  useEffect(() => {
+    loadFollowupLeads();
+  }, [loadFollowupLeads]);
+
+  // Reset page when switching campaigns so we don't land on an out-of-range page
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCampaignId]);
+
+  // Clamp current page when total or pageSize changes (e.g., after filtering)
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [total, pageSize, currentPage]);
+
+ useEffect(() => {
+  const scrollToTarget = () => {
+    if (currentPage === 1) {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    if (!tableRef.current) return;
+
+    const rect = tableRef.current.getBoundingClientRect();
+    const offset = 300;
+
+    const targetY = window.scrollY + rect.top - offset;
+
+    window.scrollTo({
+      top: Math.max(0, targetY),
+      behavior: "smooth",
+    });
+  };
+
+  requestAnimationFrame(scrollToTarget);
+}, [currentPage]);
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const users = await getAllAgents();
+        const callerOnly = (Array.isArray(users) ? users : [])
+          .filter((user) => user.role === "caller-agent")
+          .map((user) => ({
+            _id: user._id,
+            name: user.name || user.email,
+            email: user.email,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setAgents(callerOnly);
+      } catch (error) {
+        console.error("Error loading caller agents:", error);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  const handleViewLead = (leadId) => {
+    setSelectedLeadId(leadId);
+    setShowDetailModal(true);
+  };
+
+  const handleEditLead = (lead) => {
+    setSelectedLeadForEdit(lead);
+    setShowEditModal(true);
+  };
+
+  const handleEditSave = (updated) => {
+    setLeads((prevLeads) =>
+      prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)),
+    );
+    showNotification("Lead updated successfully", "success");
+    setShowEditModal(false);
+    loadFollowupLeads();
+  };
+
+  const handleUpdateStatus = (leadId) => {
+    const lead = leads.find((item) => item._id === leadId);
+    setSelectedLeadForStatus(lead || null);
+    setShowStatusModal(true);
+  };
+
+  const handleStatusUpdateSuccess = (updated) => {
+    setLeads((prevLeads) =>
+      prevLeads.map((lead) => (lead._id === updated._id ? updated : lead)),
+    );
+    showNotification("Qualification updated successfully", "success");
+    setShowStatusModal(false);
+    loadFollowupLeads();
+  };
+
+  const handleSearch = (e) => {
+    setSearchInput(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setSearchInput("");
+    setSelectedDialerStatus("");
+    setSelectedDisposition("");
+    setSelectedAppointmentStatus("");
+    setSelectedAgent("");
+    setCurrentPage(1);
+  };
+
+  const handleExport = () => {
+    if (leads.length === 0) {
+      showNotification("No leads to export", "error");
+      return;
+    }
+
+    const headers = [
+      "Business Name",
+      "Phone",
+      "Email",
+      "Dialer Status",
+      "Disposition",
+      "Appointment Status",
+      "Agent Assigned",
+      "Last Contacted",
+      "Notes",
+    ];
+    const rows = leads.map((lead) => [
+      lead.businessName || "",
+      lead.phoneNumber || "",
+      lead.email || "",
+      lead.dialerStatus || "",
+      lead.disposition || "",
+      lead.appointmentStatus || "",
+      getAssignedAgentLabel(lead) || "",
+      formatDate(lead.lastDialedAt) || "",
+      lead.agentNotes || "",
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `followup-leads-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showNotification("Followup leads exported successfully", "success");
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (date) => {
+    if (!date) return "";
+    return new Date(date).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: "bg-slate-800 text-slate-50",
+      dialing: "bg-blue-800 text-blue-50",
+      connected: "bg-emerald-800 text-emerald-50",
+      failed: "bg-rose-800 text-rose-50",
+      completed: "bg-indigo-800 text-indigo-50",
+    };
+    return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const getDispositionColor = (disposition) => {
+    const colors = {
+      voicemail: "bg-gray-600 text-white",
+      followup: "bg-amber-600 text-white",
+      "not-interested": "bg-red-600 text-white",
+      appointment: "bg-emerald-600 text-white",
+      "wrong-number": "bg-orange-600 text-white",
+    };
+    return colors[disposition] || "bg-gray-200 text-gray-800";
+  };
+
+  const getAppointmentColor = (appointmentStatus) => {
+    const colors = {
+      "in-process":
+        "bg-gradient-to-l from-yellow-600 via-yellow-800 to-yellow-900 text-white",
+      "qualified-level-1":
+        "bg-gradient-to-l from-blue-600 via-blue-800 to-blue-900 text-white",
+      "qualified-level-2":
+        "bg-gradient-to-l from-indigo-600 via-indigo-800 to-indigo-900 text-white",
+      "qualified-level-3":
+        "bg-gradient-to-l from-emerald-600 via-emerald-800 to-emerald-900 text-white",
+      disqualified:
+        "bg-gradient-to-l from-red-600 via-red-800 to-red-900 text-white",
+      reschedule:
+        "bg-gradient-to-l from-orange-600 via-orange-800 to-orange-900 text-white",
+      onhold:
+        "bg-gradient-to-l from-gray-600 via-gray-800 to-gray-900 text-white",
+    };
+
+    return colors[appointmentStatus] || "bg-gray-200 text-gray-800";
+  };
+
+  const totalPages = Math.ceil(total / pageSize);
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, total);
+
+  // Build a condensed pagination array with ellipses when needed
+  const getPageNumbers = (totalPages, currentPage) => {
+    const pages = [];
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const left = Math.max(3, currentPage - 1);
+    const right = Math.min(totalPages - 2, currentPage + 1);
+
+    pages.push(1, 2);
+
+    if (left > 3) {
+      pages.push("...");
+    } else if (left === 3) {
+      pages.push(3);
+    }
+
+    for (let i = left; i <= right; i++) {
+      pages.push(i);
+    }
+
+    if (right < totalPages - 2) {
+      pages.push("...");
+    } else if (right === totalPages - 2) {
+      pages.push(totalPages - 2);
+    }
+
+    pages.push(totalPages - 1, totalPages);
+    // Remove duplicates and keep order
+    return pages.filter((v, i, a) => a.indexOf(v) === i);
+  };
+
+  const getAssignedAgentLabel = (lead) => {
+    if (lead.assignedCallerName) return lead.assignedCallerName;
+    if (lead.assignedCaller && typeof lead.assignedCaller === "object") {
+      return lead.assignedCaller.name || lead.assignedCaller.email || "—";
+    }
+    if (typeof lead.assignedCaller === "string") return lead.assignedCaller;
+    return "—";
+  };
+
+  const activeFiltersCount = [
+    searchInput,
+    selectedDialerStatus,
+    selectedDisposition,
+    selectedAppointmentStatus,
+    selectedAgent,
+  ].filter(Boolean).length;
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 p-8 shadow-lg dark:border-slate-700/50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-gradient-to-br from-cyan-500/10 to-blue-500/10 blur-3xl"></div>
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
+              <Layers3 className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Lead Followups
+              </h1>
+              <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+                Track call outcomes, assignments, and next actions in one place.
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-sm dark:border-slate-600/50 dark:bg-slate-900/80 dark:text-slate-200">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20">
+              <Layers3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <span>{stats.total ?? "—"} total leads</span>
+          </div>
+        </div>
+
+        {/* header end */}
+      </div>
+
+      {/* Campaign Selector */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <SmartCampaignSelector
+          value={selectedCampaignId}
+          onChange={setSelectedCampaignId}
+        />
+      </div>
+
+      {/* {selectedCampaignId && (
+        <> */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+          <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-blue-500/5 blur-2xl transition-all group-hover:bg-blue-500/10"></div>
+          <div className="relative flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Total Leads
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.total ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                scoped to selected campaign
+              </p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/10">
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+          <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-emerald-500/5 blur-2xl transition-all group-hover:bg-emerald-500/10"></div>
+          <div className="relative flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                In Process
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.inProcess ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                potential clients
+              </p>
+            </div>
+             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/10">
+              <Clock3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+          <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-purple-500/5 blur-2xl transition-all group-hover:bg-purple-500/10"></div>
+          <div className="relative flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Qualified L1
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.qa1 ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                approved
+              </p>
+            </div>
+           
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/10">
+              <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+          <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-amber-500/5 blur-2xl transition-all group-hover:bg-amber-500/10"></div>
+          <div className="relative flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Scheduled
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.qa2 ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                upcoming followups
+              </p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-600/10">
+              <Clock3 className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            </div>
+          </div>
+        </div> */}
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+          <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-pink-500/5 blur-2xl transition-all group-hover:bg-pink-500/10"></div>
+          <div className="relative flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Qualified L3
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                {stats.qa3 ?? "—"}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                highest qualification
+              </p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/10">
+              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Section */}
+      <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {/* Search Bar */}
+          <div className="relative lg:col-span-4">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name, phone..."
+              value={searchInput}
+              onChange={handleSearch}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400 dark:focus:border-cyan-400"
+            />
+          </div>
+
+          {/* <select
+            value={selectedDialerStatus}
+            onChange={(e) => {
+              setSelectedDialerStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">All Statuses</option>
+            {DIALER_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status.replace("_", " ").toUpperCase()}
+              </option>
+            ))}
+          </select> */}
+
+          {/* Qualification Status */}
+          <div className="lg:col-span-3">
+            <select
+              value={selectedAppointmentStatus}
+              onChange={(e) => {
+                setSelectedAppointmentStatus(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-11 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+            >
+              <option value="">All Qualifications</option>
+              {APPOINTMENT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status.replace("-", " ").toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Disposition */}
+          <div className="lg:col-span-2">
+            <select
+              value={selectedDisposition}
+              onChange={(e) => {
+                setSelectedDisposition(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-11 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+            >
+              <option value="">All Dispositions</option>
+              {DISPOSITIONS.map((disposition) => (
+                <option key={disposition} value={disposition}>
+                  {disposition.replace("-", " ").toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+          >
+            <Filter className="h-4 w-4" />
+            {showAdvancedFilters ? "Hide" : "More"} Filters
+          </button> */}
+
+          {/* Agent + Clear Filters */}
+          <div className="flex gap-3 lg:col-span-3">
+            <select
+              value={selectedAgent}
+              onChange={(e) => {
+                setSelectedAgent(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-11 flex-1 cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+            >
+              <option value="">All Agents</option>
+              {agents.map((agent) => (
+                <option key={agent._id} value={agent._id}>
+                  {agent.name || agent.email}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={clearAllFilters}
+              className="flex h-11 items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-4 font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
+            >
+              <X className="h-4 w-4" />
+              Clear
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Bar: Results Count + Actions */}
+        <div className="flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            Showing{" "}
+            <span className="font-bold text-slate-900 dark:text-white">
+              {leads.length > 0 ? startIndex : 0}–{endIndex}
+            </span>{" "}
+            of{" "}
+            <span className="font-bold text-slate-900 dark:text-white">
+              {total}
+            </span>{" "}
+            followup leads
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(parseInt(e.target.value, 10));
+                setCurrentPage(1);
+              }}
+              className="h-10 cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-400"
+            >
+              <option value={10}>10 per page</option>
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+
+            {canExport && leads.length > 0 && (
+              <button
+                onClick={handleExport}
+                className="flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:from-cyan-700 hover:to-blue-700 hover:shadow-cyan-500/40"
+                title="Export as CSV"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div
+        ref={tableRef}
+        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center p-16">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-500 dark:border-slate-700 dark:border-t-cyan-400"></div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Loading followup leads...
+              </p>
+            </div>
+          </div>
+        ) : leads.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+                <tr>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Lead
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Agent
+                  </th>
+                  {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Status
+                  </th> */}
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Disposition
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Qualification
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Address
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Last Dialed
+                  </th>
+                  {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                        Follow-Up Date (If any)
+                      </th> */}
+                  <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-700 dark:bg-slate-800">
+                {leads.map((lead, idx) => (
+                  <tr
+                    key={lead._id}
+                    className="transition hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                  >
+                    <td className="px-5 py-4 text-sm">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {lead.businessName || "N/A"}
+                        </span>
+                        <span className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                          {lead.phoneNumber}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-sm">
+                      <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
+                          <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                        </div>
+                        <span className="font-medium">
+                          {getAssignedAgentLabel(lead)}
+                        </span>
+                      </div>
+                    </td>
+                    {/* <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                          lead.dialerStatus,
+                        )}`}
+                      >
+                        {lead.dialerStatus?.replace("_", " ").toUpperCase() ||
+                          "—"}
+                      </span>
+                    </td> */}
+                    <td className="px-5 py-4 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${getDispositionColor(
+                          lead.disposition,
+                        )}`}
+                      >
+                        {lead.disposition?.replace("-", " ").toUpperCase() ||
+                          "—"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${getAppointmentColor(
+                          lead.appointmentStatus,
+                        )}`}
+                      >
+                        {lead.appointmentStatus
+                          ?.replace("-", " ")
+                          .toUpperCase() || "—"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-700 dark:text-slate-300">
+                      <span className="line-clamp-2 max-w-xs">
+                        {lead.businessAddress || lead.address || "—"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {formatDate(lead.lastDialedAt)}
+                        </span>
+                        <span className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                          {formatTime(lead.lastDialedAt)}
+                        </span>
+                      </div>
+                    </td>
+                    {/* <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-amber-500" />
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {lead.followUpDate
+                                ? formatDate(lead.followUpDate)
+                                : "—"}
+                            </span>
+                          </div>
+                        </td> */}
+                    <td className="px-5 py-4 text-center">
+                      <button
+                        onClick={() => handleViewLead(lead._id)}
+                        className="cursor-pointer rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 transition hover:from-cyan-700 hover:to-blue-700 hover:shadow-cyan-500/30"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center p-16">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
+              <FileText className="h-10 w-10 text-slate-400 dark:text-slate-500" />
+            </div>
+            <p className="text-base font-medium text-slate-600 dark:text-slate-400">
+              No followup leads found
+            </p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+              Try adjusting your filters or search criteria
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </button>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {getPageNumbers(totalPages, currentPage).map((page, idx) =>
+              page === "..." ? (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="inline-flex h-10 items-center justify-center px-3 text-sm text-slate-500"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`h-10 w-10 cursor-pointer rounded-lg text-sm font-semibold shadow-sm transition ${
+                    currentPage === page
+                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-cyan-500/30"
+                      : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {page}
+                </button>
+              ),
+            )}
+          </div>
+
+          <button
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
+            }
+            disabled={currentPage === totalPages}
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {/* </>
+      )} */}
+
+      {!selectedCampaignId && (
+        <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3.5 dark:border-blue-900/50 dark:bg-blue-950/30">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50">
+            <Layers3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            Showing followups across ALL campaigns
+          </p>
+        </div>
+      )}
+      {!selectedCampaignId && <SelectCampaignMsg />}
+
+      <LeadDetailModal
+        isOpen={showDetailModal}
+        leadId={selectedLeadId}
+        onClose={() => setShowDetailModal(false)}
+        onEditLead={canManageLeads ? handleEditLead : undefined}
+        onStatusUpdate={canManageLeads ? handleUpdateStatus : undefined}
+      />
+
+      {canManageLeads && (
+        <>
+          <EditLeadModal
+            isOpen={showEditModal}
+            lead={selectedLeadForEdit}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleEditSave}
+          />
+
+          <UpdateQualificationModal
+            isOpen={showStatusModal}
+            lead={selectedLeadForStatus}
+            onClose={() => setShowStatusModal(false)}
+            onSuccess={handleStatusUpdateSuccess}
+            onError={(message) => showNotification(message, "error")}
+          />
+        </>
+      )}
+    </div>
+  );
+}

@@ -52,6 +52,7 @@ export const LEAD_FIELD_CONFIG = {
   managerOnly: [
     { key: 'managerNotes', label: 'Manager Notes', type: 'textarea', readOnly: false },
     { key: 'recordingLink', label: 'Recording Link', type: 'url', readOnly: false },
+    { key: 'callQuality', label: 'Call Quality', type: 'select', options: ['average', 'below-average', 'best'], readOnly: false },
   ],
 };
 
@@ -71,7 +72,7 @@ export const getCallerVisibleFields = (role, edit = false) => {
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
       ...LEAD_WORKFLOW_FIELDS,
-      // ...LEAD_FIELD_CONFIG.managerOnly,
+      ...LEAD_FIELD_CONFIG.managerOnly,
     ];
   }
   else if (role === 'manager' || role == 'admin') {

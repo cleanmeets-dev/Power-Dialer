@@ -27,6 +27,7 @@ export default function UpdateQualificationModal({
   const [validationError, setValidationError] = useState(null);
   const [managerNotes, setManagerNotes] = useState(lead?.managerNotes || "");
   const [recordingLink, setRecordingLink] = useState(lead?.recordingLink || "");
+  const [callQuality, setCallQuality] = useState(lead?.callQuality || "");
 
   useEffect(() => {
     const fetchAllowedStatuses = async () => {
@@ -49,6 +50,7 @@ export default function UpdateQualificationModal({
       setStatus(currentLevel);
       setManagerNotes(lead?.managerNotes || "");
       setRecordingLink(lead?.recordingLink || "");
+      setCallQuality(lead?.callQuality || "");
       setValidationError(null);
       fetchAllowedStatuses();
     }
@@ -86,6 +88,7 @@ export default function UpdateQualificationModal({
       const payload = { appointmentStatus: status };
       if (managerNotes !== undefined) payload.managerNotes = managerNotes;
       if (recordingLink !== undefined) payload.recordingLink = recordingLink;
+        if (callQuality !== undefined && callQuality !== "") payload.callQuality = callQuality;
       const updated = await updateQualification(lead._id, payload);
       onSuccess?.(updated);
       onClose();
@@ -165,10 +168,10 @@ export default function UpdateQualificationModal({
             value={status}
             onChange={(e) => handleStatusChange(e.target.value)}
             disabled={availableOptions.length === 0}
-            className={`w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition focus:ring-2 cursor-pointer ${
+            className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition appearance-none bg-white dark:bg-slate-900 bg-clip-padding pr-10 ${
               validationError
                 ? "border-red-300 bg-red-50 text-red-900 focus:ring-red-500/20 dark:border-red-700 dark:bg-red-900/20 dark:text-red-100"
-                : "border-slate-300 bg-white text-slate-900 focus:border-primary-500 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                : "border-slate-300 text-slate-900 focus:border-primary-500 focus:ring-primary-500/20 dark:border-slate-700 dark:text-slate-100"
             }`}
           >
             <option value="">Select a status...</option>
@@ -265,6 +268,19 @@ export default function UpdateQualificationModal({
             placeholder="https://..."
             className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:ring-2"
           />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">Call Quality</label>
+          <select
+            value={callQuality}
+            onChange={(e) => setCallQuality(e.target.value)}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition appearance-none bg-white dark:bg-slate-900 bg-clip-padding pr-10"
+          >
+            <option value="">Not Rated</option>
+            <option value="average">Average</option>
+            <option value="below-average">Below Average</option>
+            <option value="best">Best</option>
+          </select>
         </div>
         <div className="flex gap-3 justify-end mt-6">
           <button

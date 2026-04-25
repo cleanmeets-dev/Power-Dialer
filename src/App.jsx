@@ -20,7 +20,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import MyTasksPage from "./pages/MyTasksPage";
 import EarningsHistoryPage from "./pages/EarningsHistoryPage";
-import QualifiedLeadsPool from "./pages/QualifiedLeadsPool";
+import ManageClientOffers from "./pages/ManageClientOffers";
 import MyOffersPage from "./pages/MyOffersPage";
 import OfferDetailPage from "./pages/OfferDetailPage";
 import React from "react";
@@ -61,7 +61,7 @@ function App() {
               <Route path="attendance" element={<AttendanceHistoryPage />} />
               <Route path="earnings" element={<EarningsHistoryPage />} />
               <Route path="direct-dialer" element={<DirectDialerPage />} />
-              <Route path="client-leads" element={<QualifiedLeadsPool />} />
+              <Route path="client-leads" element={<ManageClientOffers />} />
             </Route>
 
             <Route

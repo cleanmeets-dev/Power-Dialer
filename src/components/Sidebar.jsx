@@ -44,6 +44,18 @@ function getSidebarItems(role) {
         path: "/manager/caller-leads",
       },
       {
+        id: "closer-leads",
+        label: "Manage Closer Leads (TBD)",
+        icon: Repeat2,
+        path: "/manager/closer-leads",
+      },
+      {
+        id: "client-leads",
+        label: "Manage Client Offers",
+        icon: Repeat,
+        path: "/manager/client-leads",
+      },
+      {
         id: "scraper",
         label: "Maps Scraper",
         icon: MapPinned,
@@ -76,24 +88,13 @@ function getSidebarItems(role) {
         icon: Users,
         path: "/manager/user-management",
       },
-      {
-        id: "closer-leads",
-        label: "Manage Closer Leads (TBD)",
-        icon: Repeat2,
-        path: "/manager/closer-leads",
-      },
-      {
-        id: "client-leads",
-        label: "Client Marketplace",
-        icon: Repeat,
-        path: "/manager/client-leads",
-      },
-           {
-          id: "call-logs",
-          label: "Call Logs",
-          icon: Phone,
-          path: "/manager/call-logs",
-        },
+      
+        //    {
+        //   id: "call-logs",
+        //   label: "Call Logs",
+        //   icon: Phone,
+        //   path: "/manager/call-logs",
+        // },
     ];
   }
 

@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { getCallerVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
 import { getLead } from '../../services/api.js';
-import { Edit3, ListChecks, User2 } from 'lucide-react';
+import { Edit3, ListChecks, User2, BadgeDollarSign } from 'lucide-react';
 
 const STATUS_COLORS = {
   pending: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400',
@@ -33,7 +33,20 @@ const DISPOSITION_COLORS = {
   'wrong-number': 'bg-orange-500/20 text-orange-700 dark:text-orange-400',
 };
 
-export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdate, onEditLead }) {
+const QUALIFIED_STATUSES = new Set([
+  'qualified-level-1',
+  'qualified-level-2',
+  'qualified-level-3',
+]);
+
+export default function LeadDetailModal({
+  isOpen,
+  leadId,
+  onClose,
+  onStatusUpdate,
+  onEditLead,
+  onCreateOffer,
+}) {
   const { user } = useAuth();
   const visibleFields = getCallerVisibleFields(user?.role);
   const [lead, setLead] = useState(null);
@@ -70,6 +83,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
   if (!lead) return null;
 
   const isManager = user?.role === 'manager';
+  const canCreateOffer = onCreateOffer && QUALIFIED_STATUSES.has(lead.appointmentStatus);
 
   const renderFieldValue = (key, value) => {
     if (!value) return '—';
@@ -189,6 +203,15 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
           >
             <ListChecks className="w-4 h-4" />
             Update Qualification
+          </button>
+        )}
+        {canCreateOffer && (
+          <button
+            onClick={() => onCreateOffer?.(lead)}
+            className="px-5 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          >
+            <BadgeDollarSign className="w-4 h-4" />
+            Create Offer
           </button>
         )}
       </div>

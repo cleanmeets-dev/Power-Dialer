@@ -51,7 +51,7 @@ export default function OffersManagementTable({
             Offers Management
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Track lifecycle from offered to paid, expired, or cancelled.
+            Offered leads are shown first so managers can actively manage live marketplace inventory.
           </p>
         </div>
 

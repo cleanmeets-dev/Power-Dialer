@@ -11,6 +11,7 @@ import {
   MapPinned,
   ClipboardList,
   Coins,
+  Repeat,
 } from "lucide-react";
 
 function getSidebarItems(role) {
@@ -42,12 +43,6 @@ function getSidebarItems(role) {
         path: "/manager/caller-leads",
       },
       {
-        id: "closer-leads",
-        label: "Manage Closer Leads (TBC)",
-        icon: Repeat2,
-        path: "/manager/closer-leads",
-      },
-      {
         id: "scraper",
         label: "Maps Scraper",
         icon: MapPinned,
@@ -62,36 +57,42 @@ function getSidebarItems(role) {
         icon: Users,
         path: "/manager/agents",
       },
-	  {
-		id: "attendance",
-		label: "Attendance Record",
-		icon: CalendarDays,
-		path: "/manager/attendance",
-	  },
-	  {
-		id: "earnings",
-		label: "Earnings History",
-		icon: Coins,
-		path: "/manager/earnings",
-	  },
+      {
+        id: "attendance",
+        label: "Attendance Record",
+        icon: CalendarDays,
+        path: "/manager/attendance",
+      },
+      {
+        id: "earnings",
+        label: "Earnings History",
+        icon: Coins,
+        path: "/manager/earnings",
+      },
       {
         id: "user-management",
         label: "User Management",
         icon: Users,
         path: "/manager/user-management",
       },
-      //   {
-      //     id: "direct-dialer",
-      //     label: "Direct Dialer",
-      //     icon: Phone,
-      //     path: "/manager/direct-dialer",
-      //   },
-    //   {
-    //     id: "call-logs",
-    //     label: "Call Logs",
-    //     icon: Phone,
-    //     path: "/manager/call-logs",
-    //   },
+      {
+        id: "closer-leads",
+        label: "Manage Closer Leads (TBD)",
+        icon: Repeat2,
+        path: "/manager/closer-leads",
+      },
+      {
+        id: "client-leads",
+        label: "Manage Client Leads (TBD)",
+        icon: Repeat,
+        path: "/manager/client-leads",
+      },
+           {
+          id: "call-logs",
+          label: "Call Logs",
+          icon: Phone,
+          path: "/manager/call-logs",
+        },
     ];
   }
 
@@ -151,7 +152,7 @@ export default function Sidebar({ user, isOpen, onClose }) {
   return (
     <>
       <aside className="hidden md:block w-72 shrink-0">
-        <div className="sticky top-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 backdrop-blur p-4">
+        <div className="sticky top-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 backdrop-blur p-4 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-theme">
           <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
             Navigation
           </p>
@@ -179,7 +180,7 @@ export default function Sidebar({ user, isOpen, onClose }) {
             onClick={onClose}
             aria-label="Close navigation"
           />
-          <aside className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-4">
+          <aside className="absolute left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-4 overflow-y-auto scrollbar-theme">
             <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
               Navigation
             </p>

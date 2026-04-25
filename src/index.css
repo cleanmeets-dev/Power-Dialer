@@ -85,6 +85,94 @@ body {
   @apply bg-slate-900 text-slate-50;
 }
 
+/* Themed scrollbar variables */
+:root {
+  --scrollbar-thumb: var(--color-primary-700);
+  --scrollbar-track: transparent;
+}
+
+:root[data-theme="dark"] {
+  --scrollbar-thumb: var(--color-primary-700);
+}
+
+/* Themed scrollbar utility: add `scrollbar-theme` to any scroll container */
+.scrollbar-theme {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit browsers */
+.scrollbar-theme::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scrollbar-theme::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+.scrollbar-theme::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:hover {
+  filter: brightness(0.9);
+}
+
+
+/* Apply themed scrollbar globally (affects all scrollable elements) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit global */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  filter: brightness(0.9);
+}
+
+/* Remove all scrollbar arrows globally (WebKit, bulletproof) */
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: none !important;
+  opacity: 0 !important;
+  border: none !important;
+  -webkit-appearance: none !important;
+}
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* Ensure all overflow containers inherit clean scrollbar behavior */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  -ms-overflow-style: none;
+}
+
+::-webkit-scrollbar-button:vertical:start:decrement,
+::-webkit-scrollbar-button:vertical:end:increment {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
 /* Power Hour Button Animation */
 
 @keyframes powerPop {

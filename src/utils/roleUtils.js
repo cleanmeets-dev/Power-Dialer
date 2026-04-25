@@ -8,6 +8,7 @@ export const ROLES = {
   MANAGER: 'manager',
   CALLER_AGENT: 'caller-agent',
   CLOSER_AGENT: 'closer-agent',
+  CLIENT: 'client',
 };
 
 export const AGENT_ROLES = [ROLES.CALLER_AGENT];
@@ -33,6 +34,10 @@ export const isCloserAgent = (role) => {
   return role === ROLES.CLOSER_AGENT;
 };
 
+export const isClient = (role) => {
+  return role === ROLES.CLIENT;
+};
+
 /**
  * Check if user is a manager or admin (same permissions)
  */
@@ -46,5 +51,6 @@ export const isManager = (role) => {
 export const getRoleHomeRoute = (role) => {
   if (isManager(role)) return '/manager';
   if (isCallerAgent(role)) return '/agent';
+  if (isClient(role)) return '/client';
   return '/login';
 };

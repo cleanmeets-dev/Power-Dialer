@@ -20,6 +20,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleHomeRedirect from "./routes/RoleHomeRedirect";
 import MyTasksPage from "./pages/MyTasksPage";
 import EarningsHistoryPage from "./pages/EarningsHistoryPage";
+import QualifiedLeadsPool from "./pages/QualifiedLeadsPool";
+import MyOffersPage from "./pages/MyOffersPage";
+import OfferDetailPage from "./pages/OfferDetailPage";
 import React from "react";
 import MobileBlockWrapper from "./components/MobileBlockWrapper";
 import CelebrationListener from "./components/CelebrationListener";
@@ -58,6 +61,20 @@ function App() {
               <Route path="attendance" element={<AttendanceHistoryPage />} />
               <Route path="earnings" element={<EarningsHistoryPage />} />
               <Route path="direct-dialer" element={<DirectDialerPage />} />
+              <Route path="client-leads" element={<QualifiedLeadsPool />} />
+            </Route>
+
+            <Route
+              path="/client"
+              element={
+                <ProtectedRoute allowedRoles={[ROLES.CLIENT]}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<MyOffersPage />} />
+              <Route path="offers" element={<MyOffersPage />} />
+              <Route path="offers/:offerId" element={<OfferDetailPage />} />
             </Route>
 
             <Route

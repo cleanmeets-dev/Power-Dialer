@@ -1,0 +1,343 @@
+import { useEffect, useMemo, useState } from "react";
+import Modal from "./common/Modal";
+import FormInput from "./common/FormInput";
+import { createClientOffer, getAllAgents } from "../services/api";
+
+const FIELD_OPTIONS = [
+  "businessName",
+  "contactName",
+  "businessAddress",
+  "city",
+  "state",
+  "country",
+  "email",
+  "phoneNumber",
+  "leadFor",
+  "currentSetup",
+  "servicesGetting",
+  "frequency",
+  "currentChallenges",
+  "interestLevel",
+  "appointmentDate",
+  "appointmentTime",
+  "appointmentStatus",
+  "agentNotes",
+];
+
+const DEFAULT_VISIBLE_FIELDS = [
+  "businessName",
+  "city",
+  "state",
+  "interestLevel",
+  "currentSetup",
+  "appointmentDate",
+  "appointmentStatus",
+];
+
+const DEFAULT_MASKING = {
+  emailMasked: true,
+  phoneMasked: true,
+  addressMasked: true,
+};
+
+const getDefaultExpiry = () => {
+  const nextDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return new Date(nextDay.getTime() - nextDay.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+};
+
+export default function CreateOfferModal({
+  isOpen,
+  lead,
+  onClose,
+  onCreated,
+  showNotification,
+}) {
+  const [clients, setClients] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [form, setForm] = useState({
+    clientId: "",
+    price: "",
+    currency: "USD",
+    expiresAt: getDefaultExpiry(),
+    visibleFields: DEFAULT_VISIBLE_FIELDS,
+    fieldMasking: DEFAULT_MASKING,
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadClients = async () => {
+      setIsLoadingClients(true);
+      try {
+        const users = await getAllAgents({ includeClients: true });
+        setClients(
+          (Array.isArray(users) ? users : [])
+            .filter((user) => user.role === "client")
+            .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email)),
+        );
+      } catch (error) {
+        console.error("Failed to load clients", error);
+        showNotification?.("Failed to load clients", "error");
+      } finally {
+        setIsLoadingClients(false);
+      }
+    };
+
+    loadClients();
+  }, [isOpen, showNotification]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setForm({
+      clientId: "",
+      price: "",
+      currency: "USD",
+      expiresAt: getDefaultExpiry(),
+      visibleFields: DEFAULT_VISIBLE_FIELDS,
+      fieldMasking: DEFAULT_MASKING,
+    });
+  }, [isOpen, lead?._id]);
+
+  const selectedClient = useMemo(
+    () => clients.find((client) => client._id === form.clientId) || null,
+    [clients, form.clientId],
+  );
+
+  const toggleVisibleField = (field) => {
+    setForm((prev) => {
+      const exists = prev.visibleFields.includes(field);
+      return {
+        ...prev,
+        visibleFields: exists
+          ? prev.visibleFields.filter((item) => item !== field)
+          : [...prev.visibleFields, field],
+      };
+    });
+  };
+
+  const toggleMask = (key) => {
+    setForm((prev) => ({
+      ...prev,
+      fieldMasking: {
+        ...prev.fieldMasking,
+        [key]: !prev.fieldMasking[key],
+      },
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!lead?._id) {
+      showNotification?.("Invalid lead selected", "error");
+      return;
+    }
+
+    if (!form.clientId) {
+      showNotification?.("Please choose a client", "error");
+      return;
+    }
+
+    if (!form.visibleFields.length) {
+      showNotification?.("Select at least one visible field", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        leadId: lead._id,
+        clientId: form.clientId,
+        price: Number(form.price),
+        currency: form.currency,
+        expiresAt: new Date(form.expiresAt).toISOString(),
+        visibleFields: form.visibleFields,
+        fieldMasking: form.fieldMasking,
+      };
+
+      const created = await createClientOffer(payload);
+      showNotification?.("Offer created successfully", "success");
+      onCreated?.(created);
+      onClose?.();
+    } catch (error) {
+      console.error("Failed to create offer", error);
+      showNotification?.(
+        error.response?.data?.error || "Failed to create offer",
+        "error",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create Client Offer"
+      maxWidth="max-w-3xl"
+    >
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/40">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            Lead
+          </p>
+          <div className="mt-2 flex flex-col gap-1">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {lead?.businessName || "Unnamed lead"}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {lead?.contactName || "No contact"} • {lead?.city || "Unknown city"},{" "}
+              {lead?.state || "Unknown state"}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Qualification: {lead?.appointmentStatus || "Unknown"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Assign Client
+            </label>
+            <select
+              value={form.clientId}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, clientId: event.target.value }))
+              }
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="">
+                {isLoadingClients ? "Loading clients..." : "Select client"}
+              </option>
+              {clients.map((client) => (
+                <option key={client._id} value={client._id}>
+                  {client.name || client.email} ({client.email})
+                </option>
+              ))}
+            </select>
+            {selectedClient && (
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Assigning to {selectedClient.name || selectedClient.email}
+              </p>
+            )}
+          </div>
+
+          <FormInput
+            label="Price"
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            required
+            value={form.price}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, price: event.target.value }))
+            }
+          />
+
+          <FormInput
+            label="Currency"
+            name="currency"
+            value={form.currency}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, currency: event.target.value.toUpperCase() }))
+            }
+          />
+
+          <FormInput
+            label="Expires At"
+            name="expiresAt"
+            type="datetime-local"
+            required
+            value={form.expiresAt}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, expiresAt: event.target.value }))
+            }
+          />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div>
+            <p className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+              Visible Fields
+            </p>
+            <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
+              {FIELD_OPTIONS.map((field) => {
+                const checked = form.visibleFields.includes(field);
+                return (
+                  <label
+                    key={field}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleVisibleField(field)}
+                      className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                    />
+                    <span>{field}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                Masking Controls
+              </p>
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                {[
+                  ["emailMasked", "Mask email"],
+                  ["phoneMasked", "Mask phone number"],
+                  ["addressMasked", "Mask street address"],
+                ].map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex items-center justify-between rounded-lg bg-white px-4 py-3 text-sm dark:bg-slate-800"
+                  >
+                    <span className="text-slate-700 dark:text-slate-200">{label}</span>
+                    <input
+                      type="checkbox"
+                      checked={form.fieldMasking[key]}
+                      onChange={() => toggleMask(key)}
+                      className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-900 dark:border-cyan-900/40 dark:bg-cyan-950/30 dark:text-cyan-100">
+              Clients only see masked data from the offer snapshot. They do not get direct
+              access to `CallerLead`.
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Close
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "Creating..." : "Create Offer"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

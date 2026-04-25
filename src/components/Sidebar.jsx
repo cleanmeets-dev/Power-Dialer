@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutGrid,
   Megaphone,
-  FileText,
   Phone,
   Users,
   PhoneCall,
@@ -12,6 +11,8 @@ import {
   ClipboardList,
   Coins,
   Repeat,
+  BriefcaseBusiness,
+  BadgeDollarSign,
 } from "lucide-react";
 
 function getSidebarItems(role) {
@@ -83,7 +84,7 @@ function getSidebarItems(role) {
       },
       {
         id: "client-leads",
-        label: "Manage Client Leads (TBD)",
+        label: "Client Marketplace",
         icon: Repeat,
         path: "/manager/client-leads",
       },
@@ -93,6 +94,23 @@ function getSidebarItems(role) {
           icon: Phone,
           path: "/manager/call-logs",
         },
+    ];
+  }
+
+  if (role === "client") {
+    return [
+      {
+        id: "overview",
+        label: "My Offers",
+        icon: BriefcaseBusiness,
+        path: "/client",
+      },
+      {
+        id: "offers",
+        label: "Offer Marketplace",
+        icon: BadgeDollarSign,
+        path: "/client/offers",
+      },
     ];
   }
 

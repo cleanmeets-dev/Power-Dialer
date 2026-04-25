@@ -35,10 +35,12 @@ const DEFAULT_FORM = {
 };
 
 const STATUS_STYLES = {
-  queued:  "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300",
-  running: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  done:    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  error:   "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  queued:
+    "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300",
+  running:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  done: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  error: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
 };
 
 function DailyLeadsChart({ series }) {
@@ -50,7 +52,9 @@ function DailyLeadsChart({ series }) {
     <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
         Leads Scraped — Last {series.length} Days&nbsp;
-        <span className="normal-case font-normal">(12:00 noon → 12:00 noon PKT)</span>
+        <span className="normal-case font-normal">
+          (12:00 noon → 12:00 noon PKT)
+        </span>
       </p>
       <div className="flex items-end gap-1.5 h-20">
         {series.map((d, i) => {
@@ -233,7 +237,8 @@ export default function ScraperPage() {
         );
 
         if (latestSession.status === "running") {
-          const latestResults = await getScrapeSessionResults(selectedSessionId);
+          const latestResults =
+            await getScrapeSessionResults(selectedSessionId);
           setResults(latestResults.results || []);
         }
 
@@ -429,20 +434,6 @@ export default function ScraperPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              void loadReferenceData();
-              void loadSessions(selectedSessionId);
-              void loadDailyLeads();
-            }}
-            className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${isLoadingSessions ? "animate-spin" : ""}`}
-            />
-            Refresh Data
-          </button>
         </div>
       </div>
 
@@ -470,13 +461,28 @@ export default function ScraperPage() {
                   the lead queue.
                 </p>
               </div>
+           
               <button
+                type="button"
+                onClick={() => {
+                  void loadReferenceData();
+                  void loadSessions(selectedSessionId);
+                  void loadDailyLeads();
+                }}
+                className="text-sm px-4 py-2 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoadingSessions ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </button>
+                 <button
                 type="button"
                 onClick={handleExportCsv}
                 disabled={isLoadingResults || !results.length}
-                className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2 cursor-pointer"
+                className="text-sm px-4 py-2 rounded-lg bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition inline-flex items-center justify-center gap-2 cursor-pointer"
               >
-                Export CSV
+                Export
               </button>
             </div>
 
@@ -548,9 +554,8 @@ export default function ScraperPage() {
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Created{" "}
-                  {new Date(selectedSession.createdAt).toLocaleString()} |
-                  Requested {selectedSession.maxResults} | Skipped{" "}
+                  Created {new Date(selectedSession.createdAt).toLocaleString()}{" "}
+                  | Requested {selectedSession.maxResults} | Skipped{" "}
                   {selectedSession.skipResults || 0} | Found{" "}
                   {selectedSession.totalFound || 0} | Imported{" "}
                   {selectedSession.importedCount || 0}
@@ -566,13 +571,9 @@ export default function ScraperPage() {
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Completed at{" "}
                     {selectedSession.completedAt
-                      ? new Date(
-                          selectedSession.completedAt,
-                        ).toLocaleString()
+                      ? new Date(selectedSession.completedAt).toLocaleString()
                       : selectedSession.updatedAt
-                        ? new Date(
-                            selectedSession.updatedAt,
-                          ).toLocaleString()
+                        ? new Date(selectedSession.updatedAt).toLocaleString()
                         : "-"}
                     {selectedSession.createdAt &&
                       (selectedSession.completedAt ||

@@ -447,6 +447,7 @@ export const completeCall = async (leadId, data) => {
     disposition: data.disposition,
     agentNotes: data.agentNotes,
     followUpDate: data.followUpDate,
+    followUpTime: data.followUpTime,
     contactName: data.contactName,
     businessAddress: data.businessAddress,
     city: data.city,

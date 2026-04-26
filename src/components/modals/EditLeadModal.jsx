@@ -11,7 +11,7 @@ import { Save, X, AlertCircle, Calendar, Clock } from 'lucide-react';
 const APPOINTMENT_CARD_KEYS = ['appointmentDate', 'appointmentTime', 'appointmentStatus'];
 
 // Rendered in the followup detail card (shown only when disposition = followup)
-const FOLLOWUP_CARD_KEYS = ['followUpDate'];
+const FOLLOWUP_CARD_KEYS = ['followUpDate', 'followUpTime'];
 
 // Shown in main grid ONLY when disposition is appointment or followup
 const CONDITIONAL_GRID_KEYS = [
@@ -275,11 +275,13 @@ export default function EditLeadModal({ isOpen, lead, onClose, onSave }) {
                 Follow-up Details
               </h4>
             </div>
-            {editableFields
-              .filter(f => FOLLOWUP_CARD_KEYS.includes(f.key))
-              .map(field => (
-                <div key={field.key}>{renderField(field)}</div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {editableFields
+                .filter(f => FOLLOWUP_CARD_KEYS.includes(f.key))
+                .map(field => (
+                  <div key={field.key}>{renderField(field)}</div>
+                ))}
+            </div>
           </div>
         )}
 

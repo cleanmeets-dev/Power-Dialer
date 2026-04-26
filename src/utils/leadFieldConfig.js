@@ -57,6 +57,7 @@ export const LEAD_WORKFLOW_FIELDS = [
   { key: 'disposition', label: 'Disposition', type: 'select', options: ['voicemail', 'followup', 'not-interested', 'appointment', 'wrong-number'], readOnly: false },
   { key: 'agentNotes', label: 'Agent Notes', type: 'textarea', readOnly: false },
   { key: 'followUpDate', label: 'Follow-Up Date', type: 'date', readOnly: false },
+  { key: 'followUpTime', label: 'Follow-Up Time', type: 'time', readOnly: false },
   { key: 'lastDialedAt', label: 'Last Dialed', type: 'datetime-local', readOnly: true },
 ];
 

@@ -303,6 +303,13 @@ export const deleteLead = async (id) => {
   return response.data;
 };
 
+export const bulkDeleteLeads = async (leadIds) => {
+  const response = await api.delete('/caller-leads/bulk', {
+    data: { leadIds },
+  });
+  return response.data;
+};
+
 export const updateDisposition = async (id, updates) => {
   const response = await api.patch(`/caller-leads/${id}/disposition`, updates);
   return response.data.data;

@@ -543,17 +543,19 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
           <table className="w-full table-fixed text-sm select-none border-separate border-spacing-0">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700/50 ">
-                <th className="text-left py-3 px-2 text-cyan-700 dark:text-cyan-400 font-semibold w-8">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedRows.size === leads.length && leads.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    disabled={isLoading}
-                    className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-600 text-cyan-600 dark:text-cyan-500 cursor-pointer"
-                  />
-                </th>
+                {user?.role !== "caller-agent" && (
+                  <th className="text-left py-3 px-2 text-cyan-700 dark:text-cyan-400 font-semibold w-8">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedRows.size === leads.length && leads.length > 0
+                      }
+                      onChange={handleSelectAll}
+                      disabled={isLoading}
+                      className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-600 text-cyan-600 dark:text-cyan-500 cursor-pointer"
+                    />
+                  </th>
+                )}
                 {tableColumns.map((col) => (
                   <th
                     key={col.key}
@@ -588,15 +590,17 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
                               : "hover:bg-slate-100 dark:hover:bg-slate-700/30 border-slate-200 dark:border-slate-700/50"
                       }`}
                     >
-                      <td className="py-3 px-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedRows.has(lead._id)}
-                          onChange={() => handleSelectRow(lead._id)}
-                          disabled={isLoading}
-                          className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-600 text-cyan-600 dark:text-cyan-500 cursor-pointer"
-                        />
-                      </td>
+                      {user?.role !== "caller-agent" && (
+                        <td className="py-3 px-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.has(lead._id)}
+                            onChange={() => handleSelectRow(lead._id)}
+                            disabled={isLoading}
+                            className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-600 text-cyan-600 dark:text-cyan-500 cursor-pointer"
+                          />
+                        </td>
+                      )}
                       {tableColumns.map((col) => (
                         <td
                           key={`${lead._id}-${col.key}`}
@@ -653,14 +657,16 @@ export default function LeadsTable({ showNotification, activeCalls = [] }) {
                               ? "Edit Details"
                               : "Edit Disposition"}
                           </button>
-                          <button
-                            onClick={() => handleDeleteClick(lead)}
-                            disabled={isLoading}
-                            className="text-rose-700 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
-                            title="Delete lead"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {user?.role !== "caller-agent" && (
+                            <button
+                              onClick={() => handleDeleteClick(lead)}
+                              disabled={isLoading}
+                              className="text-rose-700 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 disabled:text-slate-400 dark:disabled:text-slate-600 transition cursor-pointer p-1 hover:bg-slate-200 dark:hover:bg-slate-600/30 rounded"
+                              title="Delete lead"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

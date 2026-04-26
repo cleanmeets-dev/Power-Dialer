@@ -15,8 +15,9 @@ import {
   Users,
   CheckCircle2,
   TrendingUp,
+  Trash2,
 } from "lucide-react";
-import { getAllAgents, getLeads } from "../services/api";
+import { getAllAgents, getLeads, bulkDeleteLeads, deleteLead } from "../services/api";
 import SmartCampaignSelector from "../components/SmartCampaignSelector";
 import LeadDetailModal from "../components/modals/LeadDetailModal";
 import EditLeadModal from "../components/modals/EditLeadModal";
@@ -61,8 +62,7 @@ export default function ManageCallerLeads() {
   const [searchInput, setSearchInput] = useState("");
   const [selectedDialerStatus, setSelectedDialerStatus] = useState("");
   const [selectedDisposition, setSelectedDisposition] = useState("");
-  const [selectedAppointmentStatus, setSelectedAppointmentStatus] =
-    useState("");
+  const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState("");
   const [selectedAgent, setSelectedAgent] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -84,20 +84,61 @@ export default function ManageCallerLeads() {
   });
   const tableRef = useRef(null);
 
+  // Bulk selection state
+  const [selectedLeadIds, setSelectedLeadIds] = useState([]);
+  const allSelected = leads.length > 0 && selectedLeadIds.length === leads.length;
+  const someSelected = selectedLeadIds.length > 0 && selectedLeadIds.length < leads.length;
+
+  const handleSelectLead = (leadId) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(leadId)
+        ? prev.filter((id) => id !== leadId)
+        : [...prev, leadId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedLeadIds([]);
+    } else {
+      setSelectedLeadIds(leads.map((lead) => lead._id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedLeadIds.length) return;
+    if (!window.confirm(`Delete ${selectedLeadIds.length} selected lead${selectedLeadIds.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    
+    try {
+      setIsLoading(true);
+      await bulkDeleteLeads(selectedLeadIds);
+      showNotification(`Deleted ${selectedLeadIds.length} lead${selectedLeadIds.length > 1 ? 's' : ''}`, "success");
+      setSelectedLeadIds([]);
+      loadFollowupLeads();
+    } catch (e) {
+      showNotification(e.response?.data?.error || "Bulk delete failed", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteSingle = async (leadId) => {
+    if (!window.confirm("Delete this lead? This cannot be undone.")) return;
+    
+    try {
+      setIsLoading(true);
+      await deleteLead(leadId);
+      showNotification("Lead deleted successfully", "success");
+      loadFollowupLeads();
+    } catch (e) {
+      showNotification(e.response?.data?.error || "Delete failed", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch followup leads
   const loadFollowupLeads = useCallback(async () => {
-    // if (!selectedCampaignId) {
-    //   setLeads([]);
-    //   setTotal(0);
-    //   setStats({
-    //     scopedTotal: 0,
-    //     interested: 0,
-    //     appointments: 0,
-    //     followupsScheduled: 0,
-    //   });
-    //   return;
-    // }
-
     const campaignId = selectedCampaignId || undefined;
     setIsLoading(true);
     try {
@@ -143,12 +184,17 @@ export default function ManageCallerLeads() {
     loadFollowupLeads();
   }, [loadFollowupLeads]);
 
-  // Reset page when switching campaigns so we don't land on an out-of-range page
+  // Reset selection if leads change
+  useEffect(() => {
+    setSelectedLeadIds([]);
+  }, [leads]);
+
+  // Reset page when switching campaigns
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCampaignId]);
 
-  // Clamp current page when total or pageSize changes (e.g., after filtering)
+  // Clamp current page when total or pageSize changes
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     if (currentPage > totalPages) {
@@ -171,7 +217,6 @@ export default function ManageCallerLeads() {
 
       const rect = tableRef.current.getBoundingClientRect();
       const offset = 300;
-
       const targetY = window.scrollY + rect.top - offset;
 
       window.scrollTo({
@@ -360,7 +405,6 @@ export default function ManageCallerLeads() {
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, total);
 
-  // Build a condensed pagination array with ellipses when needed
   const getPageNumbers = (totalPages, currentPage) => {
     const pages = [];
     if (totalPages <= 7) {
@@ -389,7 +433,6 @@ export default function ManageCallerLeads() {
     }
 
     pages.push(totalPages - 1, totalPages);
-    // Remove duplicates and keep order
     return pages.filter((v, i, a) => a.indexOf(v) === i);
   };
 
@@ -413,11 +456,11 @@ export default function ManageCallerLeads() {
   return (
     <div className="flex flex-col gap-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 p-8 shadow-lg dark:border-slate-700/50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
-        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-gradient-to-br from-cyan-500/10 to-blue-500/10 blur-3xl"></div>
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-linear-to-br from-slate-50 via-white to-blue-50/30 p-8 shadow-lg dark:border-slate-700/50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-linear-to-br from-cyan-500/10 to-blue-500/10 blur-3xl"></div>
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
               <Layers3 className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -430,14 +473,12 @@ export default function ManageCallerLeads() {
             </div>
           </div>
           <div className="inline-flex w-fit items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-sm dark:border-slate-600/50 dark:bg-slate-900/80 dark:text-slate-200">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-500/20 to-blue-500/20">
               <Layers3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
             </div>
             <span>{stats.total ?? "—"} total leads</span>
           </div>
         </div>
-
-        {/* header end */}
       </div>
 
       {/* Campaign Selector */}
@@ -453,10 +494,10 @@ export default function ManageCallerLeads() {
           Only assigned leads will display here
         </div>
       )}
-    
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
           <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-blue-500/5 blur-2xl transition-all group-hover:bg-blue-500/10"></div>
           <div className="relative flex items-start justify-between">
             <div>
@@ -470,13 +511,13 @@ export default function ManageCallerLeads() {
                 scoped to selected campaign
               </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500/10 to-blue-600/10">
               <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
           <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-emerald-500/5 blur-2xl transition-all group-hover:bg-emerald-500/10"></div>
           <div className="relative flex items-start justify-between">
             <div>
@@ -490,13 +531,13 @@ export default function ManageCallerLeads() {
                 potential clients
               </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-purple-500/10 to-purple-600/10">
               <Clock3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
           <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-purple-500/5 blur-2xl transition-all group-hover:bg-purple-500/10"></div>
           <div className="relative flex items-start justify-between">
             <div>
@@ -510,33 +551,13 @@ export default function ManageCallerLeads() {
                 approved
               </p>
             </div>
-
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500/10 to-emerald-600/10">
               <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
         </div>
 
-        {/* <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
-          <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-amber-500/5 blur-2xl transition-all group-hover:bg-amber-500/10"></div>
-          <div className="relative flex items-start justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Scheduled
-              </p>
-              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                {stats.qa2 ?? "—"}
-              </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                upcoming followups
-              </p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-600/10">
-              <Clock3 className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-          </div>
-        </div> */}
-        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
+        <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50/50 p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/50">
           <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-pink-500/5 blur-2xl transition-all group-hover:bg-pink-500/10"></div>
           <div className="relative flex items-start justify-between">
             <div>
@@ -550,7 +571,7 @@ export default function ManageCallerLeads() {
                 highest qualification
               </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-green-500/10 to-green-600/10">
               <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
@@ -571,22 +592,6 @@ export default function ManageCallerLeads() {
               className="h-11 w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-500 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400 dark:focus:border-cyan-400"
             />
           </div>
-
-          {/* <select
-            value={selectedDialerStatus}
-            onChange={(e) => {
-              setSelectedDialerStatus(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
-            <option value="">All Statuses</option>
-            {DIALER_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {status.replace("_", " ").toUpperCase()}
-              </option>
-            ))}
-          </select> */}
 
           {/* Qualification Status */}
           <div className="lg:col-span-3">
@@ -626,14 +631,6 @@ export default function ManageCallerLeads() {
             </select>
           </div>
 
-          {/* <button
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            <Filter className="h-4 w-4" />
-            {showAdvancedFilters ? "Hide" : "More"} Filters
-          </button> */}
-
           {/* Agent + Clear Filters */}
           <div className="flex gap-3 lg:col-span-3">
             <select
@@ -654,7 +651,7 @@ export default function ManageCallerLeads() {
 
             <button
               onClick={clearAllFilters}
-              className="flex h-11 items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-4 font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
+              className="flex h-11 cursor-pointer items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-4 font-medium text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/60"
             >
               <X className="h-4 w-4" />
               Clear
@@ -693,7 +690,7 @@ export default function ManageCallerLeads() {
             {canExport && leads.length > 0 && (
               <button
                 onClick={handleExport}
-                className="flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:from-cyan-700 hover:to-blue-700 hover:shadow-cyan-500/40"
+                className="flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-linear-to-r from-cyan-600 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition hover:from-cyan-700 hover:to-blue-700 hover:shadow-cyan-500/40"
                 title="Export as CSV"
               >
                 <Download className="h-4 w-4" />
@@ -709,6 +706,36 @@ export default function ManageCallerLeads() {
         ref={tableRef}
         className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
       >
+        {canManageLeads && leads.length > 0 && (
+          <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-700 dark:bg-slate-900">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected;
+              }}
+              onChange={handleSelectAll}
+              className="h-5 w-5 cursor-pointer rounded border-slate-300 accent-cyan-600 dark:border-slate-600"
+            />
+            <span className="text-sm text-slate-700 dark:text-slate-300">
+              {allSelected
+                ? "All leads selected"
+                : someSelected
+                ? `${selectedLeadIds.length} selected`
+                : "Select leads to delete"}
+            </span>
+            {selectedLeadIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={isLoading}
+                className="ml-2 flex cursor-pointer items-center gap-2 rounded bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete Selected
+              </button>
+            )}
+          </div>
+        )}
         {isLoading ? (
           <div className="flex items-center justify-center p-16">
             <div className="flex flex-col items-center gap-3">
@@ -721,17 +748,27 @@ export default function ManageCallerLeads() {
         ) : leads.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+              <thead className="bg-linear-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
                 <tr>
+                  {canManageLeads && (
+                    <th className="px-4 py-3.5 text-left">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = someSelected;
+                        }}
+                        onChange={handleSelectAll}
+                        className="h-5 w-5 cursor-pointer rounded border-slate-300 accent-cyan-600 dark:border-slate-600"
+                      />
+                    </th>
+                  )}
                   <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Lead
                   </th>
                   <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Agent
                   </th>
-                  {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    Status
-                  </th> */}
                   <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Disposition
                   </th>
@@ -744,20 +781,27 @@ export default function ManageCallerLeads() {
                   <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Last Dialed
                   </th>
-                  {/* <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                        Follow-Up Date (If any)
-                      </th> */}
                   <th className="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Action
+                    Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-700 dark:bg-slate-800">
-                {leads.map((lead, idx) => (
+                {leads.map((lead) => (
                   <tr
                     key={lead._id}
                     className="transition hover:bg-slate-50 dark:hover:bg-slate-700/30"
                   >
+                    {canManageLeads && (
+                      <td className="px-4 py-4 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedLeadIds.includes(lead._id)}
+                          onChange={() => handleSelectLead(lead._id)}
+                          className="h-5 w-5 cursor-pointer rounded border-slate-300 accent-cyan-600 dark:border-slate-600"
+                        />
+                      </td>
+                    )}
                     <td className="px-5 py-4 text-sm">
                       <div className="flex flex-col">
                         <span className="font-semibold text-slate-900 dark:text-white">
@@ -768,6 +812,7 @@ export default function ManageCallerLeads() {
                         </span>
                       </div>
                     </td>
+
                     <td className="px-5 py-4 text-sm">
                       <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
@@ -778,16 +823,6 @@ export default function ManageCallerLeads() {
                         </span>
                       </div>
                     </td>
-                    {/* <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                          lead.dialerStatus,
-                        )}`}
-                      >
-                        {lead.dialerStatus?.replace("_", " ").toUpperCase() ||
-                          "—"}
-                      </span>
-                    </td> */}
                     <td className="px-5 py-4 text-sm">
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${getDispositionColor(
@@ -824,23 +859,24 @@ export default function ManageCallerLeads() {
                         </span>
                       </div>
                     </td>
-                    {/* <td className="px-4 py-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-amber-500" />
-                            <span className="text-slate-700 dark:text-slate-300">
-                              {lead.followUpDate
-                                ? formatDate(lead.followUpDate)
-                                : "—"}
-                            </span>
-                          </div>
-                        </td> */}
-                    <td className="px-5 py-4 text-center">
-                      <button
-                        onClick={() => handleViewLead(lead._id)}
-                        className="cursor-pointer rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 transition hover:from-cyan-700 hover:to-blue-700 hover:shadow-cyan-500/30"
-                      >
-                        View
-                      </button>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleViewLead(lead._id)}
+                          className="cursor-pointer rounded-lg bg-linear-to-r from-cyan-600 to-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 transition hover:from-cyan-700 hover:to-blue-700 hover:shadow-cyan-500/30"
+                        >
+                          View
+                        </button>
+                        {canManageLeads && (
+                          <button
+                            onClick={() => handleDeleteSingle(lead._id)}
+                            className="cursor-pointer rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition hover:bg-rose-700"
+                            title="Delete lead"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -889,7 +925,7 @@ export default function ManageCallerLeads() {
                   onClick={() => setCurrentPage(page)}
                   className={`h-10 w-10 cursor-pointer rounded-lg text-sm font-semibold shadow-sm transition ${
                     currentPage === page
-                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-cyan-500/30"
+                      ? "bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-cyan-500/30"
                       : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   }`}
                 >
@@ -911,8 +947,6 @@ export default function ManageCallerLeads() {
           </button>
         </div>
       )}
-      {/* </>
-      )} */}
 
       {!selectedCampaignId && (
         <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3.5 dark:border-blue-900/50 dark:bg-blue-950/30">

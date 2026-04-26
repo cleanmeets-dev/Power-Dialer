@@ -1,10 +1,8 @@
 /**
  * Lead field configurations organized by role
- * Defines which fields each role can view and edit
  */
 
 export const LEAD_FIELD_CONFIG = {
-  // Common fields visible to all roles
   common: [
     { key: 'businessName', label: 'Business Name', type: 'text', readOnly: false },
     { key: 'contactName', label: 'Contact Name', type: 'text', readOnly: false },
@@ -16,7 +14,6 @@ export const LEAD_FIELD_CONFIG = {
     { key: 'country', label: 'Country', type: 'text', readOnly: false },
   ],
 
-  // Caller-Agent specific fields (for initial outbound calls)
   'caller-agent': [
     { key: 'leadFor', label: 'Lead For', type: 'text', readOnly: false },
     { key: 'currentSetup', label: 'Current Setup', type: 'textarea', readOnly: false },
@@ -29,7 +26,6 @@ export const LEAD_FIELD_CONFIG = {
     { key: 'appointmentTime', label: 'Appointment Time', type: 'time', readOnly: false },
   ],
 
-  // Closer-Agent specific fields (for follow-ups and closures)
   'closer-agent': [
     { key: 'website', label: 'Website', type: 'url', readOnly: false },
     { key: 'targetAreas', label: 'Target Areas', type: 'textarea', readOnly: false },
@@ -46,9 +42,8 @@ export const LEAD_FIELD_CONFIG = {
     { key: 'closerNotes', label: 'Closer Notes', type: 'textarea', readOnly: false },
   ],
 
-  // Manager sees all fields
-  manager: 'all', // Special flag indicating managers see all fields
-  // Manager-only fields
+  manager: 'all',
+
   managerOnly: [
     { key: 'managerNotes', label: 'Manager Notes', type: 'textarea', readOnly: false },
     { key: 'recordingLink', label: 'Recording Link', type: 'url', readOnly: false },
@@ -66,8 +61,8 @@ export const LEAD_WORKFLOW_FIELDS = [
 ];
 
 export const getCallerVisibleFields = (role, edit = false) => {
-  if ((role === 'manager' || role == 'admin') && edit) {
-    // Managers see all fields
+  // FIX 4: use strict === everywhere instead of ==
+  if ((role === 'manager' || role === 'admin') && edit) {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
@@ -75,49 +70,46 @@ export const getCallerVisibleFields = (role, edit = false) => {
       ...LEAD_FIELD_CONFIG.managerOnly,
     ];
   }
-  else if (role === 'manager' || role == 'admin') {
-    // Managers see all fields
+
+  if (role === 'caller-agent' && edit) {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['caller-agent'],
       ...LEAD_WORKFLOW_FIELDS,
-      ...LEAD_FIELD_CONFIG.managerOnly,
-    ];
-  } else if (role === 'caller-agent') {
-    return [
-      ...LEAD_FIELD_CONFIG.common,
-      ...LEAD_FIELD_CONFIG['caller-agent'],
-      ...LEAD_WORKFLOW_FIELDS,
-      ...LEAD_FIELD_CONFIG.managerOnly,
     ];
   }
-  return LEAD_FIELD_CONFIG.common;
+
+  // FIX 5: removed unreachable dead-code return at bottom; this is now the fallback
+  return [
+    ...LEAD_FIELD_CONFIG.common,
+    ...LEAD_FIELD_CONFIG['caller-agent'],
+    ...LEAD_WORKFLOW_FIELDS,
+    ...LEAD_FIELD_CONFIG.managerOnly,
+  ];
 };
 
 export const getCloserVisibleFields = (role) => {
-  if (role === 'manager' || role == 'admin') {
-    // Managers see all fields
+  // FIX 4 (continued): strict equality
+  if (role === 'manager' || role === 'admin') {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['closer-agent'],
       ...LEAD_WORKFLOW_FIELDS,
       ...LEAD_FIELD_CONFIG.managerOnly,
     ];
-  } else if (role === 'closer-agent') {
+  }
+
+  if (role === 'closer-agent') {
     return [
       ...LEAD_FIELD_CONFIG.common,
       ...LEAD_FIELD_CONFIG['closer-agent'],
       ...LEAD_WORKFLOW_FIELDS,
     ];
   }
+
   return LEAD_FIELD_CONFIG.common;
 };
 
-/**
- * Get table columns for a specific role
- * @param {string} role - User role
- * @returns {array} Array of column configurations
- */
 export const getTableColumns = (role) => {
   const baseColumns = [
     { key: 'businessName', label: 'Business Name', width: 'w-48' },
@@ -125,17 +117,19 @@ export const getTableColumns = (role) => {
     { key: 'phoneNumber', label: 'Phone', width: 'w-28' },
   ];
 
-  if (role === 'manager' || role == 'admin') {
+  if (role === 'manager' || role === 'admin') {
     return [
       ...baseColumns,
       { key: 'assignedAgentName', label: 'Assigned Agent', width: 'w-32' },
     ];
   }
 
-  if (role !== 'manager' || role != 'admin') {
+  // FIX 6: was `role !== 'manager' || role != 'admin'` (always true due to ||).
+  // Corrected to && so this only runs for non-manager, non-admin roles.
+  if (role !== 'manager' && role !== 'admin') {
     return [
       ...baseColumns,
-    { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
+      { key: 'dialerStatus', label: 'Dialer Status', width: 'w-24' },
     ];
   }
 

@@ -7,6 +7,7 @@ import {
 } from "../services/api";
 import CreateOfferModal from "../components/CreateOfferModal";
 import OffersManagementTable from "../components/OffersManagementTable";
+import QualifiedLeadsTable from "../components/QualifiedLeadsTable";
 
 const QUALIFIED_OPTIONS = [
   "",
@@ -25,7 +26,7 @@ export default function ManageClientOffers() {
   });
   const [offerFilters, setOfferFilters] = useState({
     search: "",
-    status: "offered",
+    status: "",
     page: 1,
     limit: 10,
   });
@@ -144,6 +145,18 @@ export default function ManageClientOffers() {
           </p>
         </div>
       </div>
+
+      <QualifiedLeadsTable
+        leads={qualifiedLeads}
+        filters={leadFilters}
+        onFiltersChange={setLeadFilters}
+        pagination={qualifiedPagination}
+        onPageChange={(page) =>
+          setLeadFilters((prev) => ({ ...prev, page }))
+        }
+        onCreateOffer={setSelectedLead}
+        isLoading={isLoadingLeads}
+      />
 
       <OffersManagementTable
         offers={offers}

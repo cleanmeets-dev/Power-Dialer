@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Ban, Clock3, CreditCard, Search } from "lucide-react";
-import { cancelManagerOffer } from "../services/api";
+import { Ban, Clock3, CreditCard, Search, Unlock } from "lucide-react";
+import { cancelManagerOffer, unlockManagerOffer } from "../services/api";
 import ConfirmModal from "./common/ConfirmModal";
 
 const STATUS_OPTIONS = ["offered", "paid", "expired", "cancelled"];
@@ -23,6 +23,7 @@ export default function OffersManagementTable({
   isLoading,
 }) {
   const [offerToCancel, setOfferToCancel] = useState(null);
+  const [offerToUnlock, setOfferToUnlock] = useState(null);
   const totalPages = pagination?.pages || 1;
 
   const handleCancel = async () => {
@@ -40,6 +41,24 @@ export default function OffersManagementTable({
       );
     } finally {
       setOfferToCancel(null);
+    }
+  };
+
+  const handleUnlock = async () => {
+    if (!offerToUnlock?._id) return;
+
+    try {
+      const unlocked = await unlockManagerOffer(offerToUnlock._id);
+      showNotification?.("Offer unlocked successfully", "success");
+      onOfferCancelled?.(unlocked); // Reuse the callback to update list
+    } catch (error) {
+      console.error("Failed to unlock offer", error);
+      showNotification?.(
+        error.response?.data?.error || "Failed to unlock offer",
+        "error",
+      );
+    } finally {
+      setOfferToUnlock(null);
     }
   };
 
@@ -169,14 +188,24 @@ export default function OffersManagementTable({
                     </td>
                     <td className="px-4 py-4">
                       {offer.status === "offered" ? (
-                        <button
-                          type="button"
-                          onClick={() => setOfferToCancel(offer)}
-                          className="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/40 dark:text-rose-200"
-                        >
-                          <Ban className="h-4 w-4" />
-                          Cancel
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setOfferToUnlock(offer)}
+                            className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-200"
+                          >
+                            <Unlock className="h-4 w-4" />
+                            Unlock
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOfferToCancel(offer)}
+                            className="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/40 dark:text-rose-200"
+                          >
+                            <Ban className="h-4 w-4" />
+                            Cancel
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           Closed
@@ -222,6 +251,14 @@ export default function OffersManagementTable({
         onConfirm={handleCancel}
         onCancel={() => setOfferToCancel(null)}
         danger
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(offerToUnlock)}
+        title="Unlock offer"
+        message={`Unlock the offer for ${offerToUnlock?.lead?.businessName || "this lead"}? The client will be granted full access to the unmasked data immediately.`}
+        onConfirm={handleUnlock}
+        onCancel={() => setOfferToUnlock(null)}
       />
     </div>
   );

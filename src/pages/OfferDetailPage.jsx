@@ -4,7 +4,6 @@ import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom
 import {
   acceptClientOffer,
   getClientOffer,
-  payClientOffer,
   rejectClientOffer,
 } from "../services/api";
 
@@ -94,8 +93,9 @@ export default function OfferDetailPage() {
               {offer.meta.businessName || "Lead opportunity"}
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Review the masked data below. Full contact access is released only through the
-              controlled offer workflow and never through direct `CallerLead` access.
+              {offer.isUnlocked
+                ? "Full contact details have been unlocked and are visible below."
+                : "Please pay to view complete details. Only the masked data is visible below."}
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -149,7 +149,11 @@ export default function OfferDetailPage() {
             <div className="mt-5 rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-900 dark:border-cyan-900/40 dark:bg-cyan-950/30 dark:text-cyan-100">
               <div className="flex items-start gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4" />
-                <p>Only the fields configured in the offer are visible below, with masking still enforced.</p>
+                <p>
+                  {offer.isUnlocked
+                    ? "Full lead information is now unlocked."
+                    : "Only the fields configured in the offer are visible below, with masking still enforced."}
+                </p>
               </div>
             </div>
           </div>
@@ -192,15 +196,7 @@ export default function OfferDetailPage() {
               <ShieldCheck className="h-4 w-4" />
               Accept Offer
             </button>
-            <button
-              type="button"
-              disabled={!canAct || isActioning}
-              onClick={() => executeAction(payClientOffer, "Payment completed")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition hover:from-emerald-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <CreditCard className="h-4 w-4" />
-              Simulate Payment
-            </button>
+
             <button
               type="button"
               disabled={!canAct || isActioning}

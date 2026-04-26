@@ -50,7 +50,7 @@ export default function MyOffersPage() {
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
               Review your assigned lead offers, inspect the masked business details, and
-              decide whether to pay or reject before the expiry window closes.
+              decide whether to accept or reject before the expiry window closes. Payment is handled externally.
             </p>
           </div>
 

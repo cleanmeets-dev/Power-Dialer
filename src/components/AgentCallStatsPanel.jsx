@@ -90,12 +90,14 @@ export default function AgentCallStatsPanel({
                 <th className="text-left px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">Agent</th>
                 <th className="text-left px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">Role</th>
                 <th className="text-right px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">Calls</th>
+                <th className="text-right px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">Leads Assigned</th>
+                <th className="text-right px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">Appointments Created</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {dailyCallData.agents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-slate-600 dark:text-slate-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate-600 dark:text-slate-400">
                     {isDailyCallsLoading ? 'Loading daily call data...' : 'No agents found'}
                   </td>
                 </tr>
@@ -112,6 +114,12 @@ export default function AgentCallStatsPanel({
                         <PhoneCall className="w-3 h-3" />
                         {agent.callCount}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 font-medium">
+                      {agent.leadsAssigned}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300 font-medium">
+                      {agent.appointmentsCreated}
                     </td>
                   </tr>
                 ))

@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getCallerVisibleFields } from '../../utils/leadFieldConfig.js';
 import Modal from '../common/Modal.jsx';
-import { getLead } from '../../services/api.js';
-import { Edit3, ListChecks, User2, BadgeDollarSign } from 'lucide-react';
+import { getLead, unlockManagerOffer } from '../../services/api.js';
+import { Edit3, ListChecks, User2, BadgeDollarSign, Unlock } from 'lucide-react';
 
 const STATUS_COLORS = {
   pending: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400',
@@ -51,6 +51,7 @@ export default function LeadDetailModal({
   const visibleFields = getCallerVisibleFields(user?.role);
   const [lead, setLead] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isActioning, setIsActioning] = useState(false);
 
   const loadLead = useCallback(async () => {
     setIsLoading(true);
@@ -83,7 +84,23 @@ export default function LeadDetailModal({
   if (!lead) return null;
 
   const isManager = user?.role === 'manager';
-  const canCreateOffer = onCreateOffer && QUALIFIED_STATUSES.has(lead.appointmentStatus);
+  const hasOffer = Boolean(lead.currentOffer);
+  const canCreateOffer = !hasOffer && onCreateOffer && QUALIFIED_STATUSES.has(lead.appointmentStatus);
+  const canUnlockOffer = hasOffer && lead.currentOffer.status === 'offered' && (user?.role === 'admin' || user?.role === 'manager');
+
+  const handleUnlockOffer = async () => {
+    if (!window.confirm("Unlock this offer? The client will be granted full access immediately.")) return;
+    setIsActioning(true);
+    try {
+      await unlockManagerOffer(lead.currentOffer._id);
+      await loadLead(); // Refresh the lead data
+    } catch (error) {
+      console.error("Failed to unlock offer", error);
+      alert(error.response?.data?.error || "Failed to unlock offer");
+    } finally {
+      setIsActioning(false);
+    }
+  };
 
   const renderFieldValue = (key, value) => {
     if (!value) return '—';
@@ -212,6 +229,16 @@ export default function LeadDetailModal({
           >
             <BadgeDollarSign className="w-4 h-4" />
             Create Offer
+          </button>
+        )}
+        {canUnlockOffer && (
+          <button
+            onClick={handleUnlockOffer}
+            disabled={isActioning}
+            className="px-5 py-2 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition flex items-center gap-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 border border-emerald-300 disabled:opacity-50"
+          >
+            <Unlock className="w-4 h-4" />
+            {isActioning ? "Unlocking..." : "Unlock Offer"}
           </button>
         )}
       </div>

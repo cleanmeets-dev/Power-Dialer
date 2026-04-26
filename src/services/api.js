@@ -775,6 +775,11 @@ export const cancelManagerOffer = async (offerId) => {
   return response.data.data;
 };
 
+export const unlockManagerOffer = async (offerId) => {
+  const response = await api.patch(`/manager/offers/${offerId}/unlock`);
+  return response.data.data;
+};
+
 export const getClientOffers = async ({
   status = "",
   page = 1,
@@ -798,11 +803,6 @@ export const getClientOffer = async (offerId) => {
 
 export const acceptClientOffer = async (offerId) => {
   const response = await api.post(`/client/offers/${offerId}/accept`);
-  return response.data.data;
-};
-
-export const payClientOffer = async (offerId) => {
-  const response = await api.post(`/client/offers/${offerId}/pay`);
   return response.data.data;
 };
 

@@ -101,7 +101,7 @@ export default function AttendanceHistoryPage() {
       return;
     }
 
-    const headers = ['Date', 'Agent Name', 'Email', 'Check In', 'Check Out', 'Total Shift (excluding breaks)', 'Break Time', 'Breaks Taken'];
+    const headers = ['Date', 'Agent Name', 'Email', 'Check In', 'Check Out', 'Total Shift (excluding breaks)', 'Break Time', 'Breaks Taken', 'Late / Half-day', 'Lost Hours', 'Compensation Hours'];
     const csvRows = filteredLogs.map(log => [
       log.dateKey,
       log.agent?.name || 'Unknown',
@@ -110,7 +110,10 @@ export default function AttendanceHistoryPage() {
       formatTime(log.checkOutAt) || (log.status === 'checked-in' ? 'Still working...' : '—'),
       formatDurationMs(log.shiftDurationMs),
       formatDurationMs(log.totalBreakMs),
-      log.breaksTaken || 0
+      log.breaksTaken || 0,
+      log.isHalfDay ? 'Half-day' : (log.isLate ? 'Late' : 'On-time'),
+      log.lostHours > 0 ? log.lostHours.toFixed(2) : 0,
+      log.compensationHours > 0 ? log.compensationHours.toFixed(2) : 0
     ]);
 
     const csvContent = [

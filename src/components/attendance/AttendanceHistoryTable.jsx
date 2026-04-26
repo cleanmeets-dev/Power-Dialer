@@ -32,6 +32,7 @@ export default function AttendanceHistoryTable({
               <th className="px-6 py-5 font-semibold">Check In</th>
               <th className="px-6 py-5 font-semibold">Check Out</th>
               <th className="px-6 py-5 font-semibold">Net Worked Time</th>
+              <th className="px-6 py-5 font-semibold text-center">Hours Bal.</th>
               <th className="px-6 py-5 font-semibold text-center">Breaks</th>
             </tr>
           </thead>
@@ -73,6 +74,11 @@ export default function AttendanceHistoryTable({
                     <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                       <span>{formatTime(log.checkInAt)}</span>
+                      {log.isHalfDay ? (
+                        <span className="ml-2 text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400">Half-day</span>
+                      ) : log.isLate ? (
+                        <span className="ml-2 text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">Late</span>
+                      ) : null}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -87,6 +93,15 @@ export default function AttendanceHistoryTable({
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-900/30 text-cyan-300 rounded font-semibold text-sm border border-cyan-800">
                       {formatDurationMs(log.shiftDurationMs)}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {log.lostHours > 0 ? (
+                       <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">-{log.lostHours.toFixed(2)}h</span>
+                    ) : log.compensationHours > 0 ? (
+                       <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">+{log.compensationHours.toFixed(2)}h</span>
+                    ) : (
+                       <span className="text-xs font-medium text-slate-400">—</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center justify-center">

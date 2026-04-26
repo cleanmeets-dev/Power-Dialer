@@ -32,14 +32,17 @@ function formatDurationOption(minutes) {
 }
 
 const formatRemainingTime = (totalSeconds) => {
-  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const isNegative = totalSeconds < 0;
+  const safeSeconds = Math.abs(Math.floor(Number(totalSeconds) || 0));
   const hours = Math.floor(safeSeconds / 3600);
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
+
+  const prefix = isNegative ? "-" : "";
   if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    return `${prefix}${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${prefix}${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 };
 
 export default function Navbar({
@@ -131,12 +134,18 @@ export default function Navbar({
     }
 
     const breakStart = new Date(user.attendance.breakStartedAt).getTime();
-    const previousTotalBreakSeconds = Math.floor((user.attendance.totalBreakMs || 0) / 1000);
+    const previousTotalBreakSeconds = Math.floor(
+      (user.attendance.totalBreakMs || 0) / 1000,
+    );
 
     const tick = () => {
-      const currentBreakElapsedSeconds = Math.floor((Date.now() - breakStart) / 1000);
-      const totalElapsedSeconds = previousTotalBreakSeconds + currentBreakElapsedSeconds;
-      const remaining = Math.max(0, 60 * 60 - totalElapsedSeconds);
+      const currentBreakElapsedSeconds = Math.floor(
+        (Date.now() - breakStart) / 1000,
+      );
+      const totalElapsedSeconds =
+        previousTotalBreakSeconds + currentBreakElapsedSeconds;
+      // Allow negative to show overtime
+      const remaining = 60 * 60 - totalElapsedSeconds;
       setBreakTimer(remaining);
     };
 
@@ -153,10 +162,7 @@ export default function Navbar({
         onShowNotification?.("Break ended successfully", "success");
       } else {
         await startBreak();
-        onShowNotification?.(
-          "Break started... timer active.",
-          "success",
-        );
+        onShowNotification?.("Break started... timer active.", "success");
       }
       await hydrateAuth();
     } catch (err) {
@@ -217,6 +223,8 @@ export default function Navbar({
     }
   };
 
+  const isBreakOvertime = breakTimer < 0;
+
   return (
     <>
       <nav className="dark:bg-linear-to-r dark:from-slate-900 dark:to-slate-800 bg-linear-to-r from-slate-50 to-slate-100 dark:border-b dark:border-slate-700 border-b border-slate-200 sticky top-0 z-40 shadow-md dark:shadow-slate-800">
@@ -254,8 +262,15 @@ export default function Navbar({
                 <div className="mr-2">
                   {user.attendance.onBreak ? (
                     <div className="flex items-center gap-2">
-                      <div className="px-3 py-1.5 rounded-lg bg-rose-900/40 border border-rose-500/50 text-rose-400 text-sm font-bold tracking-wide shadow-[0_0_10px_rgba(244,63,94,0.3)]">
-                        Break: {formatRemainingTime(breakTimer)}
+                      <div
+                        className={`px-3 py-1.5 rounded-lg text-sm font-bold tracking-wide ${
+                          isBreakOvertime
+                            ? "bg-red-900/60 border border-red-400/70 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.5)] animate-pulse"
+                            : "bg-rose-900/40 border border-rose-500/50 text-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.3)]"
+                        }`}
+                      >
+                        {isBreakOvertime ? "⚠️ Overtime: " : "Break: "}
+                        {formatRemainingTime(breakTimer)}
                       </div>
                       <button
                         onClick={handleToggleBreak}

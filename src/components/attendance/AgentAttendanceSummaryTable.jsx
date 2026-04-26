@@ -37,8 +37,24 @@ export default function AgentAttendanceSummaryTable({
                   <span className="font-extrabold text-emerald-700 dark:text-emerald-300">{item.presentDays}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">Absent</span>
-                  <span className="font-extrabold text-rose-700 dark:text-rose-300">{item.absentDays}</span>
+                  <span className="font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">Absent (Total)</span>
+                  <span className="font-extrabold text-rose-700 dark:text-rose-300">{item.totalAbsences}</span>
+                </div>
+                <div className="flex flex-col text-xs mt-1 border-t border-slate-200/50 dark:border-slate-700/50 pt-2 gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Lates / Half-days</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{item.lateMarks || 0} / {item.halfDayMarks || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Penalty Absences</span>
+                    <span className="font-medium text-rose-600 dark:text-rose-400">{item.penaltyAbsences || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 mt-1 border-t border-slate-100 dark:border-slate-700/30">
+                    <span className="text-slate-500 font-medium">Net Hours Bal.</span>
+                    <span className={`font-bold ${item.netHoursBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {item.netHoursBalance > 0 ? '+' : ''}{item.netHoursBalance?.toFixed(2)}h
+                    </span>
+                  </div>
                 </div>
               </div>
 

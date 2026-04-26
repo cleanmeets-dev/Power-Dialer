@@ -1,0 +1,225 @@
+import { useEffect, useState } from "react";
+import { ArrowLeft, Clock3, CreditCard, ShieldCheck, XCircle } from "lucide-react";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import {
+  acceptClientOffer,
+  getClientOffer,
+  payClientOffer,
+  rejectClientOffer,
+} from "../services/api";
+
+const statusClassMap = {
+  offered: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+  paid: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+  expired: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
+  cancelled: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+};
+
+export default function OfferDetailPage() {
+  const { offerId } = useParams();
+  const navigate = useNavigate();
+  const { showNotification } = useOutletContext();
+  const [offer, setOffer] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isActioning, setIsActioning] = useState(false);
+
+  useEffect(() => {
+    const loadOffer = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getClientOffer(offerId);
+        setOffer(data);
+      } catch (error) {
+        console.error("Failed to load offer", error);
+        showNotification("Failed to load offer", "error");
+        navigate("/client/offers");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOffer();
+  }, [offerId, showNotification, navigate]);
+
+  const executeAction = async (handler, successMessage) => {
+    setIsActioning(true);
+    try {
+      const data = await handler(offerId);
+      const nextOffer = data.offer || data;
+      setOffer(nextOffer);
+      showNotification(successMessage, "success");
+    } catch (error) {
+      console.error("Offer action failed", error);
+      showNotification(error.response?.data?.error || "Offer action failed", "error");
+    } finally {
+      setIsActioning(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-16 text-center text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+        Loading offer...
+      </div>
+    );
+  }
+
+  if (!offer) {
+    return null;
+  }
+
+  const canAct = offer.status === "offered";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Link
+          to="/client/offers"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to offers
+        </Link>
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassMap[offer.status] || statusClassMap.expired}`}
+        >
+          {offer.status}
+        </span>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-cyan-50 to-emerald-50 p-8 shadow-lg dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              {offer.meta.businessName || "Lead opportunity"}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              Review the masked data below. Full contact access is released only through the
+              controlled offer workflow and never through direct `CallerLead` access.
+            </p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/60 bg-white/90 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  Price
+                </p>
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+                  {offer.currency} {Number(offer.price || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/60 bg-white/90 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  Expires
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">
+                  {new Date(offer.expiresAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Qualification</span>
+                <span className="font-medium text-slate-900 dark:text-white">
+                  {offer.meta.appointmentStatus || "Unknown"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Interest level</span>
+                <span className="font-medium text-slate-900 dark:text-white">
+                  {offer.meta.interestLevel || "Unknown"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Payment</span>
+                <span className="font-medium text-slate-900 dark:text-white">
+                  {offer.payment?.status || "pending"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Region</span>
+                <span className="font-medium text-slate-900 dark:text-white">
+                  {offer.meta.city}, {offer.meta.state}, {offer.meta.country}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-900 dark:border-cyan-900/40 dark:bg-cyan-950/30 dark:text-cyan-100">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="mt-0.5 h-4 w-4" />
+                <p>Only the fields configured in the offer are visible below, with masking still enforced.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            Visible Lead Data
+          </h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {Object.entries(offer.leadPreview || {}).map(([key, value]) => (
+              <div
+                key={key}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50"
+              >
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  {key}
+                </p>
+                <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">
+                  {value || "Not available"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            Actions
+          </h2>
+          <div className="mt-5 space-y-3">
+            <button
+              type="button"
+              disabled={!canAct || isActioning}
+              onClick={() => executeAction(acceptClientOffer, "Offer accepted")}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-cyan-800/50 dark:bg-cyan-950/40 dark:text-cyan-100"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Accept Offer
+            </button>
+            <button
+              type="button"
+              disabled={!canAct || isActioning}
+              onClick={() => executeAction(payClientOffer, "Payment completed")}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition hover:from-emerald-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CreditCard className="h-4 w-4" />
+              Simulate Payment
+            </button>
+            <button
+              type="button"
+              disabled={!canAct || isActioning}
+              onClick={() => executeAction(rejectClientOffer, "Offer rejected")}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-800/50 dark:bg-rose-950/40 dark:text-rose-200"
+            >
+              <XCircle className="h-4 w-4" />
+              Reject Offer
+            </button>
+          </div>
+
+          <div className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
+            <div className="flex items-center gap-2">
+              <Clock3 className="h-4 w-4 text-slate-400" />
+              Offer expires on {new Date(offer.expiresAt).toLocaleString()}.
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}

@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutGrid,
   Megaphone,
-  FileText,
   Phone,
   Users,
   PhoneCall,
@@ -12,6 +11,8 @@ import {
   ClipboardList,
   Coins,
   Repeat,
+  BriefcaseBusiness,
+  BadgeDollarSign,
 } from "lucide-react";
 
 function getSidebarItems(role) {
@@ -41,6 +42,18 @@ function getSidebarItems(role) {
         label: "Manage Caller Leads",
         icon: Repeat2,
         path: "/manager/caller-leads",
+      },
+      {
+        id: "closer-leads",
+        label: "Manage Closer Leads (TBD)",
+        icon: Repeat2,
+        path: "/manager/closer-leads",
+      },
+      {
+        id: "client-leads",
+        label: "Manage Client Offers",
+        icon: Repeat,
+        path: "/manager/client-leads",
       },
       {
         id: "scraper",
@@ -75,17 +88,29 @@ function getSidebarItems(role) {
         icon: Users,
         path: "/manager/user-management",
       },
+      
+        //    {
+        //   id: "call-logs",
+        //   label: "Call Logs",
+        //   icon: Phone,
+        //   path: "/manager/call-logs",
+        // },
+    ];
+  }
+
+  if (role === "client") {
+    return [
       {
-        id: "closer-leads",
-        label: "Manage Closer Leads (TBD)",
-        icon: Repeat2,
-        path: "/manager/closer-leads",
+        id: "overview",
+        label: "My Offers",
+        icon: BriefcaseBusiness,
+        path: "/client",
       },
       {
-        id: "client-leads",
-        label: "Manage Client Leads (TBD)",
-        icon: Repeat,
-        path: "/manager/client-leads",
+        id: "offers",
+        label: "Offer Marketplace",
+        icon: BadgeDollarSign,
+        path: "/client/offers",
       },
         //    {
         //   id: "call-logs",

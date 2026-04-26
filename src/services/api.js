@@ -725,4 +725,90 @@ export const getDetailedEarningsHistory = async ({ agentId, page = 1, limit = 20
   return response.data; // Return full data object as it includes pagination
 };
 
+// ==================== Client Lead Marketplace ====================
+
+export const getQualifiedLeadsPool = async ({
+  search = "",
+  appointmentStatus = "",
+  page = 1,
+  limit = 10,
+} = {}) => {
+  const response = await api.get("/manager/offers/qualified-leads", {
+    params: {
+      ...(search ? { search } : {}),
+      ...(appointmentStatus ? { appointmentStatus } : {}),
+      page,
+      limit,
+    },
+  });
+
+  return response.data.data;
+};
+
+export const createClientOffer = async (payload) => {
+  const response = await api.post("/manager/offers", payload);
+  return response.data.data;
+};
+
+export const getManagerOffers = async ({
+  status = "",
+  clientId = "",
+  search = "",
+  page = 1,
+  limit = 10,
+} = {}) => {
+  const response = await api.get("/manager/offers", {
+    params: {
+      ...(status ? { status } : {}),
+      ...(clientId ? { clientId } : {}),
+      ...(search ? { search } : {}),
+      page,
+      limit,
+    },
+  });
+
+  return response.data.data;
+};
+
+export const cancelManagerOffer = async (offerId) => {
+  const response = await api.patch(`/manager/offers/${offerId}/cancel`);
+  return response.data.data;
+};
+
+export const getClientOffers = async ({
+  status = "",
+  page = 1,
+  limit = 10,
+} = {}) => {
+  const response = await api.get("/client/offers", {
+    params: {
+      ...(status ? { status } : {}),
+      page,
+      limit,
+    },
+  });
+
+  return response.data.data;
+};
+
+export const getClientOffer = async (offerId) => {
+  const response = await api.get(`/client/offers/${offerId}`);
+  return response.data.data;
+};
+
+export const acceptClientOffer = async (offerId) => {
+  const response = await api.post(`/client/offers/${offerId}/accept`);
+  return response.data.data;
+};
+
+export const payClientOffer = async (offerId) => {
+  const response = await api.post(`/client/offers/${offerId}/pay`);
+  return response.data.data;
+};
+
+export const rejectClientOffer = async (offerId) => {
+  const response = await api.post(`/client/offers/${offerId}/reject`);
+  return response.data.data;
+};
+
 export default api;

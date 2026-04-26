@@ -23,6 +23,7 @@ import LeadDetailModal from "../components/modals/LeadDetailModal";
 import EditLeadModal from "../components/modals/EditLeadModal";
 import UpdateQualificationModal from "../components/modals/UpdateQualificationModal";
 import SelectCampaignMsg from "../components/common/SelectCampaignMsg";
+import CreateOfferModal from "../components/CreateOfferModal";
 
 const DIALER_STATUSES = [
   "pending",
@@ -50,6 +51,12 @@ const APPOINTMENT_STATUSES = [
   "onhold",
 ];
 
+const QUALIFIED_STATUSES = new Set([
+  "qualified-level-1",
+  "qualified-level-2",
+  "qualified-level-3",
+]);
+
 export default function ManageCallerLeads() {
   const { showNotification } = useOutletContext();
   const { user } = useAuth();
@@ -73,6 +80,7 @@ export default function ManageCallerLeads() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLeadForStatus, setSelectedLeadForStatus] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedLeadForOffer, setSelectedLeadForOffer] = useState(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [agents, setAgents] = useState([]);
   const [stats, setStats] = useState({
@@ -280,6 +288,18 @@ export default function ManageCallerLeads() {
     );
     showNotification("Qualification updated successfully", "success");
     setShowStatusModal(false);
+    loadFollowupLeads();
+  };
+
+  const handleCreateOffer = (lead) => {
+    if (!QUALIFIED_STATUSES.has(lead?.appointmentStatus)) {
+      showNotification("Only qualified leads can be offered to clients", "error");
+      return;
+    }
+    setSelectedLeadForOffer(lead || null);
+  };
+
+  const handleOfferCreated = () => {
     loadFollowupLeads();
   };
 
@@ -966,6 +986,7 @@ export default function ManageCallerLeads() {
         onClose={() => setShowDetailModal(false)}
         onEditLead={canManageLeads ? handleEditLead : undefined}
         onStatusUpdate={canManageLeads ? handleUpdateStatus : undefined}
+        onCreateOffer={canManageLeads ? handleCreateOffer : undefined}
       />
 
       {canManageLeads && (
@@ -983,6 +1004,14 @@ export default function ManageCallerLeads() {
             onClose={() => setShowStatusModal(false)}
             onSuccess={handleStatusUpdateSuccess}
             onError={(message) => showNotification(message, "error")}
+          />
+
+          <CreateOfferModal
+            isOpen={Boolean(selectedLeadForOffer)}
+            lead={selectedLeadForOffer}
+            onClose={() => setSelectedLeadForOffer(null)}
+            onCreated={handleOfferCreated}
+            showNotification={showNotification}
           />
         </>
       )}

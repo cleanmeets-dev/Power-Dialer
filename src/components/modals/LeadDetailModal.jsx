@@ -182,7 +182,7 @@ export default function LeadDetailModal({ isOpen, leadId, onClose, onStatusUpdat
             Edit
           </button>
         )}
-        {onStatusUpdate && (
+        {onStatusUpdate && (user?.role === 'manager' || user?.role === 'admin') && (
           <button
             onClick={() => onStatusUpdate?.(lead._id)}
             className="px-5 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition flex items-center gap-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"

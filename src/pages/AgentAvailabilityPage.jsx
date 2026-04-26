@@ -116,6 +116,10 @@ export default function AgentAvailabilityPage() {
       } else if (action === 'break-end') {
         await managerEndAgentBreak(agent._id);
         showNotification(`${agent.name} break ended`, 'success');
+      } else if (action === 'checkout') {
+        // Explicit check out: check out agent only
+        await managerCheckOutAgent(agent._id);
+        showNotification(`${agent.name} has been checked out`, 'success');
       }
 
       await loadAgents();
@@ -275,6 +279,14 @@ export default function AgentAvailabilityPage() {
         {filteredAgents.map((agent) => {
           const isActuallyAvailable = agent.isAvailable && !agent.attendance?.onBreak && !agent.activeLead && agent.attendance?.isCheckedIn;
 
+          const totalBreakMs = agent.attendance?.totalBreakMs || 0;
+          let currentBreakMs = 0;
+          if (agent.attendance?.onBreak && agent.attendance?.breakStartedAt) {
+            currentBreakMs = Math.max(0, Date.now() - new Date(agent.attendance.breakStartedAt).getTime());
+          }
+          const totalBreakMinutes = Math.floor((totalBreakMs + currentBreakMs) / 60000);
+          const breakExceeded = totalBreakMinutes > 60;
+
           return (
             <div
               key={agent._id}
@@ -319,7 +331,7 @@ export default function AgentAvailabilityPage() {
                 </span>
               </div>
 
-              {/* Attendance Details */}
+              {/* Attendance Details + Logout Button */}
               <div className="mt-auto border-t border-slate-200/60 dark:border-slate-700/50 pt-4 space-y-2.5">
                 <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
                   <span className="text-emerald-600 dark:text-emerald-500 font-medium flex items-center gap-1.5">
@@ -345,27 +357,13 @@ export default function AgentAvailabilityPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2">
-                  <span className="text-amber-600 dark:text-amber-500 font-medium flex items-center gap-1.5">
+                <div className={`flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2 ${breakExceeded ? 'bg-rose-100/80 dark:bg-rose-900/40 -mx-2 px-2 pt-2 rounded border-rose-200 dark:border-rose-800' : ''}`}>
+                  <span className={`${breakExceeded ? 'text-rose-700 dark:text-rose-400' : 'text-amber-600 dark:text-amber-500'} font-medium flex items-center gap-1.5`}>
                     <Clock className="w-3.5 h-3.5" />
-                    Break Started
+                    Break Taken
                   </span>
-                  <span className="text-amber-700 dark:text-amber-400 font-bold">
-                    {agent.attendance?.breakStartedAt
-                      ? new Date(agent.attendance.breakStartedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : '—'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs border-b border-slate-100 dark:border-slate-700/30 pb-2 mb-0">
-                  <span className="text-indigo-600 dark:text-indigo-500 font-medium flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    Break Ended
-                  </span>
-                  <span className="text-indigo-700 dark:text-indigo-400 font-bold">
-                    {agent.attendance?.breakEndedAt
-                      ? new Date(agent.attendance.breakEndedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : '—'}
+                  <span className={`${breakExceeded ? 'text-rose-800 dark:text-rose-300 font-extrabold' : 'text-amber-700 dark:text-amber-400 font-bold'}`}>
+                    {totalBreakMinutes} min
                   </span>
                 </div>
                 
@@ -392,6 +390,19 @@ export default function AgentAvailabilityPage() {
                       : '—'}
                   </span>
                 </div>
+
+                {/* Explicit Check Out Button for Manager/Admin */}
+                {user && (user.role === 'manager' || user.role === 'admin') && agent.attendance?.isCheckedIn && (
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={() => handleAttendanceAction(agent, 'checkout')}
+                      disabled={loadingAgentId === agent._id}
+                      className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition disabled:opacity-50"
+                    >
+                      {loadingAgentId === agent._id ? 'Checking out...' : 'Check Out Agent'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );

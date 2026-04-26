@@ -131,10 +131,12 @@ export default function Navbar({
     }
 
     const breakStart = new Date(user.attendance.breakStartedAt).getTime();
+    const previousTotalBreakSeconds = Math.floor((user.attendance.totalBreakMs || 0) / 1000);
 
     const tick = () => {
-      const elapsedSeconds = Math.floor((Date.now() - breakStart) / 1000);
-      const remaining = Math.max(0, 60 * 60 - elapsedSeconds);
+      const currentBreakElapsedSeconds = Math.floor((Date.now() - breakStart) / 1000);
+      const totalElapsedSeconds = previousTotalBreakSeconds + currentBreakElapsedSeconds;
+      const remaining = Math.max(0, 60 * 60 - totalElapsedSeconds);
       setBreakTimer(remaining);
     };
 
@@ -152,7 +154,7 @@ export default function Navbar({
       } else {
         await startBreak();
         onShowNotification?.(
-          "Break started. 60 minute timer active.",
+          "Break started... timer active.",
           "success",
         );
       }
@@ -265,16 +267,14 @@ export default function Navbar({
                       </button>
                     </div>
                   ) : (
-                    (user.attendance.breaksTaken || 0) < 1 && (
-                      <button
-                        onClick={handleToggleBreak}
-                        disabled={isAgentBreakLoading}
-                        className="flex items-center gap-2 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50"
-                      >
-                        <PauseCircle className="w-5 h-5" />
-                        {isAgentBreakLoading ? "Starting..." : "Take Break"}
-                      </button>
-                    )
+                    <button
+                      onClick={handleToggleBreak}
+                      disabled={isAgentBreakLoading}
+                      className="flex items-center gap-2 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50"
+                    >
+                      <PauseCircle className="w-5 h-5" />
+                      {isAgentBreakLoading ? "Starting..." : "Take Break"}
+                    </button>
                   )}
                 </div>
               )}

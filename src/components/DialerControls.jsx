@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useRef } from "react";
+import { useContext, useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { Play, Square, Pause, SkipForward, Phone } from "lucide-react";
 import {
   logAgentCallAttempt,
@@ -6,8 +6,9 @@ import {
   stopDialing,
 } from "../services/api";
 import { LeadsContext } from "../context/LeadsContext";
+import EditLeadModal from "./modals/EditLeadModal";
 
-export default function DialerControls({
+const DialerControls = forwardRef(function DialerControls({
   campaignId,
   isDialing,
   setIsDialing,
@@ -17,12 +18,18 @@ export default function DialerControls({
   isLoading,
   mode = "power",
   agentId = null,
-}) {
+  isOnBreak = false,
+  onCallTriggered,
+}, ref) {
   const isAgentMode = mode === "agent";
   const leadsContext = useContext(LeadsContext);
   const leads = leadsContext ? leadsContext.leads : [];
   const pagination = leadsContext ? leadsContext.pagination : null;
   const changePage = leadsContext ? leadsContext.changePage : null;
+
+  useImperativeHandle(ref, () => ({
+    triggerNextCall: handleNextCall,
+  }));
 
   // Frontend Auto Dialer State (Zoom Integration)
   const [autoDialState, setAutoDialState] = useState({
@@ -62,6 +69,12 @@ export default function DialerControls({
           isAutoDialingCurrent: true,
         });
       }
+
+      if (onCallTriggered) {
+        onCallTriggered(lead);
+      }
+      setActiveDialerLead(lead);
+      setShowDispositionModal(true);
     } catch (e) {
       console.error("Failed to track call attempt", e);
     }
@@ -106,13 +119,22 @@ export default function DialerControls({
       return;
     }
 
-    const totalPages = pagination.totalPages || 1;
-    let nextPage = (pagination.page || 1) + 1;
+    let currentPageToFetch = pagination.page || 1;
+    let currentTotalPages = pagination.totalPages || 1;
 
-    while (nextPage <= totalPages) {
-      const result = await changePage(nextPage);
-      const nextPageLeads = result?.leads || [];
-      const firstPendingIndex = findFirstPendingLead(nextPageLeads);
+    // Re-fetch the current page first. 
+    // If the table is filtered by "Pending", the completed leads fall off page 1, 
+    // meaning the *next* batch of pending leads will slide into page 1!
+    // If not filtered, re-fetching page 1 will just yield completed leads, and we'll naturally move to page 2.
+    while (currentPageToFetch <= currentTotalPages) {
+      const result = await changePage(currentPageToFetch);
+      const fetchedLeads = result?.leads || [];
+      
+      if (result?.pagination?.totalPages) {
+        currentTotalPages = result.pagination.totalPages;
+      }
+
+      const firstPendingIndex = findFirstPendingLead(fetchedLeads);
 
       if (firstPendingIndex !== -1) {
         setAutoDialState({
@@ -120,12 +142,12 @@ export default function DialerControls({
           currentIndex: firstPendingIndex,
           status: "calling",
         });
-        triggerZoomCall(nextPageLeads[firstPendingIndex]);
-        onSuccess(`Moved to page ${nextPage} and continued dialing.`);
+        triggerZoomCall(fetchedLeads[firstPendingIndex]);
+        onSuccess(`Continued dialing on page ${currentPageToFetch}.`);
         return;
       }
 
-      nextPage += 1;
+      currentPageToFetch += 1;
     }
 
     setIsDialing(false);
@@ -211,6 +233,9 @@ export default function DialerControls({
   };
 
   const handleNextCall = async () => {
+    // If the dialer is stopped or paused (e.g. by Break), don't automatically advance
+    if (!autoDialState.active || isOnBreak) return;
+
     const nextState = advanceNextCall(autoDialState);
     if (nextState) {
       setAutoDialState(nextState);
@@ -218,6 +243,38 @@ export default function DialerControls({
     }
 
     await advanceToNextPageAndCall();
+  };
+
+  const handleNextCallRef = useRef(handleNextCall);
+  useEffect(() => {
+    handleNextCallRef.current = handleNextCall;
+  });
+
+  const prevIsOnBreak = useRef(isOnBreak);
+  useEffect(() => {
+    if (prevIsOnBreak.current && !isOnBreak) {
+      if (autoDialState.active) {
+        setTimeout(() => handleNextCallRef.current(), 500);
+      }
+    }
+    prevIsOnBreak.current = isOnBreak;
+  }, [isOnBreak]);
+
+  const [showDispositionModal, setShowDispositionModal] = useState(false);
+  const [activeDialerLead, setActiveDialerLead] = useState(null);
+
+  const handleDispositionSaved = (updatedLead) => {
+    if (leadsContext?.updateLead) {
+      leadsContext.updateLead(updatedLead);
+    }
+    setShowDispositionModal(false);
+    onSuccess("Lead disposed successfully");
+
+    // Add a 5-second delay before triggering the next call
+    // Uses the ref to ensure we don't use stale closures if the break state changed during the wait
+    setTimeout(() => {
+      handleNextCallRef.current();
+    }, 5000);
   };
 
   return (
@@ -270,7 +327,7 @@ export default function DialerControls({
         // Agent Auto Dialer UI (Zoom Integration)
         <div>
           <div className="flex flex-wrap gap-3 mb-4">
-            {!autoDialState.active ? (
+            {!autoDialState.active && (
               <button
                 onClick={handleStartAutoDialer}
                 disabled={!campaignId || leads.length === 0 || isLoading}
@@ -283,27 +340,10 @@ export default function DialerControls({
                 <Play className="w-5 h-5" />
                 Start Auto Dialer
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={handleStopAutoDialer}
-                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition bg-rose-600 hover:bg-rose-700 text-white"
-                >
-                  <Square className="w-5 h-5" />
-                  Stop Sequence
-                </button>
-                <button
-                  onClick={handleNextCall}
-                  className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <SkipForward className="w-5 h-5" />
-                  Next Call
-                </button>
-              </>
             )}
           </div>
 
-          {autoDialState.active && (
+          {autoDialState.active && !isOnBreak && (
             <div className="p-4 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
@@ -325,6 +365,16 @@ export default function DialerControls({
           )}
         </div>
       )}
+
+      <EditLeadModal
+        isOpen={showDispositionModal}
+        lead={activeDialerLead}
+        onClose={() => setShowDispositionModal(false)}
+        onSave={handleDispositionSaved}
+        onLeadDeleted={() => setShowDispositionModal(false)}
+      />
     </div>
   );
-}
+});
+
+export default DialerControls;

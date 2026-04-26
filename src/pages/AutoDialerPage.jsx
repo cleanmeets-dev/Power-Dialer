@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDialer } from "../hooks/useDialer";
@@ -8,6 +8,7 @@ import { LeadsProvider } from "../context/LeadsContext";
 import LeadsTable from "../components/LeadsTable";
 import { PhoneCall } from "lucide-react";
 import SelectCampaignMsg from "../components/common/SelectCampaignMsg";
+import { updateAgentAvailability } from "../services/api";
 
 export default function AutoDialerPage() {
   const { showNotification } = useOutletContext();
@@ -19,6 +20,19 @@ export default function AutoDialerPage() {
     (message, type = "success") => showNotification(message, type),
     { mode: "agent", agentId: user?._id },
   );
+
+  const dialerRef = useRef(null);
+  const [isOnBreak, setIsOnBreak] = useState(
+    user?.attendance?.onBreak || false
+  );
+
+  useEffect(() => {
+    if (user?.attendance) {
+      setIsOnBreak(user.attendance.onBreak || false);
+    }
+  }, [user?.attendance]);
+
+
 
   return (
     <div className="space-y-6">
@@ -52,6 +66,7 @@ export default function AutoDialerPage() {
           <LeadsProvider campaignId={selectedCampaignId}>
             <div className="mt-4 mb-6">
               <DialerControls
+                ref={dialerRef}
                 campaignId={selectedCampaignId}
                 isDialing={isDialing}
                 setIsDialing={setIsDialing}
@@ -61,6 +76,7 @@ export default function AutoDialerPage() {
                 isLoading={false}
                 mode="agent"
                 agentId={user?._id}
+                isOnBreak={isOnBreak}
               />
             </div>
 

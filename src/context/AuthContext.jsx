@@ -46,7 +46,10 @@ export function AuthProvider({ children }) {
       return null;
     }
 
-    setIsLoading(true);
+    // Only set loading to true if we don't already have an authenticated user.
+    // This prevents the ProtectedRoute from unmounting child components and losing local state
+    // during background profile refreshes (like toggling a break).
+    setIsLoading((prev) => !prev && !isAuthenticated ? true : prev);
 
     try {
       const currentUser = await getCurrentUser();
@@ -61,7 +64,7 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [clearAuthState]);
+  }, [clearAuthState, isAuthenticated]);
 
   useEffect(() => {
     hydrateAuth();

@@ -87,12 +87,12 @@ function getSidebarItems(role) {
         icon: Repeat,
         path: "/manager/client-leads",
       },
-           {
-          id: "call-logs",
-          label: "Call Logs",
-          icon: Phone,
-          path: "/manager/call-logs",
-        },
+        //    {
+        //   id: "call-logs",
+        //   label: "Call Logs",
+        //   icon: Phone,
+        //   path: "/manager/call-logs",
+        // },
     ];
   }
 

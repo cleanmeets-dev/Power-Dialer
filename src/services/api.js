@@ -239,6 +239,16 @@ export const uploadLeads = async (file, campaignId, agentId) => {
   return response.data;
 };
 
+export const getLeadByPhone = async (phoneNumber) => {
+  const response = await api.get(`/caller-leads/phone/${encodeURIComponent(phoneNumber)}`);
+  return response.data.data;
+};
+
+export const createLead = async (payload) => {
+  const response = await api.post('/caller-leads', payload);
+  return response.data.data;
+};
+
 export const getLeads = async (campaignId, options = {}) => {
   const {
     status = null,

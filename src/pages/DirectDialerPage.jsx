@@ -1,8 +1,9 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Phone, PhoneOff, Delete } from "lucide-react";
-import { logAgentCallAttempt, setMyDirectCallStatus } from "../services/api";
+import { logAgentCallAttempt, setMyDirectCallStatus, getCampaigns, getLeadByPhone, createLead } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
+import EditLeadModal from "../components/modals/EditLeadModal";
 
 // DTMF frequency pairs (Hz)
 const DTMF_FREQUENCIES = {
@@ -135,9 +136,40 @@ export default function DirectDialerPage() {
   const [callMethod, setCallMethod] = useState("zoom");
   const [inCallDigits, setInCallDigits] = useState("");
   const [isZoomCallActive, setIsZoomCallActive] = useState(false);
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState("");
+  const [activeLead, setActiveLead] = useState(null);
+  const [showDispositionModal, setShowDispositionModal] = useState(false);
+  const [isCheckingLead, setIsCheckingLead] = useState(false);
+
   const inputRef = useRef(null);
   const pressedKeysRef = useRef(new Set());
   const { user } = useAuth();
+
+  // Fetch campaigns on mount
+  useEffect(() => {
+    getCampaigns()
+      .then((data) => {
+        // data contains root (parent) campaigns with their children nested
+        const autoCampaigns = [];
+        (data || []).forEach((parent) => {
+          if (parent.children && parent.children.length > 0) {
+            parent.children.forEach((child) => {
+              if (child.pipelineType === "caller" && child.dialerType === "auto") {
+                // Prepend parent name for clarity
+                autoCampaigns.push({
+                  ...child,
+                  displayName: `${parent.name} > ${child.name}`,
+                });
+              }
+            });
+          }
+        });
+        setCampaigns(autoCampaigns);
+      })
+      .catch((err) => console.error("Failed to load campaigns", err));
+  }, []);
 
   const isDialing =
     twilioDialer?.callStatus === "ringing" ||
@@ -157,12 +189,8 @@ export default function DirectDialerPage() {
     const handleKeyDown = (e) => {
       const key = e.key;
 
-      // Prevent repeated firing from key hold
-      if (pressedKeysRef.current.has(key)) {
-        return;
-      }
+      if (pressedKeysRef.current.has(key)) return;
 
-      // Handle digits (0-9)
       if (/^[0-9]$/.test(key)) {
         pressedKeysRef.current.add(key);
         e.preventDefault();
@@ -170,7 +198,6 @@ export default function DirectDialerPage() {
         return;
       }
 
-      // Handle * and #
       if (key === "*" || key === "#") {
         pressedKeysRef.current.add(key);
         e.preventDefault();
@@ -178,7 +205,6 @@ export default function DirectDialerPage() {
         return;
       }
 
-      // Handle Backspace
       if (key === "Backspace") {
         pressedKeysRef.current.add(key);
         e.preventDefault();
@@ -186,7 +212,6 @@ export default function DirectDialerPage() {
         return;
       }
 
-      // Handle Enter to call
       if (key === "Enter" && phoneNumber && !isDialing) {
         pressedKeysRef.current.add(key);
         e.preventDefault();
@@ -194,7 +219,6 @@ export default function DirectDialerPage() {
         return;
       }
 
-      // Handle Delete to clear all
       if (key === "Delete") {
         pressedKeysRef.current.add(key);
         e.preventDefault();
@@ -217,13 +241,9 @@ export default function DirectDialerPage() {
   }, [phoneNumber, isDialing, isInCall]);
 
   const statusText = useMemo(() => {
-    if (twilioDialer?.error) {
-      return twilioDialer.error;
-    }
+    if (twilioDialer?.error) return twilioDialer.error;
     if (callMethod === "zoom") return "Zoom handles call externally";
-    if (twilioDialer?.isInitializing) {
-      return "Connecting to Twilio...";
-    }
+    if (twilioDialer?.isInitializing) return "Connecting to Twilio...";
     switch (twilioDialer?.callStatus) {
       case "ringing":
         return "Ringing...";
@@ -266,19 +286,20 @@ export default function DirectDialerPage() {
         outcome: "attempted",
       });
 
+      let callSuccessful = false;
+
       if (callMethod === "zoom") {
         await setMyDirectCallStatus(true, "zoom");
         setIsZoomCallActive(true);
         window.open(`zoomphonecall://${phoneNumber}`, "_self");
         showNotification(`Calling ${phoneNumber} via Zoom`, "success");
-        return;
-      }
-
-      if (typeof twilioDialer?.placeOutgoingCall === "function") {
+        callSuccessful = true;
+      } else if (typeof twilioDialer?.placeOutgoingCall === "function") {
         const result = await twilioDialer.placeOutgoingCall(phoneNumber);
         if (result?.success) {
           showNotification(`Calling ${result.number} via Twilio`, "success");
           setInCallDigits("");
+          callSuccessful = true;
         } else {
           playBusyTone();
           showNotification(result?.error || "Twilio call failed", "error");
@@ -286,13 +307,41 @@ export default function DirectDialerPage() {
       } else {
         showNotification("Twilio dialer not available", "error");
       }
+
+      if (callSuccessful && selectedCampaignId) {
+        setIsCheckingLead(true);
+        try {
+          let lead;
+          try {
+            lead = await getLeadByPhone(phoneNumber);
+          } catch (err) {
+            // not found
+          }
+
+          if (lead) {
+            setActiveLead(lead);
+            setShowDispositionModal(true);
+          } else {
+            const newLead = await createLead({
+              campaignId: selectedCampaignId,
+              phoneNumber,
+            });
+            setActiveLead(newLead);
+            setShowDispositionModal(true);
+          }
+        } catch (err) {
+          showNotification("Failed to check or create lead automatically", "error");
+        } finally {
+          setIsCheckingLead(false);
+        }
+      }
     } catch (error) {
       playBusyTone();
       showNotification("Failed to start call", "error");
     }
   };
 
-  const handleHangup = () => {
+  const handleHangup = async () => {
     if (callMethod === "twilio") {
       playDisconnectTone();
       twilioDialer?.hangupActiveCall?.();
@@ -342,6 +391,26 @@ export default function DirectDialerPage() {
       </div>
 
       <div className="max-w-md mx-auto bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-lg shadow-2xl dark:shadow-slate-900/30 border border-slate-200 dark:border-slate-700 p-6">
+        
+        {/* Campaign Selector */}
+        <div className="mb-4">
+          <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
+            Campaign (Optional)
+          </label>
+          <select
+            value={selectedCampaignId}
+            onChange={(e) => setSelectedCampaignId(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-cyan-500"
+          >
+            <option value="">No Campaign</option>
+            {campaigns.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.displayName}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="mb-4">
           <label className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
             Call Method
@@ -467,16 +536,36 @@ export default function DirectDialerPage() {
 
         <button
           onClick={handleHangup}
-          disabled={!twilioDialer?.activeCall}
+          disabled={!twilioDialer?.activeCall && !isZoomCallActive}
           type="button"
-          className="mt-3 w-full rounded-lg bg-slate-400/20 dark:bg-slate-600/40 border border-slate-300 dark:border-slate-600 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 transition hover:-translate-y-0.5 active:scale-95"
+          className="mt-3 w-full rounded-lg bg-slate-400/20 dark:bg-slate-600/40 border border-slate-300 dark:border-slate-600 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 transition hover:-translate-y-0.5 active:scale-95 flex justify-center"
         >
-          <span className="inline-flex items-center gap-2">
-            <PhoneOff className="w-4 h-4" />
-            Hang Up
-          </span>
+          {isCheckingLead ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
+              Checking lead...
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <PhoneOff className="w-4 h-4" />
+              Hang Up
+            </span>
+          )}
         </button>
       </div>
+
+      <EditLeadModal
+        isOpen={showDispositionModal}
+        lead={activeLead}
+        onClose={() => {
+          setShowDispositionModal(false);
+          setActiveLead(null);
+          setPhoneNumber(""); // clear phone after disposition
+        }}
+        onSave={(updatedLead) => {
+          showNotification("Disposition saved", "success");
+        }}
+      />
     </div>
   );
 }
